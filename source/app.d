@@ -253,14 +253,14 @@ void post(NntpServerRequest req, NntpServerResponse res)
 	res.writeVoidBody();
 
 	while(!req.bodyReader.empty){
-		string ln = cast(string)req.bodyReader.readLine();
+		string ln = sanitizeUTF8(req.bodyReader.readLine());
 		if( ln.length == 0 ) break;
 		auto idx = ln.countUntil(':');
 		enforce(idx > 0);
 		art.addHeader(ln[0 .. idx], strip(ln[idx+1 .. $]));
 	}
 
-	art.message = cast(string)req.bodyReader.readAll();
+	art.message = sanitizeUTF8(req.bodyReader.readAll());
 
 	postArticle(art);
 
