@@ -15,43 +15,71 @@ string g_hostname = "localhost";
 void article(NntpServerRequest req, NntpServerResponse res)
 {
 	req.enforceNParams(1);
-	auto anum = to!long(req.parameters[0]);
-
-	if( !isTaskLocalSet("group") ){
-		res.status = NntpStatus.NoGroupSelected;
-		res.statusText = "Not in a newsgroup";
-		res.writeVoidBody();
-		return;
-	}
-
-	auto groupname = getTaskLocal!string("group");
-
-	if( !testAuth(groupname, res) )
-		return;
 
 	Article art;
-	try art = getArticle(groupname, anum);
-	catch( Exception e ){
-		res.status = NntpStatus.BadArticleNumber;
-		res.statusText = "Bad article number";
-		res.writeVoidBody();
-		return;
+	if( req.parameters[0].startsWith("<") ){
+		try art = getArticle(req.parameters[0]);
+		catch( Exception e ){
+			res.status = NntpStatus.BadArticleId;
+			res.statusText = "Bad article id";
+			res.writeVoidBody();
+			return;
+		}
+
+		bool auth = false;
+		foreach( g, _; art.number ){
+			if( testAuth(g) ){
+				auth = true;
+				break;
+			}
+		}
+		if( !auth ){
+			res.status = NntpStatus.AccessFailure;
+			res.statusText = "Not authorized to access this article";
+			res.writeVoidBody();
+			return;
+		}
+
+		res.statusText = "0 "~art.id~" ";
+	} else {
+		auto anum = to!long(req.parameters[0]);
+
+		if( !isTaskLocalSet("group") ){
+			res.status = NntpStatus.NoGroupSelected;
+			res.statusText = "Not in a newsgroup";
+			res.writeVoidBody();
+			return;
+		}
+
+		auto groupname = getTaskLocal!string("group");
+
+		if( !testAuth(groupname, res) )
+			return;
+
+		try art = getArticle(groupname, anum);
+		catch( Exception e ){
+			res.status = NntpStatus.BadArticleNumber;
+			res.statusText = "Bad article number";
+			res.writeVoidBody();
+			return;
+		}
+
+		res.statusText = to!string(art.number[escapeGroup(groupname)])~" "~art.id~" ";
 	}
 
-	res.statusText = to!string(art.number[escapeGroup(groupname)])~" "~art.id~" ";
 	switch(req.command){
 		default: assert(false);
 		case "article":
 			res.status = NntpStatus.Article;
-			res.statusText ~= "article";
+			res.statusText ~= "head and body follow";
 			break;
 		case "body":
 			res.status = NntpStatus.Body;
-			res.statusText ~= "body";
+			res.statusText ~= "body follows";
 			break;
 		case "head":
 			res.status = NntpStatus.Head;
-			res.statusText ~= "head";
+			res.statusText ~= "head follows";
 			break;
 	}
 
@@ -359,8 +387,12 @@ void handleCommand(NntpServerRequest req, NntpServerResponse res)
 
 bool testAuth(string grpname, NntpServerResponse res = null)
 {
-	auto grp = getGroupByName(grpname);
-	return testAuth(grp, res);
+	try {
+		auto grp = getGroupByName(grpname);
+		return testAuth(grp, res);
+	} catch( Exception e ){
+		return false;
+	}
 }
 
 bool testAuth(Group grp, NntpServerResponse res = null)
