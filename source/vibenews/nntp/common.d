@@ -1,4 +1,4 @@
-module nntp.common;
+module vibenews.nntp.common;
 
 import vibe.stream.stream;
 

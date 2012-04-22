@@ -1,6 +1,6 @@
-module admin;
+module vibenews.admin;
 
-import db;
+import vibenews.db;
 
 import vibe.core.log;
 import vibe.crypto.passwordhash;
@@ -75,6 +75,6 @@ void updateGroup(HttpServerRequest req, HttpServerResponse res)
 	enforce(req.form["password"] == req.form["passwordConfirmation"]);
 	if( req.form["password"].length > 0 )
 		group.passwordHash = generateSimplePasswordHash(req.form["password"]);
-	db.updateGroup(group);
+	vibenews.db.updateGroup(group);
 	res.redirect("/");
 }

@@ -1,4 +1,4 @@
-module db;
+module vibenews.db;
 
 import vibe.d;
 

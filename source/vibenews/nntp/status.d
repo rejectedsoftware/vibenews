@@ -1,4 +1,4 @@
-module nntp.status;
+module vibenews.nntp.status;
 
 enum NntpStatus {
 	HelpText = 100,

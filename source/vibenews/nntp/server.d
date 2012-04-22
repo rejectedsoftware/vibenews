@@ -1,7 +1,7 @@
-module nntp.server;
+module vibenews.nntp.server;
 
-import nntp.common;
-import nntp.status;
+import vibenews.nntp.common;
+import vibenews.nntp.status;
 
 import vibe.core.log;
 import vibe.core.tcp;

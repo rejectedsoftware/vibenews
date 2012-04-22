@@ -3,10 +3,10 @@ module app;
 import vibe.d;
 import vibe.crypto.passwordhash;
 
-import admin;
-import db;
-import nntp.server;
-import nntp.status;
+import vibenews.admin;
+import vibenews.db;
+import vibenews.nntp.server;
+import vibenews.nntp.status;
 
 string g_hostname = "localhost";
 
