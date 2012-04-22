@@ -28,7 +28,7 @@ void article(NntpServerRequest req, NntpServerResponse res)
 
 		bool auth = false;
 		foreach( g, _; art.number ){
-			if( testAuth(g) ){
+			if( testAuth(unescapeGroup(g)) ){
 				auth = true;
 				break;
 			}
