@@ -1,0 +1,29 @@
+extends layout
+
+block title
+	- auto title = "VibeNews - Edit group " ~ group.name;
+	
+block body
+	form(method="POST", action="/groups/#{group.name}/update")
+		p
+			label(for="description") Description:
+			input(type="text", name="description", value="#{group.description}")
+		p
+			- if( group.active )
+				input(type="checkbox", name="active", value="yes", checked)
+			- else
+				input(type="checkbox", name="active", value="yes")
+			label(for="active") Active
+		p
+			label(for="username") User name:
+			input(type="text", name="username", value="#{group.username}")
+			br
+			| leave blank for public groups
+		p
+			label(for="password") Change password:
+			input(type="password", name="password")
+		p
+			label(for="passwordConfirmation") Confirm password:
+			input(type="password", name="passwordConfirmation")
+		p
+			input(type="submit", value="Apply changes")

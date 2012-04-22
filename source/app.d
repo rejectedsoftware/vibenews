@@ -1,7 +1,9 @@
 module app;
 
 import vibe.d;
+import vibe.crypto.passwordhash;
 
+import admin;
 import db;
 import nntp.server;
 import nntp.status;
@@ -23,6 +25,10 @@ void article(NntpServerRequest req, NntpServerResponse res)
 	}
 
 	auto groupname = getTaskLocal!string("group");
+
+	if( !testAuth(groupname, res) )
+		return;
+
 	Article art;
 	try art = getArticle(groupname, anum);
 	catch( Exception e ){
@@ -70,6 +76,31 @@ void article(NntpServerRequest req, NntpServerResponse res)
 	}
 }
 
+void authinfo(NntpServerRequest req, NntpServerResponse res)
+{
+	req.enforceNParams(2, "USER/PASS <value>");
+	
+	switch(req.parameters[0].toLower()){
+		default:
+			res.status = NntpStatus.CommandSyntaxError;
+			res.statusText = "USER/PASS <value>";
+			res.writeVoidBody();
+			break;
+		case "user":
+			setTaskLocal("authUser", req.parameters[1]);
+			res.status = NntpStatus.MoreAuthInfoRequired;
+			res.statusText = "specify password";
+			res.writeVoidBody();
+			break;
+		case "pass":
+			req.enforce(isTaskLocalSet("authUser"), NntpStatus.AuthRejected, "specify user first");
+			setTaskLocal("authPassword", req.parameters[1]);
+			res.status = NntpStatus.AuthAccepted;
+			res.statusText = "authentication stored";
+			res.writeVoidBody();
+			break;
+	}
+}
 
 void group(NntpServerRequest req, NntpServerResponse res)
 {
@@ -78,12 +109,17 @@ void group(NntpServerRequest req, NntpServerResponse res)
 	Group grp;
 	try {
 		grp = getGroupByName(groupname);
+		enforce(grp.active);
 	} catch( Exception e ){
 		res.status = NntpStatus.NoSuchGruop;
 		res.statusText = "No such group "~groupname;
 		res.writeVoidBody();
 		return;
 	}
+
+	if( !testAuth(groupname, res) )
+		return;
+
 	setTaskLocal("group", groupname);
 
 	res.status = NntpStatus.GroupSelected;
@@ -121,22 +157,24 @@ void list(NntpServerRequest req, NntpServerResponse res)
 		case "newsgroups":
 			res.statusText = "Descriptions in form \"group description\".";
 			res.bodyWriter();
+			size_t cnt = 0;
 			enumerateGroups((i, grp){
-				logInfo("Got group %s", grp.name);
-					if( i > 0 ) res.bodyWriter.write("\r\n");
+					if( !grp.active ) return;
+					logInfo("Got group %s", grp.name);
+					if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
 					res.bodyWriter.write(grp.name ~ " " ~ grp.description, false);
 				});
 			break;
 		case "active":
 			res.statusText = "Newsgroups in form \"group high low flags\".";
+			size_t cnt = 0;
 			enumerateGroups((i, grp){
-					if( i > 0 ) res.bodyWriter.write("\r\n");
-					if( grp.active ){
-						auto high = to!string(grp.maxArticleNumber);
-						auto low = to!string(grp.minArticleNumber);
-						auto flags = "y";
-						res.bodyWriter.write(grp.name~" "~high~" "~low~" "~flags, false);
-					}
+					if( !grp.active ) return;
+					if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
+					auto high = to!string(grp.maxArticleNumber);
+					auto low = to!string(grp.minArticleNumber);
+					auto flags = "y";
+					res.bodyWriter.write(grp.name~" "~high~" "~low~" "~flags, false);
 				});
 			break;
 	}
@@ -168,6 +206,9 @@ void over(NntpServerRequest req, NntpServerResponse res)
 	} else fromstr = tostr = req.parameters[0];
 
 	auto grp = getGroupByName(grpname);
+	
+	if( !testAuth(grp, res) )
+		return;
 
 	long fromnum = to!long(fromstr);
 	long tonum = tostr.length ? to!long(tostr) : grp.maxArticleNumber;
@@ -240,6 +281,9 @@ void newnews(NntpServerRequest req, NntpServerResponse res)
 	auto date = DateTime(year, to!int(dstr[2 .. 4]), to!int(dstr[4 .. 6]),
 		to!int(tstr[0 .. 2]), to!int(tstr[2 .. 4]), to!int(tstr[4 .. 6]));
 
+	if( !testAuth(grp, res) )
+		return;
+
 	res.status = NntpStatus.NewArticles;
 	res.statusText = "New news follows";
 
@@ -263,14 +307,14 @@ void newgroups(NntpServerRequest req, NntpServerResponse res)
 	res.status = NntpStatus.NewGroups;
 	res.statusText = "New groups follow";
 
+	size_t cnt = 0;
 	enumerateNewGroups(SysTime(date, UTC()), (i, grp){
-			if( i > 0 ) res.bodyWriter.write("\r\n");
-			if( grp.active ){
-				auto high = to!string(grp.maxArticleNumber);
-				auto low = to!string(grp.minArticleNumber);
-				auto flags = "y";
-				res.bodyWriter.write(grp.name~" "~high~" "~low~" "~flags, false);
-			}
+			if( !grp.active ) return;
+			if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
+			auto high = to!string(grp.maxArticleNumber);
+			auto low = to!string(grp.minArticleNumber);
+			auto flags = "y";
+			res.bodyWriter.write(grp.name~" "~high~" "~low~" "~flags, false);
 		});
 
 }
@@ -292,6 +336,7 @@ void handleCommand(NntpServerRequest req, NntpServerResponse res)
 			res.writeVoidBody();
 			break;
 		case "article": article(req, res); break;
+		case "authinfo": authinfo(req, res); break;
 		case "body": article(req, res); break;
 		// capabilities
 		case "group": group(req, res); break;
@@ -312,6 +357,36 @@ void handleCommand(NntpServerRequest req, NntpServerResponse res)
 	}
 }
 
+bool testAuth(string grpname, NntpServerResponse res = null)
+{
+	auto grp = getGroupByName(grpname);
+	return testAuth(grp, res);
+}
+
+bool testAuth(Group grp, NntpServerResponse res = null)
+{
+	if( grp.username.length == 0 ) return true;
+	if( !isTaskLocalSet("authUser") || !isTaskLocalSet("authPassword") ){
+		if( res ){
+			res.status = NntpStatus.AuthRequired;
+			res.statusText = "auth info required";
+			res.writeVoidBody();
+		}
+		return false;
+	}
+	auto user = getTaskLocal!string("authUser");
+	auto pass = getTaskLocal!string("authPassword");
+	if( user != grp.username || !testSimplePasswordHash(grp.passwordHash, pass) ){
+		if( res ){
+			res.status = NntpStatus.AccessFailure;
+			res.statusText = "auth info not valid for group";
+			res.writeVoidBody();
+		}
+		return false;
+	}
+	return true;
+}
+
 static this()
 {
 	auto settings = new NntpServerSettings;
@@ -319,4 +394,6 @@ static this()
 	//settings.sslCert = "server.crt";
 	//settings.sslKey = "server.key";
 	listenNntp(settings, toDelegate(&handleCommand));
+
+	startAdminInterface();
 }

@@ -1,0 +1,45 @@
+extends layout
+
+block title
+	- auto title = "VibeNews - Admin panel";
+	
+block body
+	h2 Groups
+	table
+		tr
+			th Name
+			th Description
+			th Active
+			th Public
+			th Action
+		- foreach( g; groups )
+			tr
+				td= g.name
+				td= g.description
+				td= g.active ? "yes" : "no"
+				td= g.username.length ? "no" : "yes"
+				td
+					form(method="GET", action="/groups/#{g.name}/show")
+						input(type="submit", value="Edit")
+						
+	h3 Create new group
+	form(method="POST", action="/groups/create")
+		p
+			label(for="name") Name:
+			input(type="text", name="name")
+		p
+			label(for="description") Description:
+			input(type="text", name="description")
+		p
+			label(for="username") User name:
+			input(type="text", name="username")
+			br
+			| leave blank if group is public
+		p
+			label(for="password") Change password:
+			input(type="password", name="password")
+		p
+			label(for="passwordConfirmation") Confirm password:
+			input(type="password", name="passwordConfirmation")
+		p
+			input(type="submit", value="Create new group")

@@ -56,6 +56,8 @@ struct Group {
 	long articleCount = 0;
 	long minArticleNumber = 1;
 	long maxArticleNumber = 0;
+	string username;
+	string passwordHash;
 }
 
 void enumerateGroups(void delegate(size_t idx, Group) cb)
@@ -77,6 +79,12 @@ void enumerateNewGroups(SysTime date, void delegate(size_t idx, Group) del)
 	}
 }
 
+bool groupExists(string name)
+{
+	auto bg = s_groups.findOne(["name": name], ["_id": 1]);
+	return !bg.isNull();
+}
+
 Group getGroupByName(string name)
 {
 	auto bg = s_groups.findOne(["name": name]);
@@ -84,6 +92,16 @@ Group getGroupByName(string name)
 	Group ret;
 	deserializeBson(ret, bg);
 	return ret;
+}
+
+void addGroup(Group g)
+{
+	s_groups.insert(g);
+}
+
+void updateGroup(Group g)
+{
+	s_groups.update(["_id": g._id], g);
 }
 
 Article getArticle(string id)
