@@ -300,10 +300,12 @@ void post(NntpServerRequest req, NntpServerResponse res)
 
 void newnews(NntpServerRequest req, NntpServerResponse res)
 {
-	req.enforceNParams(3);
+	req.enforceNParams(3, 4);
 	auto grp = req.parameters[0];
 	auto dstr = req.parameters[1];
 	auto tstr = req.parameters[2];
+	req.enforce(req.parameters.length < 4 || req.parameters[3] == "GMT",
+		NntpStatus.CommandSyntaxError, "Time zone must be GMT");
 	int year = to!int(dstr[0 .. 2]);
 	year += 2000;
 	auto date = DateTime(year, to!int(dstr[2 .. 4]), to!int(dstr[4 .. 6]),
@@ -324,9 +326,11 @@ void newnews(NntpServerRequest req, NntpServerResponse res)
 
 void newgroups(NntpServerRequest req, NntpServerResponse res)
 {
-	req.enforceNParams(2);
+	req.enforceNParams(2, 3);
 	auto dstr = req.parameters[0];
 	auto tstr = req.parameters[1];
+	req.enforce(req.parameters.length < 3 || req.parameters[2] == "GMT",
+		NntpStatus.CommandSyntaxError, "Time zone must be GMT");
 	int year = to!int(dstr[0 .. 2]);
 	year += 2000;
 	auto date = DateTime(year, to!int(dstr[2 .. 4]), to!int(dstr[4 .. 6]),

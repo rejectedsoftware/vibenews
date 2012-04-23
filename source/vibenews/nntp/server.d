@@ -98,6 +98,11 @@ class NntpServerRequest {
 		enforce(parameters.length == n, NntpStatus.CommandSyntaxError, syntax ? "Expected "~syntax : "Wrong number of arguments.");
 	}
 
+	void enforceNParams(size_t nmin, size_t nmax, string syntax = null) {
+		enforce(parameters.length >= nmin && parameters.length <= nmax,
+			NntpStatus.CommandSyntaxError, syntax ? "Expected "~syntax : "Wrong number of arguments.");
+	}
+
 	void enforce(bool cond, NntpStatus status, string message)
 	{
 		.enforce(cond, message);
