@@ -12,6 +12,27 @@ string g_hostname = "localhost";
 
 // TODO: capabilities, auth, better POST validation, message codes when exceptions happen
 
+DateTime parseDateParams(string[] params, NntpServerRequest req)
+{
+	req.enforce(params.length == 2 || params[2] == "GMT",
+		NntpStatus.CommandSyntaxError, "Time zone must be GMT");
+
+	auto dstr = params[0];
+	auto tstr = params[1];
+
+	req.enforce(dstr.length == 6 || dstr.length == 8,
+		NntpStatus.CommandSyntaxError, "YYMMDD or YYYYMMDD");
+
+	bool fullyear = params[0].length == 6;
+	int year = fullyear ? to!int(dstr[0 .. 4]) : 2000 + to!int(dstr[0 .. 2]);
+	int month = fullyear ? to!int(dstr[4 .. 6]) : to!int(dstr[2 .. 4]);
+	int day = fullyear ? to!int(dstr[6 .. 8]) : to!int(dstr[4 .. 6]);
+	int hour = to!int(tstr[0 .. 2]);
+	int minute = to!int(tstr[2 .. 4]);
+	int second = to!int(tstr[4 .. 6]);
+	return DateTime(year, month, day, hour, minute, second);
+}
+
 void article(NntpServerRequest req, NntpServerResponse res)
 {
 	req.enforceNParams(1);
@@ -302,14 +323,7 @@ void newnews(NntpServerRequest req, NntpServerResponse res)
 {
 	req.enforceNParams(3, 4);
 	auto grp = req.parameters[0];
-	auto dstr = req.parameters[1];
-	auto tstr = req.parameters[2];
-	req.enforce(req.parameters.length < 4 || req.parameters[3] == "GMT",
-		NntpStatus.CommandSyntaxError, "Time zone must be GMT");
-	int year = to!int(dstr[0 .. 2]);
-	year += 2000;
-	auto date = DateTime(year, to!int(dstr[2 .. 4]), to!int(dstr[4 .. 6]),
-		to!int(tstr[0 .. 2]), to!int(tstr[2 .. 4]), to!int(tstr[4 .. 6]));
+	auto date = parseDateParams(req.parameters[1 .. $], req);
 
 	if( !testAuth(grp, res) )
 		return;
@@ -327,14 +341,7 @@ void newnews(NntpServerRequest req, NntpServerResponse res)
 void newgroups(NntpServerRequest req, NntpServerResponse res)
 {
 	req.enforceNParams(2, 3);
-	auto dstr = req.parameters[0];
-	auto tstr = req.parameters[1];
-	req.enforce(req.parameters.length < 3 || req.parameters[2] == "GMT",
-		NntpStatus.CommandSyntaxError, "Time zone must be GMT");
-	int year = to!int(dstr[0 .. 2]);
-	year += 2000;
-	auto date = DateTime(year, to!int(dstr[2 .. 4]), to!int(dstr[4 .. 6]),
-		to!int(tstr[0 .. 2]), to!int(tstr[2 .. 4]), to!int(tstr[4 .. 6]));
+	auto date = parseDateParams(req.parameters[0 .. $], req);
 
 	res.status = NntpStatus.NewGroups;
 	res.statusText = "New groups follow";
