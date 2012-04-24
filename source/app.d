@@ -31,7 +31,7 @@ DateTime parseDateParams(string[] params, NntpServerRequest req)
 
 	bool fullyear = dstr.length == 6;
 	dstr ~= ".."; // just to avoid array out-of-bounds
-	int year = fullyear ? extendYear(to!int(dstr[0 .. 4])) : 2000 + to!int(dstr[0 .. 2]);
+	int year = fullyear ? to!int(dstr[0 .. 4]) : extendYear(to!int(dstr[0 .. 2]));
 	int month = fullyear ? to!int(dstr[4 .. 6]) : to!int(dstr[2 .. 4]);
 	int day = fullyear ? to!int(dstr[6 .. 8]) : to!int(dstr[4 .. 6]);
 	int hour = to!int(tstr[0 .. 2]);
