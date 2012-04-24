@@ -30,7 +30,7 @@ DateTime parseDateParams(string[] params, NntpServerRequest req)
 		NntpStatus.CommandSyntaxError, "YYMMDD or YYYYMMDD");
 
 	bool fullyear = dstr.length == 8;
-	dstr ~= ".."; // just to avoid array out-of-bounds
+	dstr ~= "11"; // just to avoid array out-of-bounds
 	int year = fullyear ? to!int(dstr[0 .. 4]) : extendYear(to!int(dstr[0 .. 2]));
 	int month = fullyear ? to!int(dstr[4 .. 6]) : to!int(dstr[2 .. 4]);
 	int day = fullyear ? to!int(dstr[6 .. 8]) : to!int(dstr[4 .. 6]);
@@ -338,9 +338,11 @@ void newnews(NntpServerRequest req, NntpServerResponse res)
 	res.status = NntpStatus.NewArticles;
 	res.statusText = "New news follows";
 
+	auto writer = res.bodyWriter();
+
 	enumerateNewArticles(grp, SysTime(date, UTC()), (i, id, msgid, msgnum){
-			if( i > 0 ) res.bodyWriter.write("\r\n");
-			res.bodyWriter.write(msgid, false);
+			if( i > 0 ) writer.write("\r\n");
+			writer.write(msgid, false);
 		});
 
 }
@@ -353,14 +355,16 @@ void newgroups(NntpServerRequest req, NntpServerResponse res)
 	res.status = NntpStatus.NewGroups;
 	res.statusText = "New groups follow";
 
+	auto writer = res.bodyWriter();
+
 	size_t cnt = 0;
 	enumerateNewGroups(SysTime(date, UTC()), (i, grp){
 			if( !grp.active ) return;
-			if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
+			if( cnt++ > 0 ) writer.write("\r\n");
 			auto high = to!string(grp.maxArticleNumber);
 			auto low = to!string(grp.minArticleNumber);
 			auto flags = "y";
-			res.bodyWriter.write(grp.name~" "~high~" "~low~" "~flags, false);
+			writer.write(grp.name~" "~high~" "~low~" "~flags, false);
 		});
 
 }
