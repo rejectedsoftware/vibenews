@@ -73,7 +73,7 @@ void enumerateNewGroups(SysTime date, void delegate(size_t idx, Group) del)
 {
 	Group group;
 	Bson idmatch = Bson(BsonObjectID.createDateID(date));
-	foreach( idx, bg; s_articles.find(["_id": ["$gt": idmatch]]) ){
+	foreach( idx, bg; s_groups.find(["_id": ["$gt": idmatch]]) ){
 		deserializeBson(group, bg);
 		del(idx, group);
 	}
