@@ -14,6 +14,12 @@ string g_hostname = "localhost";
 
 DateTime parseDateParams(string[] params, NntpServerRequest req)
 {
+	int extendYear(int two_digit_year)
+	{
+		if( two_digit_year >= 70 ) return 1900+two_digit_year;
+		else return 2000 + two_digit_year;
+	}
+
 	req.enforce(params.length == 2 || params[2] == "GMT",
 		NntpStatus.CommandSyntaxError, "Time zone must be GMT");
 
@@ -23,8 +29,9 @@ DateTime parseDateParams(string[] params, NntpServerRequest req)
 	req.enforce(dstr.length == 6 || dstr.length == 8,
 		NntpStatus.CommandSyntaxError, "YYMMDD or YYYYMMDD");
 
-	bool fullyear = params[0].length == 6;
-	int year = fullyear ? to!int(dstr[0 .. 4]) : 2000 + to!int(dstr[0 .. 2]);
+	bool fullyear = dstr.length == 6;
+	dstr ~= ".."; // just to avoid array out-of-bounds
+	int year = fullyear ? extendYear(to!int(dstr[0 .. 4])) : 2000 + to!int(dstr[0 .. 2]);
 	int month = fullyear ? to!int(dstr[4 .. 6]) : to!int(dstr[2 .. 4]);
 	int day = fullyear ? to!int(dstr[6 .. 8]) : to!int(dstr[4 .. 6]);
 	int hour = to!int(tstr[0 .. 2]);
