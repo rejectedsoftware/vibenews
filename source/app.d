@@ -29,7 +29,7 @@ DateTime parseDateParams(string[] params, NntpServerRequest req)
 	req.enforce(dstr.length == 6 || dstr.length == 8,
 		NntpStatus.CommandSyntaxError, "YYMMDD or YYYYMMDD");
 
-	bool fullyear = dstr.length == 6;
+	bool fullyear = dstr.length == 8;
 	dstr ~= ".."; // just to avoid array out-of-bounds
 	int year = fullyear ? to!int(dstr[0 .. 4]) : extendYear(to!int(dstr[0 .. 2]));
 	int month = fullyear ? to!int(dstr[4 .. 6]) : to!int(dstr[2 .. 4]);
