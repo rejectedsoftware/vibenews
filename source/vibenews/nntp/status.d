@@ -2,6 +2,7 @@ module vibenews.nntp.status;
 
 enum NntpStatus {
 	HelpText = 100,
+	TimeFollows = 111,
 	DebugOutput = 199,
 	ServerReady = 200,
 	ServerReadyNoPosting = 201,

@@ -8,6 +8,10 @@ import vibenews.db;
 import vibenews.nntp.server;
 import vibenews.nntp.status;
 
+import std.array;
+import std.format;
+
+
 string g_hostname = "localhost";
 
 // TODO: capabilities, auth, better POST validation, message codes when exceptions happen
@@ -156,6 +160,17 @@ void authinfo(NntpServerRequest req, NntpServerResponse res)
 			res.writeVoidBody();
 			break;
 	}
+}
+
+void date(NntpServerRequest req, NntpServerResponse res)
+{
+	res.status = NntpStatus.TimeFollows;
+	auto tm = Clock.currTime(UTC());
+	auto tmstr = appender!string();
+	formattedWrite(tmstr, "%04d%02d%02d%02d%02d%02d", tm.year, tm.month, tm.day,
+			tm.hour, tm.minute, tm.second);
+	res.statusText = tmstr.data;
+	res.writeVoidBody();
 }
 
 void group(NntpServerRequest req, NntpServerResponse res)
@@ -389,6 +404,7 @@ void handleCommand(NntpServerRequest req, NntpServerResponse res)
 		case "authinfo": authinfo(req, res); break;
 		case "body": article(req, res); break;
 		// capabilities
+		case "date": date(req, res); break;
 		case "group": group(req, res); break;
 		case "head": article(req, res); break;
 		case "help": help(req, res); break;
