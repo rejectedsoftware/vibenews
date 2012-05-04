@@ -1,6 +1,10 @@
 {
     "name": "vibenews",
-    "author": "Sönke Ludwig",
+	"description": "Minimalistic NNTP server for custom newsgroups",
+	"homepage": "https://github.com/rejectedsoftware/vibenews",
+    "authors": [
+		"Sönke Ludwig",
+	],
     "version": "0.0.1",
     "dependencies": {
     }
