@@ -331,7 +331,7 @@ void post(NntpServerRequest req, NntpServerResponse res)
 		art.addHeader(ln[0 .. idx], strip(ln[idx+1 .. $]));
 	}
 
-	art.message = sanitizeUTF8(req.bodyReader.readAll());
+	art.message = req.bodyReader.readAll();
 
 	postArticle(art);
 

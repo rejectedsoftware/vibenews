@@ -20,7 +20,7 @@ struct Article {
 	bool active = true;
 	long[string] number; // num[groupname]
 	ArticleHeader[] headers;
-	string message;
+	ubyte[] message;
 	long messageLength;
 	long messageLines;
 
@@ -135,7 +135,7 @@ void enumerateArticles(string groupname, long from, long to, void delegate(size_
 	Article art;
 	string gpne = escapeGroup(groupname);
 	foreach( idx, ba; s_articles.find(["number."~gpne: ["$gte": from, "$lte": to]], ["message": 0]) ){
-		ba["message"] = Bson("");
+		ba["message"] = Bson(BsonBinData(BsonBinData.Type.Generic, null));
 		if( ba["number"][gpne].get!long > to )
 			break;
 		deserializeBson(art, ba);
@@ -208,7 +208,7 @@ string[] commaSplit(string str)
 	return ret;
 }
 
-long countLines(string str)
+long countLines(const(ubyte)[] str)
 {
 	long sum = 1;
 	while(str.length > 0){
