@@ -76,6 +76,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 class NntpServerSettings {
 	ushort port = 119; // SSL port is 563
 	string[] bindAddresses = ["0.0.0.0"];
+	string host = "localhost"; // host name
 	string sslCert;
 	string sslKey;
 }
