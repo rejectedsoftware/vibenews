@@ -348,19 +348,35 @@ void newnews(NntpServerRequest req, NntpServerResponse res)
 	auto grp = req.parameters[0];
 	auto date = parseDateParams(req.parameters[1 .. $], req);
 
-	if( !testAuth(grp, res) )
-		return;
+	if( grp == "*" ){
+		res.status = NntpStatus.NewArticles;
+		res.statusText = "New news follows";
 
-	res.status = NntpStatus.NewArticles;
-	res.statusText = "New news follows";
+		auto writer = res.bodyWriter();
 
-	auto writer = res.bodyWriter();
-
-	enumerateNewArticles(grp, SysTime(date, UTC()), (i, id, msgid, msgnum){
-			if( i > 0 ) writer.write("\r\n");
-			writer.write(msgid, false);
+		enumerateGroups((size_t gi, Group group){
+			if( !testAuth(group.name, res) )
+				return;
+				
+			enumerateNewArticles(group.name, SysTime(date, UTC()), (i, id, msgid, msgnum){
+					if( i > 0 ) writer.write("\r\n");
+					writer.write(msgid, false);
+				});
 		});
+	} else {
+		if( !testAuth(grp, res) )
+			return;
 
+		res.status = NntpStatus.NewArticles;
+		res.statusText = "New news follows";
+
+		auto writer = res.bodyWriter();
+
+		enumerateNewArticles(grp, SysTime(date, UTC()), (i, id, msgid, msgnum){
+				if( i > 0 ) writer.write("\r\n");
+				writer.write(msgid, false);
+			});
+	}
 }
 
 void newgroups(NntpServerRequest req, NntpServerResponse res)
