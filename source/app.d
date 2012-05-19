@@ -121,15 +121,28 @@ void article(NntpServerRequest req, NntpServerResponse res)
 		//res.bodyWriter.write("Message-ID: ", false);
 		//res.bodyWriter.write(art.id, false);
 		//res.bodyWriter.write("\r\n");
+		auto dst = res.bodyWriter;
 		foreach( hdr; art.headers ){
-			if( !first ) res.bodyWriter.write("\r\n");
+			if( !first ) dst.write("\r\n");
 			else first = false;
-			res.bodyWriter.write(hdr.key, false);
-			res.bodyWriter.write(": ", false);
-			res.bodyWriter.write(hdr.value, false);
+			dst.write(hdr.key, false);
+			dst.write(": ", false);
+			dst.write(hdr.value, false);
 		}
+		
+		// write Xref header
+		dst.write("\r\n");
+		dst.write("Xref: ");
+		dst.write(g_hostname);
+		foreach( grp, num; art.number ){
+			dst.write(" ");
+			dst.write(grp);
+			dst.write(":");
+			dst.write(to!string(num));
+		}
+		
 		if( req.command == "article" )
-			res.bodyWriter.write("\r\n\r\n");
+			dst.write("\r\n\r\n");
 	}
 
 	if( req.command == "body" || req.command == "article" ){
