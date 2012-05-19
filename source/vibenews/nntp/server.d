@@ -119,6 +119,7 @@ class NntpServerRequest {
 class NntpServerResponse {
 	private {
 		TcpConnection m_stream;
+		CountingOutputStream m_bodyWriter;
 		string m_certFile;
 		string m_keyFile;
 		bool m_headerWritten = false;
@@ -157,7 +158,9 @@ class NntpServerResponse {
 			writeHeader();
 		m_bodyWritten = true;
 
-		return m_stream;
+		if( !m_bodyWriter )
+			m_bodyWriter = new CountingOutputStream(m_stream);
+		return m_bodyWriter;
 	}
 
 	void acceptTLS()
@@ -179,8 +182,12 @@ class NntpServerResponse {
 
 	private void finalize()
 	{
-		if( m_bodyWritten )
-			m_stream.write("\r\n.\r\n");
+		if( m_bodyWritten ){
+			if( m_bodyWriter.bytesWritten )
+				m_stream.write("\r\n.\r\n");
+			else
+				m_stream.write(".\r\n");
+		}
 	}
 }
 

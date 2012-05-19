@@ -354,12 +354,14 @@ void newnews(NntpServerRequest req, NntpServerResponse res)
 
 		auto writer = res.bodyWriter();
 
+		bool first = true;
 		enumerateGroups((size_t gi, Group group){
 			if( !testAuth(group.name, res) )
 				return;
 				
 			enumerateNewArticles(group.name, SysTime(date, UTC()), (i, id, msgid, msgnum){
-					if( i > 0 ) writer.write("\r\n");
+					if( !first ) writer.write("\r\n");
+					first = false;
 					writer.write(msgid, false);
 				});
 		});
