@@ -136,7 +136,7 @@ void article(NntpServerRequest req, NntpServerResponse res)
 		dst.write(g_hostname);
 		foreach( grp, num; art.number ){
 			dst.write(" ");
-			dst.write(grp);
+			dst.write(unescapeGroup(grp));
 			dst.write(":");
 			dst.write(to!string(num));
 		}
