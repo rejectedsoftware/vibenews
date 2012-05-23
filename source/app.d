@@ -2,6 +2,7 @@ module app;
 
 import vibe.d;
 import vibe.crypto.passwordhash;
+import vibe.inet.rfc5322;
 
 import vibenews.admin;
 import vibenews.db;
@@ -337,22 +338,9 @@ void post(NntpServerRequest req, NntpServerResponse res)
 	res.statusText = "Ok, recommended ID "~art.id;
 	res.writeVoidBody();
 
-	string value;
-	string hdr;
-	while(!req.bodyReader.empty){
-		string ln = sanitizeUTF8(req.bodyReader.readLine());
-		if( ln.length == 0 ) break;
-		if( ln[0] != ' ' ){
-			if( hdr.length ) art.addHeader(hdr, value);
-			auto idx = ln.countUntil(':');
-			enforce(idx > 0);
-			hdr = ln[0 .. idx];
-			value = strip(ln[idx+1 .. $]);
-		} else {
-			value ~= " "~strip(ln[1 .. $]);
-		}
-	}
-	if( hdr.length ) art.addHeader(hdr, value);
+	InetHeaderMap headers;
+	parseRfc5322Header(req.bodyReader, headers);
+	foreach( k, v; headers ) art.addHeader(k, v);
 
 	art.message = req.bodyReader.readAll();
 
