@@ -33,7 +33,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			auto res = new NntpServerResponse(conn, tls_active, settings.sslCert, settings.sslKey);
 			logInfo("waiting for request");
 			auto ln = cast(string)conn.readLine();
-			logInfo("REQUEST: %s", ln);
+			logDebug("REQUEST: %s", ln);
 			auto params = ln.spaceSplit();
 			if( params.length < 1 ){
 				res.status = NntpStatus.BadCommand;
@@ -180,6 +180,7 @@ class NntpServerResponse {
 		m_headerWritten = true;
 		//if( !statusText.length ) statusText = getNntpStatusString(status);
 		m_stream.write(to!string(status) ~ " " ~ statusText ~ "\r\n");
+		logDebug("%s %s", status, statusText);
 	}
 
 	private void finalize()

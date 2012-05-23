@@ -1,5 +1,6 @@
 module vibenews.nntp.common;
 
+import vibe.core.log;
 import vibe.stream.stream;
 
 import std.algorithm;
@@ -83,6 +84,7 @@ class NntpBodyWriter : OutputStream {
 	void write(in ubyte[] bytes, bool do_flush = true)
 	{
 		m_stream.write(bytes, do_flush);
+		logDebug("<%s>", cast(string)bytes);
 	}
 
 	void flush()
@@ -95,6 +97,7 @@ class NntpBodyWriter : OutputStream {
 		enforce(!m_finalized);
 		m_finalized = true;
 		m_stream.write("\r\n.\r\n");
+		logDebug("<.>");
 	}
 
 	void write(InputStream stream, ulong nbytes = 0, bool do_flush = true)
