@@ -115,8 +115,9 @@ Article getArticle(string id)
 
 Article getArticle(string groupname, long number, bool msgbdy = true)
 {
-	auto nummatch = Bson(["$elemMatch": Bson([escapeGroup(groupname): Bson(number)])]);
-	auto ba = s_articles.findOne(["number": nummatch], msgbdy ? null : ["message": 0]);
+	auto egrp = escapeGroup(groupname);
+	auto nummatch = Bson(number);
+	auto ba = s_articles.findOne(["number."~egrp: nummatch], msgbdy ? null : ["message": 0]);
 	enforce(!ba.isNull(), "Article "~to!string(number)~" not found for group "~groupname~"!");
 	Article ret;
 	deserializeBson(ret, ba);
@@ -125,7 +126,9 @@ Article getArticle(string groupname, long number, bool msgbdy = true)
 
 void enumerateArticles(string groupname, void delegate(size_t idx, BsonObjectID _id, string msgid, long msgnum) del)
 {
-	foreach( idx, ba; s_articles.find(["number": ["$elemMatch": escapeGroup(groupname)]], ["_id": 1, "id": 1, "number": 1]) ){
+	auto egrp = escapeGroup(groupname);
+	
+	foreach( idx, ba; s_articles.find(["number."~egrp: ["$exists": true]], ["_id": 1, "id": 1, "number": 1]) ){
 		del(idx, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba["number"][escapeGroup(groupname)].get!long);
 	}
 }
@@ -146,8 +149,9 @@ void enumerateArticles(string groupname, long from, long to, void delegate(size_
 void enumerateNewArticles(string groupname, SysTime date, void delegate(size_t idx, BsonObjectID _id, string msgid, long msgnum) del)
 {
 	Bson idmatch = Bson(BsonObjectID.createDateID(date));
-	Bson groupmatch = Bson(escapeGroup(groupname));
-	foreach( idx, ba; s_articles.find(["_id" : ["$gt": idmatch], "number": ["$elemMatch": groupmatch]], ["_id": 1, "id": 1, "number": 1]) ){
+	Bson groupmatch = Bson(true);
+	auto egrp = escapeGroup(groupname);
+	foreach( idx, ba; s_articles.find(["_id" : ["$gt": idmatch], "number."~egrp: ["$exists": groupmatch]], ["_id": 1, "id": 1, "number": 1]) ){
 		del(idx, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba["number"][escapeGroup(groupname)].get!long);
 	}
 }
