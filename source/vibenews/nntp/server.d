@@ -18,11 +18,12 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 	{
 		bool tls_active = false;
 		if( settings.sslCert.length || settings.sslKey.length ){
-			auto ctx = new SSLContext(settings.sslCert, settings.sslKey, SSLVersion.TLSv1);
-			logInfo("accepting");
+			auto ctx = new SslContext(settings.sslCert, settings.sslKey, SSLVersion.TLSv1);
+			assert(false);
+			/*logInfo("accepting");
 			conn.acceptSSL(ctx);
 			logInfo("accepted");
-			tls_active = true;
+			tls_active = true;*/
 		}
 
 		conn.write("200 Welcome on VibeNews!\r\n");
@@ -167,8 +168,9 @@ class NntpServerResponse {
 	{
 		enforce(!m_tlsActive, "TLS already active");
 		m_tlsActive = true;
-		auto ctx = new SSLContext(m_certFile, m_keyFile);
-		m_stream.acceptSSL(ctx);
+		auto ctx = new SslContext(m_certFile, m_keyFile);
+		assert(false);
+		//m_stream.acceptSSL(ctx);
 	}
 
 	private void writeHeader()

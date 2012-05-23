@@ -23,6 +23,15 @@ class NntpBodyReader : InputStream {
 
 	@property ulong leastSize() { return m_currLine.length; }
 
+	@property bool dataAvailableForRead(){
+		return m_currLine.length > 0;
+	}
+
+	@property ubyte[] peek()
+	{
+		return m_currLine;
+	}
+
 	void read(ubyte[] dst)
 	{
 		while( dst.length > 0 ){

@@ -337,13 +337,22 @@ void post(NntpServerRequest req, NntpServerResponse res)
 	res.statusText = "Ok, recommended ID "~art.id;
 	res.writeVoidBody();
 
+	string value;
+	string hdr;
 	while(!req.bodyReader.empty){
 		string ln = sanitizeUTF8(req.bodyReader.readLine());
 		if( ln.length == 0 ) break;
-		auto idx = ln.countUntil(':');
-		enforce(idx > 0);
-		art.addHeader(ln[0 .. idx], strip(ln[idx+1 .. $]));
+		if( ln[0] != ' ' ){
+			if( hdr.length ) art.addHeader(hdr, value);
+			auto idx = ln.countUntil(':');
+			enforce(idx > 0);
+			hdr = ln[0 .. idx];
+			value = strip(ln[idx+1 .. $]);
+		} else {
+			value ~= "\r\n"~strip(ln[1 .. $]);
+		}
 	}
+	if( hdr.length ) art.addHeader(hdr, value);
 
 	art.message = req.bodyReader.readAll();
 
