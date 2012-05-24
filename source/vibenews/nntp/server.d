@@ -27,11 +27,11 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 		}
 
 		conn.write("200 Welcome on VibeNews!\r\n");
-			logInfo("welcomed");
+		logDebug("welcomed");
 
 		while(conn.connected){
 			auto res = new NntpServerResponse(conn, tls_active, settings.sslCert, settings.sslKey);
-			logInfo("waiting for request");
+			logDebug("waiting for request");
 			auto ln = cast(string)conn.readLine();
 			logDebug("REQUEST: %s", ln);
 			auto params = ln.spaceSplit();
@@ -66,7 +66,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			}
 			res.finalize();
 		}
-		logInfo("disconnected");
+		logDebug("disconnected");
 	}
 
 

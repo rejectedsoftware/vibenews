@@ -246,7 +246,7 @@ void list(NntpServerRequest req, NntpServerResponse res)
 			size_t cnt = 0;
 			enumerateGroups((i, grp){
 					if( !grp.active ) return;
-					logInfo("Got group %s", grp.name);
+					logDebug("Got group %s", grp.name);
 					if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
 					res.bodyWriter.write(grp.name ~ " " ~ grp.description, false);
 				});

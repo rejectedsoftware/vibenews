@@ -178,7 +178,7 @@ void postArticle(Article art)
 		s_groups.update(["name": grp], ["$inc": ["articleCount": 1]]);
 		auto bgpre = s_groups.findAndModify(["name": grp], ["$inc": ["maxArticleNumber": 1]], ["maxArticleNumber": 1]);
 		if( bgpre.isNull() ) continue; // ignore non-existant groups
-		logInfo("GRP: %s", bgpre.get!Json.toString());
+		logDebug("GRP: %s", bgpre.get!Json.toString());
 		art.number[escapeGroup(grp)] = bgpre["value"]["maxArticleNumber"].get!long + 1;
 	}
 

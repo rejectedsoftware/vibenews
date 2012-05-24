@@ -40,7 +40,6 @@ void showAdminPanel(HttpServerRequest req, HttpServerResponse res)
 
 void showGroup(HttpServerRequest req, HttpServerResponse res)
 {
-	logInfo("hello");
 	auto group = getGroupByName(req.params["groupname"]);
 	res.renderCompat!("vibenews.editgroup.dt",
 			HttpServerRequest, "req",
