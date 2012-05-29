@@ -48,19 +48,6 @@ class NntpBodyReader : InputStream {
 		}
 	}
 
-	ubyte[] readLine(size_t max_bytes = 0, string linesep = "\r\n")
-	{
-		enforce(!m_eof);
-		enforce(linesep == "\r\n");
-		auto ret = m_currLine[0 .. $-2];
-		readNextLine();
-		return ret;
-	}
-
-	ubyte[] readAll(size_t max_bytes = 0){
-		return readAllDefault(max_bytes);
-	}
-
 	private void readNextLine()
 	{
 		enforce(!m_eof);
