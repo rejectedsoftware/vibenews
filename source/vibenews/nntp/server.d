@@ -5,6 +5,7 @@ import vibenews.nntp.status;
 
 import vibe.core.log;
 import vibe.core.tcp;
+import vibe.stream.ssl;
 
 import std.algorithm;
 import std.conv;
