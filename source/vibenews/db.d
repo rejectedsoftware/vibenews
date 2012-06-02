@@ -73,7 +73,7 @@ void enumerateNewGroups(SysTime date, void delegate(size_t idx, Group) del)
 {
 	Group group;
 	Bson idmatch = Bson(BsonObjectID.createDateID(date));
-	foreach( idx, bg; s_groups.find(["_id": ["$gt": idmatch]]) ){
+	foreach( idx, bg; s_groups.find(["_id": ["$gte": idmatch]]) ){
 		deserializeBson(group, bg);
 		del(idx, group);
 	}
@@ -151,7 +151,7 @@ void enumerateNewArticles(string groupname, SysTime date, void delegate(size_t i
 	Bson idmatch = Bson(BsonObjectID.createDateID(date));
 	Bson groupmatch = Bson(true);
 	auto egrp = escapeGroup(groupname);
-	foreach( idx, ba; s_articles.find(["_id" : ["$gt": idmatch], "number."~egrp: ["$exists": groupmatch]], ["_id": 1, "id": 1, "number": 1]) ){
+	foreach( idx, ba; s_articles.find(["_id" : ["$gte": idmatch], "number."~egrp: ["$exists": groupmatch]], ["_id": 1, "id": 1, "number": 1]) ){
 		del(idx, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba["number"][escapeGroup(groupname)].get!long);
 	}
 }
