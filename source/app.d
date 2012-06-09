@@ -12,7 +12,7 @@ static this()
 	auto settings = new NntpServerSettings;
 
 	if( exists("settings.json") ){
-		auto data = stripBom(cast(string)openFile("settings.json").readAll());
+		auto data = stripUTF8Bom(cast(string)openFile("settings.json").readAll());
 		auto json = parseJson(data);
 		if( "port" in json ) settings.port = cast(short)json.port.get!long;
 		if( "host" in json ){
