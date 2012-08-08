@@ -23,6 +23,7 @@ struct Article {
 	ubyte[] message;
 	long messageLength;
 	long messageLines;
+	string peerAddress;
 
 	string getHeader(string name)
 	const {

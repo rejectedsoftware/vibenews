@@ -348,6 +348,7 @@ void post(NntpServerRequest req, NntpServerResponse res)
 	foreach( k, v; headers ) art.addHeader(k, v);
 
 	art.message = req.bodyReader.readAll();
+	art.peerAddress = req.peerAddress;
 
 	postArticle(art);
 

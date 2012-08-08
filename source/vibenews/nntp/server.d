@@ -57,6 +57,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			auto req = new NntpServerRequest(conn);
 			req.command = cmd;
 			req.parameters = params;
+			req.peerAddress = conn.peerAddress;
 			try {
 				command_handler(req, res);
 			} catch( Exception e ){
@@ -92,6 +93,7 @@ class NntpServerRequest {
 
 	string command;
 	string[] parameters;
+	string peerAddress;
 
 	this(InputStream str)
 	{
