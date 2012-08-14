@@ -27,3 +27,7 @@ block body
 			input(type="password", name="passwordConfirmation")
 		p
 			input(type="submit", value="Apply changes")
+
+	form(method="GET", action="/groups/#{group.name}/articles")
+		input(type="submit", value="Manage articles")
+	

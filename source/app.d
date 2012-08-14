@@ -6,6 +6,8 @@ import vibenews.vibenews;
 
 import std.file;
 
+AdminInterface s_adminInterface;
+
 
 static this()
 {
@@ -25,5 +27,5 @@ static this()
 	//settings.sslKey = "server.key";
 	listenNntp(settings, toDelegate(&handleCommand));
 
-	startAdminInterface();
+	s_adminInterface = new AdminInterface();
 }

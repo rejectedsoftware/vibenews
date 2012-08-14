@@ -57,6 +57,7 @@ struct Group {
 	long articleCount = 0;
 	long minArticleNumber = 1;
 	long maxArticleNumber = 0;
+	long articleNumberCounter = 0;
 	string username;
 	string passwordHash;
 }
@@ -158,6 +159,21 @@ void enumerateNewArticles(string groupname, SysTime date, void delegate(size_t i
 	}
 }
 
+void enumerateAllArticles(string groupname, int first, int count, void delegate(ref Article art) del)
+{
+	foreach( idx, ba; s_articles.find(["number."~escapeGroup(groupname): ["$exists": true]], null, QueryFlags.None, first, count) ){
+		Article art;
+		deserializeBson(art, ba);
+		del(art);
+		if( idx == count-1 ) break;
+	}
+}
+
+ulong getAllArticlesCount(string groupname)
+{
+	return s_articles.count(["number."~escapeGroup(groupname): ["$exists": true]]);
+}
+
 void postArticle(Article art)
 {
 	string relay_version = art.getHeader("Relay-Version");
@@ -178,15 +194,85 @@ void postArticle(Article art)
 
 	foreach( grp; newsgroups ){
 		s_groups.update(["name": grp], ["$inc": ["articleCount": 1]]);
-		auto bgpre = s_groups.findAndModify(["name": grp], ["$inc": ["maxArticleNumber": 1]], ["maxArticleNumber": 1]);
+		auto bgpre = s_groups.findAndModify(["name": grp], ["$inc": ["articleNumberCounter": 1]], ["articleNumberCounter": 1]);
 		if( bgpre.isNull() ) continue; // ignore non-existant groups
 		logDebug("GRP: %s", bgpre.get!Json.toString());
-		art.number[escapeGroup(grp)] = bgpre["value"]["maxArticleNumber"].get!long + 1;
+		long artnum = bgpre.articleNumberCounter.get!long + 1;
+		art.number[escapeGroup(grp)] = artnum;
+		s_groups.update(["name": Bson(grp), "maxArticleNumber": serializeToBson(["$lt": artnum])], ["$set": ["maxArticleNumber": artnum]]);
 	}
 
 	s_articles.insert(art);
 }
 
+void repairGroupNumbers()
+{
+	foreach( grp; s_groups.find(Bson.EmptyObject) ){
+		auto grpname = escapeGroup(grp.name.get!string);
+		auto numbername = "number." ~ grpname;
+
+		auto artquery = serializeToBson([numbername: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
+		auto artcnt = s_articles.count(artquery);
+		s_groups.update(["_id": grp._id, "articleCount": grp.articleCount], ["$set": ["articleCount": artcnt]]);
+
+		auto first_art = s_articles.findOne(["query": artquery, "orderby": serializeToBson([numbername: 1])], ["number": 1]);
+		auto last_art = s_articles.findOne(["query": artquery, "orderby": serializeToBson([numbername: -1])], ["number": 1]);
+		if( first_art.isNull() ) continue;
+		assert(!last_art.isNull());
+
+		s_groups.update(["_id": grp._id, "minArticleNumber": grp.minArticleNumber], ["$set": ["minArticleNumber": first_art.number[grpname]]]);
+		s_groups.update(["_id": grp._id, "maxArticleNumber": grp.maxArticleNumber], ["$set": ["maxArticleNumber": last_art.number[grpname]]]);
+	}
+}
+
+void deactivateArticle(BsonObjectID artid)
+{
+	auto oldart = s_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": false]]);
+	if( !oldart.active.get!bool ) return; // was already deactivated
+
+	// update the group counters
+	foreach( string gname, num; oldart.number ){
+		string numfield = "number."~gname;
+		auto groupname = Bson(unescapeGroup(gname));
+		auto articlequery = Bson([numfield: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
+		s_groups.update(["name": groupname], ["$inc": ["articleCount": -1]]);
+		auto g = s_groups.findOne(["name": groupname]);
+		if( g.minArticleNumber == num ){
+			auto minorder = serializeToBson([numfield: 1]);
+			auto minart = s_articles.findOne(["query": articlequery, "orderby": minorder]);
+			long newnum = minart.number[gname].get!long;
+			s_groups.update(["name": groupname, "minArticleNumber": num], ["$set": ["minArticleNumber": newnum]]);
+		}
+		if( g.maxArticleNumber == num ){
+			auto maxorder = serializeToBson([numfield: -1]);
+			auto maxart = s_articles.findOne(["query": articlequery, "orderby": maxorder]);
+			long newnum = maxart.number[gname].get!long;
+			s_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
+		}
+	}
+}
+
+void activateArticle(BsonObjectID artid)
+{
+	auto oldart = s_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": true]]);
+	if( oldart.active.get!bool ) return; // was already deactivated
+
+	// update the group counters
+	foreach( string gname, num; oldart.number ){
+		string numfield = "number."~gname;
+		auto groupname = Bson(unescapeGroup(gname));
+		auto articlequery = serializeToBson(["$exists": numfield]);
+		s_groups.update(["name": groupname], ["$inc": ["articleCount": 1]]);
+		s_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
+		s_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
+	}
+}
+
+void deleteArticle(BsonObjectID artid)
+{
+	deactivateArticle(artid);
+	s_articles.remove(["_id": artid]);
+}
 
 string escapeGroup(string str)
 {

@@ -1,0 +1,30 @@
+extends layout
+
+block title
+	- auto title = "VibeNews - View articles of " ~ info.groupname;
+	
+block body
+	table
+		tr
+			th Date
+			th Subject
+			th Poster
+			th Action
+		
+		- foreach( art; info.articles )
+			tr(class='#{art.active?"active":"inactive"}')
+				td= art.getHeader("Date")
+				td= art.getHeader("Subject")
+				td= art.getHeader("From")
+				td
+					form(action='#{req.rootDir}articles/#{art._id}/#{art.active?"deactivate":"activate"}', method="POST")
+						input(type="hidden", name="groupname", value="#{info.groupname}")
+						input(type="submit", value='#{art.active?"Deactivate":"Activate"}')
+		
+		p Pages:
+			- foreach( i; 0 .. info.pageCount )
+				- if( i == info.page )
+					|= i+1
+				- else
+					a(href="#{req.rootDir}groups/#{info.groupname}/articles?page=#{i+1}")= i+1
+			

@@ -43,3 +43,7 @@ block body
 			input(type="password", name="passwordConfirmation")
 		p
 			input(type="submit", value="Create new group")
+			
+	h3 Maintainance
+	form(method="POST", action="/groups/repair")
+		input(type="submit", value="Repair groups")	
