@@ -30,4 +30,7 @@ block body
 
 	form(method="GET", action="/groups/#{group.name}/articles")
 		input(type="submit", value="Manage articles")
-	
+
+	form(method="POST", action="/groups/#{group.name}/purge")
+		input(type="submit", value="Purge inactive articles")
+		

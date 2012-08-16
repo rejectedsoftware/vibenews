@@ -270,7 +270,6 @@ void activateArticle(BsonObjectID artid)
 	foreach( string gname, num; oldart.number ){
 		string numfield = "number."~gname;
 		auto groupname = Bson(unescapeGroup(gname));
-		auto articlequery = serializeToBson(["$exists": numfield]);
 		s_groups.update(["name": groupname], ["$inc": ["articleCount": 1]]);
 		s_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
 		s_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
@@ -281,6 +280,12 @@ void deleteArticle(BsonObjectID artid)
 {
 	deactivateArticle(artid);
 	s_articles.remove(["_id": artid]);
+}
+
+// deletes all inactive articles from the group
+void purgeGroup(string name)
+{
+	s_articles.remove(["active": Bson(false), "number."~escapeGroup(name): Bson(["$exists": Bson(true)])]);
 }
 
 string escapeGroup(string str)

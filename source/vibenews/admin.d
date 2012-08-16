@@ -25,6 +25,7 @@ class AdminInterface {
 		router.post("/groups/repair", &repairGroups);
 		router.get("/groups/:groupname/show", &showGroup);
 		router.post("/groups/:groupname/update", &updateGroup);
+		router.post("/groups/:groupname/purge", &purgeGroup);
 		router.get("/groups/:groupname/articles", &showArticles);
 		router.post("/articles/:articleid/activate", &activateArticle);
 		router.post("/articles/:articleid/deactivate", &deactivateArticle);
@@ -83,6 +84,12 @@ class AdminInterface {
 			group.passwordHash = generateSimplePasswordHash(req.form["password"]);
 		vibenews.db.updateGroup(group);
 		res.redirect("/");
+	}
+
+	void purgeGroup(HttpServerRequest req, HttpServerResponse res)
+	{
+		.purgeGroup(req.params["groupname"]);
+		res.redirect("/groups/"~req.form["groupname"]~"/show");
 	}
 
 	void repairGroups(HttpServerRequest req, HttpServerResponse res)
