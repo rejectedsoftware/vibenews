@@ -89,7 +89,7 @@ class AdminInterface {
 	void purgeGroup(HttpServerRequest req, HttpServerResponse res)
 	{
 		.purgeGroup(req.params["groupname"]);
-		res.redirect("/groups/"~req.form["groupname"]~"/show");
+		res.redirect("/groups/"~req.params["groupname"]~"/show");
 	}
 
 	void repairGroups(HttpServerRequest req, HttpServerResponse res)
