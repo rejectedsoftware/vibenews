@@ -94,7 +94,7 @@ class AdminInterface {
 	void showArticles(HttpServerRequest req, HttpServerResponse res)
 	{
 		struct Info {
-			enum articlesPerPage = 100;
+			enum articlesPerPage = 50;
 			string groupname;
 			int page;
 			Article[] articles;
