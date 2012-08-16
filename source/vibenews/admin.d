@@ -117,13 +117,13 @@ class AdminInterface {
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		.activateArticle(artid);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles");
+		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
 	}
 
 	void deactivateArticle(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		.deactivateArticle(artid);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles");
+		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
 	}
 }

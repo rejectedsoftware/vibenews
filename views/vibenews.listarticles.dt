@@ -23,7 +23,7 @@ block body
 				td
 					form(action='#{req.rootDir}articles/#{art._id}/#{art.active?"deactivate":"activate"}', method="POST")
 						input(type="hidden", name="groupname", value="#{info.groupname}")
-						input(type="hidden", name="page", value="#{info.page}")
+						input(type="hidden", name="page", value="#{info.page+1}")
 						input(type="submit", value='#{art.active?"Deactivate":"Activate"}')
 		
 		p Pages:
