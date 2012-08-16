@@ -130,7 +130,9 @@ void enumerateArticles(string groupname, void delegate(size_t idx, BsonObjectID 
 {
 	auto egrp = escapeGroup(groupname);
 	auto numquery = serializeToBson(["$exists": true]);
-	foreach( idx, ba; s_articles.find(["number."~egrp: numquery, "active": Bson(true)], ["_id": 1, "id": 1, "number": 1]) ){
+	auto query = serializeToBson(["number."~egrp: numquery, "active": Bson(true)]);
+	auto order = serializeToBson(["number."~egrp: 1]);
+	foreach( idx, ba; s_articles.find(["query": query, "orderby": order], ["_id": 1, "id": 1, "number": 1]) ){
 		del(idx, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba["number"][escapeGroup(groupname)].get!long);
 	}
 }
@@ -140,7 +142,9 @@ void enumerateArticles(string groupname, long from, long to, void delegate(size_
 	Article art;
 	string gpne = escapeGroup(groupname);
 	auto numquery = serializeToBson(["$gte": from, "$lte": to]);
-	foreach( idx, ba; s_articles.find(["number."~gpne: numquery, "active": Bson(true)], ["message": 0]) ){
+	auto query = serializeToBson(["number."~gpne: numquery, "active": Bson(true)]);
+	auto order = serializeToBson(["number."~gpne: 1]);
+	foreach( idx, ba; s_articles.find(["query": query, "orderby": order], ["message": 0]) ){
 		ba["message"] = Bson(BsonBinData(BsonBinData.Type.Generic, null));
 		if( ba["number"][gpne].get!long > to )
 			break;
@@ -154,14 +158,19 @@ void enumerateNewArticles(string groupname, SysTime date, void delegate(size_t i
 	Bson idmatch = Bson(BsonObjectID.createDateID(date));
 	Bson groupmatch = Bson(true);
 	auto egrp = escapeGroup(groupname);
-	foreach( idx, ba; s_articles.find(["_id" : Bson(["$gte": idmatch]), "number."~egrp: Bson(["$exists": groupmatch]), "active": Bson(true)], ["_id": 1, "id": 1, "number": 1]) ){
+	auto query = serializeToBson(["_id" : Bson(["$gte": idmatch]), "number."~egrp: Bson(["$exists": groupmatch]), "active": Bson(true)]);
+	auto order = serializeToBson(["number."~egrp: 1]);
+	foreach( idx, ba; s_articles.find(["query": query, "orderby": order], ["_id": 1, "id": 1, "number": 1]) ){
 		del(idx, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba["number"][escapeGroup(groupname)].get!long);
 	}
 }
 
 void enumerateAllArticles(string groupname, int first, int count, void delegate(ref Article art) del)
 {
-	foreach( idx, ba; s_articles.find(["number."~escapeGroup(groupname): ["$exists": true]], null, QueryFlags.None, first, count) ){
+	auto egrp = escapeGroup(groupname);
+	auto query = serializeToBson(["number."~egrp: ["$exists": true]]);
+	auto order = serializeToBson(["number."~egrp: 1]);
+	foreach( idx, ba; s_articles.find(["query": query, "orderby": order], null, QueryFlags.None, first, count) ){
 		Article art;
 		deserializeBson(art, ba);
 		del(art);
