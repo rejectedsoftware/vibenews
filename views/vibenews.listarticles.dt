@@ -5,6 +5,10 @@ block title
 	
 block body
 	- import std.algorithm;
+	
+	p
+		a(href="show") Back to group
+	
 	table
 		tr
 			th Date

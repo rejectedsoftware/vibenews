@@ -4,6 +4,9 @@ block title
 	- auto title = "VibeNews - Edit group " ~ group.name;
 	
 block body
+	p
+		a(href="#{req.rootDir}") Back to overview
+
 	form(method="POST", action="/groups/#{group.name}/update")
 		p
 			label(for="description") Description:
