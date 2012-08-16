@@ -7,6 +7,7 @@ import vibe.crypto.passwordhash;
 import vibe.data.bson;
 import vibe.http.router;
 import vibe.http.server;
+import vibe.http.fileserver;
 
 import std.conv;
 import std.exception;
@@ -27,6 +28,7 @@ class AdminInterface {
 		router.get("/groups/:groupname/articles", &showArticles);
 		router.post("/articles/:articleid/activate", &activateArticle);
 		router.post("/articles/:articleid/deactivate", &deactivateArticle);
+		router.get("*", serveStaticFiles("public"));
 
 		listenHttp(settings, router);
 	}

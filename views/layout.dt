@@ -2,6 +2,7 @@
 html
 	head
 		block title
+		link(rel="stylesheet", href="#{req.rootDir}styles/common.css", type="text/css")
 		title= title
 	body
 		h1= title

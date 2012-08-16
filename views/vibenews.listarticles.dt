@@ -4,6 +4,7 @@ block title
 	- auto title = "VibeNews - View articles of " ~ info.groupname;
 	
 block body
+	- import std.algorithm;
 	table
 		tr
 			th Date
@@ -13,12 +14,16 @@ block body
 		
 		- foreach( art; info.articles )
 			tr(class='#{art.active?"active":"inactive"}')
+				- auto from = art.getHeader("From");
+				- auto idx = countUntil(from, '<');
+				- if( idx >= 0 ) from = from[idx .. $];
 				td= art.getHeader("Date")
+				td= from
 				td= art.getHeader("Subject")
-				td= art.getHeader("From")
 				td
 					form(action='#{req.rootDir}articles/#{art._id}/#{art.active?"deactivate":"activate"}', method="POST")
 						input(type="hidden", name="groupname", value="#{info.groupname}")
+						input(type="hidden", name="page", value="#{info.page}")
 						input(type="submit", value='#{art.active?"Deactivate":"Activate"}')
 		
 		p Pages:
