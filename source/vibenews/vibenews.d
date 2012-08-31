@@ -6,9 +6,10 @@ import vibenews.nntp.status;
 
 import vibe.core.core;
 import vibe.core.log;
-import vibe.data.bson;
 import vibe.crypto.passwordhash;
+import vibe.data.bson;
 import vibe.inet.rfc5322;
+import vibe.stream.counting;
 
 import std.algorithm;
 import std.array;
@@ -347,7 +348,19 @@ void post(NntpServerRequest req, NntpServerResponse res)
 	parseRfc5322Header(req.bodyReader, headers);
 	foreach( k, v; headers ) art.addHeader(k, v);
 
-	art.message = req.bodyReader.readAll();
+	auto limitedReader = new LimitedInputStream(req.bodyReader, 2048*1024, true);
+
+	try {
+		art.message = limitedReader.readAll();
+	} catch( LimitException e ){
+		auto sink = new NullOutputStream;
+		sink.write(req.bodyReader);
+		res.restart();
+		res.status = NntpStatus.ArticleRejected;
+		res.statusText = "Message too big, please keep below 2.0 MiB";
+		res.writeVoidBody();
+		return;
+	}
 	art.peerAddress = req.peerAddress;
 
 	postArticle(art);
