@@ -1,12 +1,16 @@
 import vibe.d;
 
 import vibenews.admin;
+import vibenews.db;
+import vibenews.web;
 import vibenews.nntp.server;
 import vibenews.vibenews;
 
 import std.file;
 
+VibeNewsServer s_server;
 AdminInterface s_adminInterface;
+WebInterface s_webInterface;
 
 
 static this()
@@ -25,7 +29,10 @@ static this()
 
 	//settings.sslCert = "server.crt";
 	//settings.sslKey = "server.key";
-	listenNntp(settings, toDelegate(&handleCommand));
 
-	s_adminInterface = new AdminInterface();
+	auto ctrl = new Controller;
+	s_server = new VibeNewsServer(ctrl);
+	s_adminInterface = new AdminInterface(ctrl);
+	s_webInterface = new WebInterface(ctrl);
+	listenNntp(settings, &s_server.handleCommand);
 }

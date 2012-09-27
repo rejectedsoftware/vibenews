@@ -1,0 +1,23 @@
+extends layout
+
+block title
+	- auto title = info.title;
+
+block body
+
+	- foreach( i, post; info.posts )
+		div(class='#{i==0?"first odd":i%2==0?"odd":"even"}')
+			h2= post.subject
+			.post-info
+				p
+					a(href="#{req.rootDir}/users/#{post.poster.email}/")= post.poster.name
+				p
+					img(src="http://www.gravatar.com/#{post.poster.email}")
+				p Posted #{post.date}
+					- if( post.repliedToPoster.email.length )
+						| in reply to
+						a(href="#{req.rootDir}/users/#{post.repliedToPoster.email}") post.repliedToPoster.name
+				p
+					a(href="reply?post=#{post.id}") Reply
+			.post-content
+				pre= post.message

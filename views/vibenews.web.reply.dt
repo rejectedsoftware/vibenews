@@ -1,0 +1,8 @@
+extends layout
+
+block title
+	- auto title = info.title;
+
+block body
+
+	p Reply form!

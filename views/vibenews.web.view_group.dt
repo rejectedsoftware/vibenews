@@ -1,0 +1,33 @@
+extends layout
+
+block title
+	- import vibe.textfilter.urlencode;
+
+	- auto title = info.title;
+
+block body
+
+	table
+		tr
+			th Topic
+			th Answers
+			th Last post
+		- foreach( thr; info.group.threads )
+			tr
+				td
+					p
+						a(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/")= thr.subject
+						br
+						| by 
+						a(href="#{req.rootDir}users/#{urlEncode(thr.firstPoster.email)}")= thr.firstPoster.name
+						|, #{thr.firstPostDate}
+					- if( thr.pageCount > 1 )
+						p.pages
+							- foreach( i; 0 .. thr.pageCount )
+								a.page(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/?start=#{i*10}")= i+1
+				td= thr.postCount-1
+				td
+					| by 
+					a(href="#{req.rootDir}users/#{urlEncode(thr.lastPoster.email)}/")= thr.lastPoster.name
+					br
+					|= thr.lastPostDate

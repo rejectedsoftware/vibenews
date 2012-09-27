@@ -1,0 +1,32 @@
+extends layout
+
+block title
+	- import vibe.textfilter.urlencode;
+
+	- auto title = info.title;
+
+block body
+
+	- foreach( cat; info.groupCategories )
+		section
+			h2= cat.title
+			
+			table
+				tr
+					th Forum
+					th Topics
+					th Posts
+					th Last post
+				- foreach( grp; cat.groups )
+					tr
+						td
+							p
+								a(href="#{req.rootDir}groups/#{grp.name}/")= grp.title
+							p= grp.description
+						td= grp.numberOfTopics
+						td= grp.numberOfPosts
+						td
+							| by 
+							a(href="#{req.rootDir}users/#{urlEncode(grp.lastPoster.email)}/")= grp.lastPoster.name
+							br
+							|= grp.lastPostDate
