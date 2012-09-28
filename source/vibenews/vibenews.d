@@ -108,7 +108,7 @@ class VibeNewsServer {
 			}
 
 			bool auth = false;
-			foreach( g, _; art.number ){
+			foreach( g; art.groups.byKey() ){
 				if( testAuth(unescapeGroup(g)) ){
 					auth = true;
 					break;
@@ -145,7 +145,7 @@ class VibeNewsServer {
 				return;
 			}
 
-			res.statusText = to!string(art.number[escapeGroup(groupname)])~" "~art.id~" ";
+			res.statusText = to!string(art.groups[escapeGroup(groupname)].articleNumber)~" "~art.id~" ";
 		}
 
 		switch(req.command){
@@ -182,11 +182,11 @@ class VibeNewsServer {
 			dst.write("\r\n");
 			dst.write("Xref: ");
 			dst.write(g_hostname);
-			foreach( grp, num; art.number ){
+			foreach( grpname, grpref; art.groups ){
 				dst.write(" ");
-				dst.write(unescapeGroup(grp));
+				dst.write(unescapeGroup(grpname));
 				dst.write(":");
-				dst.write(to!string(num));
+				dst.write(to!string(grpref.articleNumber));
 			}
 			
 			if( req.command == "article" )
@@ -355,7 +355,7 @@ class VibeNewsServer {
 				dst.write("\t", false);
 				dst.write(str, false);
 			}
-			dst.write(to!string(art.number[escapeGroup(grpname)]));
+			dst.write(to!string(art.groups[escapeGroup(grpname)].articleNumber));
 			writeField(art.getHeader("Subject"));
 			writeField(art.getHeader("From"));
 			writeField(art.getHeader("Date"));
