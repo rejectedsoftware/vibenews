@@ -34,7 +34,7 @@ class WebInterface {
 		router.get("/groups/:group/", &showGroup);
 		router.get("/groups/:group/:thread/", &showThread);
 		router.get("/groups/:group/:thread/:post/reply", &showReply);
-		router.post("/:group/:thread/:post/reply", &postReply);
+		router.post("/groups/:group/:thread/:post/reply", &postReply);
 		router.get("*", serveStaticFiles("public"));
 
 		listenHttp(settings, router);
@@ -48,6 +48,24 @@ class WebInterface {
 		}
 		Info1 info;
 		info.title = m_title;
+
+		Category cat;
+		cat.title = "All";
+		m_ctrl.enumerateGroups((idx, grp){
+			GroupInfo gi;
+			try {
+				auto lastpost = m_ctrl.getArticle(grp.name, grp.maxArticleNumber);
+				gi.lastPoster.name = lastpost.getHeader("From");
+				//gi.lastPostDate = lastpost.getHeader("Date");
+			} catch( Exception ){}
+
+			gi.name = grp.name;
+			gi.description = grp.description;
+			gi.numberOfPosts = grp.articleCount;
+			gi.numberOfTopics = m_ctrl.getThreadCount(grp._id);
+			cat.groups ~= gi;
+		});
+		info.groupCategories ~= cat;
 
 		res.renderCompat!("vibenews.web.index.dt",
 			HttpServerRequest, "req",
@@ -104,10 +122,9 @@ class WebInterface {
 
 struct GroupInfo {
 	string name;
-	string title;
 	string description;
-	size_t numberOfTopics;
-	size_t numberOfPosts;
+	long numberOfTopics;
+	long numberOfPosts;
 	PosterInfo lastPoster;
 	SysTime lastPostDate;
 	ThreadInfo[] threads;

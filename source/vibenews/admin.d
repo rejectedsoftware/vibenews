@@ -28,7 +28,8 @@ class AdminInterface {
 		auto router = new UrlRouter;
 		router.get("/", &showAdminPanel);
 		router.post("/groups/create", &createGroup);
-		router.post("/groups/repair", &repairGroups);
+		router.post("/groups/repair-numbers", &repairGroupNumbers);
+		router.post("/groups/repair-threads", &repairGroupThreads);
 		router.get("/groups/:groupname/show", &showGroup);
 		router.post("/groups/:groupname/update", &updateGroup);
 		router.post("/groups/:groupname/purge", &purgeGroup);
@@ -98,9 +99,15 @@ class AdminInterface {
 		res.redirect("/groups/"~req.params["groupname"]~"/show");
 	}
 
-	void repairGroups(HttpServerRequest req, HttpServerResponse res)
+	void repairGroupNumbers(HttpServerRequest req, HttpServerResponse res)
 	{
 		m_ctrl.repairGroupNumbers();
+		res.redirect("/");
+	}
+
+	void repairGroupThreads(HttpServerRequest req, HttpServerResponse res)
+	{
+		m_ctrl.repairThreads();
 		res.redirect("/");
 	}
 

@@ -17,7 +17,7 @@ class Controller {
 		m_articles = m_db["vibenews.articles"];
 		m_threads = m_db["vibenews.threads"];
 
-		// fixup old article format and generate any missing threads
+		// fixup old article format
 		foreach( a; m_articles.find(["number": ["$exists": true]]) ){
 			GroupRef[string] grprefs;
 			foreach( string gname, num; a.number ){
@@ -27,35 +27,6 @@ class Controller {
 				// create new GroupRef instead of the simple long
 				GroupRef grpref;
 				grpref.articleNumber = num.get!long;
-
-				// extract reply-to and subject headers
-				string repl;
-				string subject;
-				foreach( h; a.headers ){
-					if( icmp(h.key.get!string, "In-Reply-To") == 0 )
-						repl = h.value.get!string;
-					else if( icmp(h.key.get!string, "Subject") == 0 )
-						subject = h.value.get!string;
-				}
-
-				// try to find the thread of any reply-to message
-				auto rart = repl.length ? m_articles.findOne(["id": repl]) : Bson(null);
-				if( !rart.isNull() && !rart.groups.isNull() ){
-					auto grefs = rart.groups.get!(Bson[string]);
-					auto gref = grefs[gname];
-					if( !gref.isNull() ) grpref.threadId = gref.threadId.get!BsonObjectID;
-				}
-
-				// otherwise create a new thread
-				if( grpref.threadId == BsonObjectID() ){
-					Thread thr;
-					thr._id = BsonObjectID.generate();
-					thr.groupId = grp._id.get!BsonObjectID;
-					thr.subject = subject;
-					m_threads.insert(thr);
-					grpref.threadId = thr._id;
-				}
-
 				grprefs[gname] = grpref;
 			}
 			// remove the old number field and add the group refs instead
@@ -63,6 +34,11 @@ class Controller {
 			m_articles.update(["_id": a._id], ["$unset": ["number": true]]);
 		}
 	}
+
+
+	/***************************/
+	/* Groups                  */
+	/***************************/
 
 	void enumerateGroups(void delegate(size_t idx, Group) cb)
 	{
@@ -107,6 +83,30 @@ class Controller {
 	{
 		m_groups.update(["_id": g._id], g);
 	}
+
+	/***************************/
+	/* Threads                 */
+	/***************************/
+
+	long getThreadCount(BsonObjectID group)
+	{
+		return m_threads.count(["groupId": group]);
+	}
+
+	void enumerateThreads(BsonObjectID group, size_t skip, size_t max_count, void delegate(size_t, Thread) del)
+	{
+		size_t idx = skip;
+		foreach( bthr; m_threads.find(Bson.EmptyObject, null, QueryFlags.None, skip) ){
+			Thread thr;
+			deserializeBson(thr, bthr);
+			del(idx, thr);
+			idx++;
+		}
+	}
+
+	/***************************/
+	/* Articles                */
+	/***************************/
 
 	Article getArticle(string id)
 	{
@@ -195,7 +195,7 @@ class Controller {
 		string subject = art.getHeader("Subject");
 		string messageid = art.getHeader("Message-ID");
 		string path = art.getHeader("Path");
-		string reply_to = art.getHeader("Reply-To");
+		string reply_to = art.getHeader("In-Reply-To");
 
 		if( messageid.length == 0 ) art.addHeader("Message-ID", art.id);
 		art.messageLength = art.message.length;
@@ -256,6 +256,48 @@ class Controller {
 
 			m_groups.update(["_id": grp._id, "minArticleNumber": grp.minArticleNumber], ["$set": ["minArticleNumber": first_art.groups[grpname].articleNumber]]);
 			m_groups.update(["_id": grp._id, "maxArticleNumber": grp.maxArticleNumber], ["$set": ["maxArticleNumber": last_art.groups[grpname].articleNumber]]);
+		}
+	}
+
+	void repairThreads()
+	{
+		m_threads.remove(Bson.EmptyObject);
+
+		foreach( ba; m_articles.find() ){
+			Article a;
+			deserializeBson(a, ba);
+
+			// extract reply-to and subject headers
+			string repl = a.getHeader("In-Reply-To");
+			string subject = a.getHeader("Subject");
+			auto rart = repl.length ? m_articles.findOne(["id": repl]) : Bson(null);
+
+			foreach( gname; a.groups.byKey() ){
+				auto grp = m_groups.findOne(["name": unescapeGroup(gname)], ["_id": true]);
+				if( grp.isNull() ) continue;
+
+				BsonObjectID threadid;
+
+				// try to find the thread of any reply-to message
+				if( !rart.isNull() ){
+					auto gref = rart.groups[gname];
+					if( !gref.isNull() && m_threads.count(["_id": gref.threadId]) > 0 )
+						threadid = gref.threadId.get!BsonObjectID;
+				}
+
+				// otherwise create a new thread
+				if( threadid == BsonObjectID() ){
+					Thread thr;
+					thr._id = BsonObjectID.generate();
+					thr.groupId = grp._id.get!BsonObjectID;
+					thr.subject = subject;
+					m_threads.insert(thr);
+
+					threadid = thr._id;
+				}
+
+				m_articles.update(["_id": a._id], ["$set": ["groups."~gname~".threadId": threadid]]);
+			}
 		}
 	}
 

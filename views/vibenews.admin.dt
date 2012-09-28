@@ -45,5 +45,7 @@ block body
 			input(type="submit", value="Create new group")
 			
 	h3 Maintainance
-	form(method="POST", action="/groups/repair")
-		input(type="submit", value="Repair groups")	
+	form(method="POST", action="/groups/repair-numbers")
+		input(type="submit", value="Repair group numbers")
+	form(method="POST", action="/groups/repair-threads")
+		input(type="submit", value="Repair threads")

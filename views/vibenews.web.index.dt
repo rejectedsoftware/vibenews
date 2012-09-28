@@ -21,7 +21,7 @@ block body
 					tr
 						td
 							p
-								a(href="#{req.rootDir}groups/#{grp.name}/")= grp.title
+								a(href="#{req.rootDir}groups/#{grp.name}/")= grp.name
 							p= grp.description
 						td= grp.numberOfTopics
 						td= grp.numberOfPosts
