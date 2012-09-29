@@ -88,23 +88,7 @@ class WebInterface {
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 		info.group = GroupInfo(grp, m_ctrl);
 		m_ctrl.enumerateThreads(grp._id, info.start, info.pageSize, (idx, thr){
-			ThreadInfo thrinfo;
-			thrinfo.id = thr._id;
-			thrinfo.subject = thr.subject;
-			thrinfo.postCount = cast(size_t)m_ctrl.getThreadPostCount(thr._id, grp.name);
-			thrinfo.pageCount = (thrinfo.postCount + info.pageSize-1) / info.pageSize;
-			thrinfo.pageSize = info.pageSize;
-
-			try {
-				auto firstpost = m_ctrl.getArticle(thr.firstArticleId);
-				thrinfo.firstPoster = PosterInfo(firstpost.getHeader("From"));
-				thrinfo.firstPostDate = firstpost.getHeader("Date");//.parseRFC822DateTimeString();
-				auto lastpost = m_ctrl.getArticle(thr.lastArticleId);
-				thrinfo.lastPoster = PosterInfo(lastpost.getHeader("From"));
-				thrinfo.lastPostDate = lastpost.getHeader("Date");//.parseRFC822DateTimeString();
-			} catch( Exception ){}
-
-			info.threads ~= thrinfo;
+			info.threads ~= ThreadInfo(thr, m_ctrl, info.pageSize, grp.name);
 		});
 		
 		info.pageCount = (info.group.numberOfTopics + info.pageSize-1) / info.pageSize;
@@ -121,6 +105,7 @@ class WebInterface {
 			GroupInfo group;
 			PostInfo[] posts;
 			BsonObjectID threadId;
+			ThreadInfo thread;
 			size_t start;
 			size_t postCount;
 			size_t pageSize = 10;
@@ -128,10 +113,12 @@ class WebInterface {
 		}
 		Info3 info;
 
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+
 		info.title = m_title;
 		if( auto ps = "start" in req.query ) info.start = to!size_t(*ps);
 		info.threadId = BsonObjectID.fromString(req.params["thread"]);
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		info.thread = ThreadInfo(m_ctrl.getThread(info.threadId), m_ctrl, info.pageSize, grp.name);
 		info.group = GroupInfo(grp, m_ctrl);
 		info.postCount = cast(size_t)m_ctrl.getThreadPostCount(info.threadId, grp.name);
 		info.pageCount = (info.postCount + info.pageSize-1) / info.pageSize;
@@ -305,6 +292,24 @@ struct GroupInfo {
 }
 
 struct ThreadInfo {
+	this(Thread thr, Controller ctrl, size_t page_size, string groupname = null)
+	{
+		id = thr._id;
+		subject = thr.subject;
+		postCount = cast(size_t)ctrl.getThreadPostCount(thr._id, groupname);
+		pageCount = (postCount + page_size-1) / page_size;
+		pageSize = page_size;
+
+		try {
+			auto firstpost = ctrl.getArticle(thr.firstArticleId);
+			firstPoster = PosterInfo(firstpost.getHeader("From"));
+			firstPostDate = firstpost.getHeader("Date");//.parseRFC822DateTimeString();
+			auto lastpost = ctrl.getArticle(thr.lastArticleId);
+			lastPoster = PosterInfo(lastpost.getHeader("From"));
+			lastPostDate = lastpost.getHeader("Date");//.parseRFC822DateTimeString();
+		} catch( Exception ){}
+	}
+
 	BsonObjectID id;
 	string subject;
 	PosterInfo firstPoster;

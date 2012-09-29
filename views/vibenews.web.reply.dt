@@ -1,7 +1,7 @@
 extends layout
 
 block title
-	- auto title = info.title;
+	- auto title = info.title ~ " - Reply";
 
 block body
 

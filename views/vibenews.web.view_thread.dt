@@ -4,7 +4,7 @@ block title
 	- import vibe.crypto.md5;
 	- import vibe.textfilter.markdown;
 
-	- auto title = info.title;
+	- auto title = info.title ~ " - " ~ info.thread.subject;
 
 block body
 

@@ -3,7 +3,7 @@ extends layout
 block title
 	- import vibe.textfilter.urlencode;
 
-	- auto title = info.title;
+	- auto title = info.title ~ " - " ~ info.group.name;
 
 block body
 
