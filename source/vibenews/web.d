@@ -12,6 +12,7 @@ import vibe.http.fileserver;
 import vibe.inet.message;
 import vibe.utils.string;
 
+import std.algorithm : map;
 import std.array;
 import std.base64;
 import std.conv;
@@ -25,12 +26,13 @@ import std.utf;
 class WebInterface {
 	private {
 		Controller m_ctrl;
-		string m_title = "My Forum";
+		string m_title;
 	}
 
-	this(Controller ctrl)
+	this(Controller ctrl, string title)
 	{
 		m_ctrl = ctrl;
+		m_title = title;
 
 		auto settings = new HttpServerSettings;
 		settings.port = 8009;
@@ -118,14 +120,23 @@ class WebInterface {
 			string title;
 			GroupInfo group;
 			PostInfo[] posts;
+			BsonObjectID threadId;
+			size_t start;
+			size_t postCount;
+			size_t pageSize = 10;
+			size_t pageCount;
 		}
 		Info3 info;
 
-		auto threadid = BsonObjectID.fromString(req.params["thread"]);
+		info.title = m_title;
+		if( auto ps = "start" in req.query ) info.start = to!size_t(*ps);
+		info.threadId = BsonObjectID.fromString(req.params["thread"]);
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 		info.group = GroupInfo(grp, m_ctrl);
+		info.postCount = cast(size_t)m_ctrl.getThreadPostCount(info.threadId, grp.name);
+		info.pageCount = (info.postCount + info.pageSize-1) / info.pageSize;
 
-		m_ctrl.enumerateThreadPosts(threadid, grp.name, 0, 10, (idx, art){
+		m_ctrl.enumerateThreadPosts(info.threadId, grp.name, info.start, info.pageSize, (idx, art){
 			Article replart;
 			try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
 			catch( Exception ){}
@@ -148,6 +159,8 @@ class WebInterface {
 
 		auto postid = BsonObjectID.fromString(req.params["post"]);
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+
+		info.title = m_title;
 		info.group = GroupInfo(grp, m_ctrl);
 
 		auto art = m_ctrl.getArticle(postid);
@@ -166,10 +179,13 @@ class WebInterface {
 		static struct Info5 {
 			string title;
 			GroupInfo group;
+			string subject;
+			string message;
 		}
 		Info5 info;
 
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		info.title = m_title;
 		info.group = GroupInfo(grp, m_ctrl);
 
 		res.renderCompat!("vibenews.web.reply.dt",
@@ -206,12 +222,25 @@ class WebInterface {
 		static struct Info5 {
 			string title;
 			GroupInfo group;
+			string subject;
+			string message;
 		}
 		Info5 info;
 
 		auto threadid = BsonObjectID.fromString(req.params["thread"]);
+		Article repart;
+		if( "post" in req.query ){
+			auto repartid = BsonObjectID.fromString(req.query["post"]);
+			repart = m_ctrl.getArticle(repartid);
+		}
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		info.title = m_title;
 		info.group = GroupInfo(grp, m_ctrl);
+		info.subject = repart.getHeader("Subject");
+		if( !info.subject.startsWith("Re:") ) info.subject = "Re: " ~ info.subject;
+		info.message = "On "~repart.getHeader("Date")~", "~PosterInfo(repart.getHeader("From")).name~" wrote:\r\n";
+		info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(cast(string)repart.message)).join("\r\n");
+		info.message ~= "\r\n\r\n";
 
 		res.renderCompat!("vibenews.web.reply.dt",
 			HttpServerRequest, "req",

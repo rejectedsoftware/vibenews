@@ -5,36 +5,38 @@ block title
 
 block body
 
-	p
+	nav
 		a(href="../../../") Forum index
-	p
 		a(href="../")= info.group.name
-	p
 		a(href="./") Back to thread
 		
 	form(action='#{"post" in req.query ? "reply" : "post"}', method="POST")
 		- if( "post" in req.query )
 			input(type="hidden", name="article", value='#{req.query["post"]}')
 		table
+			col.caption
 			tr
 				td
-					label(for="name") Name:
+					label(for="name") Name
 				td
 					input#name(type="text", name="name")
 			tr
 				td
-					label(for="email") Email:
+					label(for="email") Email
 				td
 					input#email(type="text", name="email")
 			tr
 				td
-					label(for="subject") Subject:
+					label(for="subject") Subject
 				td
-					input#subject(type="text", name="subject")
+					input#subject(type="text", name="subject", value="#{info.subject}")
 			tr
 				td
-					label(for="message") Message:
+					label(for="message") Message
+					p(style="color: gray;") Note that you can use 
+						a(href="http://daringfireball.net/projects/markdown/basics", target="_blank") Markdown
+						| to markup your message.
 				td
-					textarea#message(name="message")
+					textarea#message(name="message", rows="18")= info.message
 
 		button(type="submit") Post

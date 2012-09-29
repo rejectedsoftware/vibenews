@@ -1,8 +1,36 @@
 body {
 	font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
 	font-size: 10pt;
+	color: white;
+	background-color: #333;
+	padding: 0;
+	margin: 0;
 }
 
+h1 {
+	background-color: #E0D8D0;
+	background-image: -webkit-linear-gradient(top, #E0D8D0, #B0A8A0);
+	background-image:    -moz-linear-gradient(top, #E0D8D0, #B0A8A0);
+	background-image:     -ms-linear-gradient(top, #E0D8D0, #B0A8A0);
+	background-image:      -o-linear-gradient(top, #E0D8D0, #B0A8A0);
+	color: black;
+	font-weight: normal;
+	margin: 0;
+	padding: 3.75pt 15pt;
+}
+
+a {
+	color: white;
+}
+
+nav a { text-decoration: none; }
+nav a:after { content: " < " }
+nav a:hover { text-decoration: underline; }
+nav { margin-bottom: 15pt; }
+
+a.title {
+	font-size: 12pt;
+}
 
 .inactive {
 	color: #eaa;
@@ -14,10 +42,110 @@ table {
 	border-collapse: collapse;
 }
 
+col.caption {
+	width: 150pt;
+}
+
 th {
 	text-align: left;
+	background-color: #666;
+	background-image: -webkit-linear-gradient(top, #777, #444);
+	background-image:    -moz-linear-gradient(top, #777, #444);
+	background-image:     -ms-linear-gradient(top, #777, #444);
+	background-image:      -o-linear-gradient(top, #777, #444);
+}
+
+td {
+	padding: 7.5pt;
+	background-color: #eae8dd;
+	color: black;
+}
+
+td a {
+	color: black;
 }
 
 td, th {
 	border-bottom: 1px solid gray;
+}
+
+td.odd {
+	background-color: #eee;
+}
+
+td.even {
+	background-color: #ddd;
+}
+
+quot {
+	display: block;
+	border-left: 2px solid gray;
+	padding-left: 7.5pt;
+}
+
+.post {
+	border: 1px solid black;
+	margin-bottom: 15pt;
+	background-color: #eae8dd;
+	border: 1px solid #877;
+	color: black;
+}
+
+.post a { color: black; }
+
+/* clearfix */
+.post:after {
+	content: ".";
+	display: block;
+	clear: both;
+	visibility: hidden;
+	line-height: 0;
+	height: 0;
+}
+
+
+.post h2 {
+	background-color: #666;
+	background-image: -webkit-linear-gradient(top, #777, #444);
+	background-image:    -moz-linear-gradient(top, #777, #444);
+	background-image:     -ms-linear-gradient(top, #777, #444);
+	background-image:      -o-linear-gradient(top, #777, #444);
+	border-bottom: 1px solid #877;
+	color: white;
+	margin: 0;
+	padding: 0 4pt;
+	font-size: 12pt;
+	font-weight: normal;
+}
+
+.post-info {
+	width: 180pt;
+	float: left;
+	padding: 15pt;
+}
+
+.post-info img {
+	border: 1px solid black;
+}
+
+.post-content {
+	margin: 0;
+	margin-left: 210pt;
+	margin-bottom: -1px;
+	padding: 15pt;
+	background-color: white;
+	border-left: 1px solid #877;
+	border-bottom: 1px solid #877;
+}
+
+.post-content pre {
+	margin: 0;
+}
+
+.secondary, .secondary a {
+	color: #888;
+}
+
+input, textarea {
+	width: 100%;
 }

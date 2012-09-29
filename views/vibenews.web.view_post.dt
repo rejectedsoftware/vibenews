@@ -12,7 +12,7 @@ block body
 	p
 		a(href="./") Back to thread
 
-		div.first
+		div.post.first
 			h2= info.post.subject
 			.post-info
 				p

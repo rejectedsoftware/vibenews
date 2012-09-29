@@ -7,7 +7,7 @@ block title
 
 block body
 
-	p
+	nav
 		a(href="../../") Forum index
 		
 	p
@@ -21,21 +21,21 @@ block body
 		- foreach( thr; info.threads )
 			tr
 				td
-					p
-						a(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/")= thr.subject
-						br
+					.primary
+						a.title(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/")= thr.subject
+					.secondary
 						| by 
 						a(href="#{req.rootDir}users/#{urlEncode(thr.firstPoster.email)}")= thr.firstPoster.name
-						|, #{thr.firstPostDate}
+						| on #{thr.firstPostDate}
 					- if( thr.pageCount > 1 )
-						p.pages
+						span.pages Pages: 
 							- foreach( i; 0 .. thr.pageCount )
 								a.page(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/?start=#{i*thr.pageSize}")= i+1
 				td= thr.postCount-1
 				td
 					| by 
 					a(href="#{req.rootDir}users/#{urlEncode(thr.lastPoster.email)}/")= thr.lastPoster.name
-					br
+					| on 
 					|= thr.lastPostDate
 					
 	- if( info.pageCount > 1 )
