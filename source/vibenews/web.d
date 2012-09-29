@@ -8,7 +8,7 @@ import vibe.data.bson;
 import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
-import vibe.inet.rfc5322;
+import vibe.inet.message;
 import vibe.utils.string;
 
 import std.conv;

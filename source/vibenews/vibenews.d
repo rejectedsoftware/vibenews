@@ -8,7 +8,7 @@ import vibe.core.core;
 import vibe.core.log;
 import vibe.crypto.passwordhash;
 import vibe.data.bson;
-import vibe.inet.rfc5322;
+import vibe.inet.message;
 import vibe.stream.counting;
 
 import std.algorithm;
