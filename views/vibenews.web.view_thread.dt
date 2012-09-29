@@ -5,6 +5,11 @@ block title
 
 block body
 
+	p
+		a(href="../../../") Forum index
+	p
+		a(href="../")= info.group.name
+
 	- foreach( i, post; info.posts )
 		div(class='#{i==0?"first odd":i%2==0?"odd":"even"}')
 			h2= post.subject

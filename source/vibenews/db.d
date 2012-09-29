@@ -21,7 +21,7 @@ class Controller {
 		foreach( a; m_articles.find(["number": ["$exists": true]]) ){
 			GroupRef[string] grprefs;
 			foreach( string gname, num; a.number ){
-				auto grp = m_groups.findOne(["name": gname], ["_id": true]);
+				auto grp = m_groups.findOne(["name": unescapeGroup(gname)], ["_id": true]);
 				if( grp.isNull() ) continue;
 
 				// create new GroupRef instead of the simple long
@@ -65,6 +65,15 @@ class Controller {
 		return !bg.isNull();
 	}
 
+	Group getGroup(BsonObjectID id)
+	{
+		auto bg = m_groups.findOne(["_id": Bson(id), "active": Bson(true)]);
+		enforce(!bg.isNull(), "Unknown group id!");
+		Group ret;
+		deserializeBson(ret, bg);
+		return ret;
+	}
+
 	Group getGroupByName(string name)
 	{
 		auto bg = m_groups.findOne(["name": Bson(name), "active": Bson(true)]);
@@ -93,20 +102,55 @@ class Controller {
 		return m_threads.count(["groupId": group]);
 	}
 
+	Thread getThread(BsonObjectID id)
+	{
+		auto bt = m_threads.findOne(["_id": id]);
+		enforce(!bt.isNull(), "Unknown thread id");
+		Thread t;
+		deserializeBson(t, bt);
+		return t;
+	}
+
 	void enumerateThreads(BsonObjectID group, size_t skip, size_t max_count, void delegate(size_t, Thread) del)
 	{
 		size_t idx = skip;
-		foreach( bthr; m_threads.find(Bson.EmptyObject, null, QueryFlags.None, skip) ){
+		foreach( bthr; m_threads.find(["query": ["groupId": Bson(group)], "orderby": ["lastArticleId": Bson(-1)]], null, QueryFlags.None, skip) ){
 			Thread thr;
 			deserializeBson(thr, bthr);
 			del(idx, thr);
-			idx++;
+			if( ++idx >= skip+max_count ) break;
+		}
+	}
+
+	long getThreadPostCount(BsonObjectID thread, string groupname = null)
+	{
+		if( !groupname ) groupname = getGroup(getThread(thread).groupId).name;
+		return m_articles.count(["groups."~escapeGroup(groupname)~".threadId" : Bson(thread), "active": Bson(true)]);
+	}
+
+	void enumerateThreadPosts(BsonObjectID thread, string groupname, size_t skip, size_t max_count, void delegate(size_t, Article) del)
+	{
+		size_t idx = skip;
+		foreach( bart; m_articles.find(["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)]) ){
+			Article art;
+			deserializeBson(art, bart);
+			del(idx, art);
+			if( ++idx >= skip+max_count ) break;
 		}
 	}
 
 	/***************************/
 	/* Articles                */
 	/***************************/
+
+	Article getArticle(BsonObjectID id)
+	{
+		auto ba = m_articles.findOne(["_id": Bson(id), "active": Bson(true)]);
+		enforce(!ba.isNull(), "Unknown article id!");
+		Article ret;
+		deserializeBson(ret, ba);
+		return ret;
+	}
 
 	Article getArticle(string id)
 	{
@@ -170,9 +214,10 @@ class Controller {
 	void enumerateAllArticles(string groupname, int first, int count, void delegate(ref Article art) del)
 	{
 		auto egrp = escapeGroup(groupname);
+		logDebug("%s %s", groupname, egrp);
 		auto query = serializeToBson(["groups."~egrp: ["$exists": true]]);
-		auto order = serializeToBson(["groups."~egrp~".articleNumber": 1]);
-		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], null, QueryFlags.None, first, count) ){
+		//auto order = serializeToBson(["groups."~egrp~".articleNumber": 1]);
+		foreach( idx, ba; m_articles.find(/*["query": query, "orderby": order]*/query, null, QueryFlags.None, first, count) ){
 			Article art;
 			deserializeBson(art, ba);
 			del(art);
@@ -225,8 +270,12 @@ class Controller {
 				thr._id = BsonObjectID.generate();
 				thr.groupId = bgpre._id.get!BsonObjectID;
 				thr.subject = subject;
+				thr.firstArticleId = art._id;
+				thr.lastArticleId = art._id;
 				m_threads.insert(thr);
 				threadid = thr._id;
+			} else {
+				m_threads.update(["_id": threadid], ["$set": ["lastArticleId": art._id]]);
 			}
 
 			GroupRef grpref;
@@ -291,9 +340,13 @@ class Controller {
 					thr._id = BsonObjectID.generate();
 					thr.groupId = grp._id.get!BsonObjectID;
 					thr.subject = subject;
+					thr.firstArticleId = a._id;
+					thr.lastArticleId = a._id;
 					m_threads.insert(thr);
 
 					threadid = thr._id;
+				} else {
+					m_threads.update(["_id": threadid], ["$set": ["lastArticleId": a._id]]);
 				}
 
 				m_articles.update(["_id": a._id], ["$set": ["groups."~gname~".threadId": threadid]]);
@@ -327,6 +380,8 @@ class Controller {
 				m_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
 			}
 		}
+
+		// TODO: update thread first/lastArticleId
 	}
 
 	void activateArticle(BsonObjectID artid)
@@ -342,6 +397,8 @@ class Controller {
 			m_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
 			m_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
 		}
+
+		// TODO: update thread first/lastArticleId
 	}
 
 	void deleteArticle(BsonObjectID artid)
@@ -453,4 +510,6 @@ struct Thread {
 	BsonObjectID _id;
 	BsonObjectID groupId;
 	string subject;
+	BsonObjectID firstArticleId;
+	BsonObjectID lastArticleId;
 }

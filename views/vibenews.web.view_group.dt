@@ -7,12 +7,15 @@ block title
 
 block body
 
+	p
+		a(href="../../") Forum index
+
 	table
 		tr
 			th Topic
 			th Answers
 			th Last post
-		- foreach( thr; info.group.threads )
+		- foreach( thr; info.threads )
 			tr
 				td
 					p
@@ -24,10 +27,18 @@ block body
 					- if( thr.pageCount > 1 )
 						p.pages
 							- foreach( i; 0 .. thr.pageCount )
-								a.page(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/?start=#{i*10}")= i+1
+								a.page(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/?start=#{i*thr.pageSize}")= i+1
 				td= thr.postCount-1
 				td
 					| by 
 					a(href="#{req.rootDir}users/#{urlEncode(thr.lastPoster.email)}/")= thr.lastPoster.name
 					br
 					|= thr.lastPostDate
+					
+	- if( info.pageCount > 1 )
+		p.pages
+			- foreach( i; 0 .. info.pageCount )
+				- if( info.start == i*info.pageSize )
+					|= i+1
+				- else
+					a.page(href="#{req.rootDir}groups/#{info.group.name}/?start=#{i*info.pageSize}")= i+1
