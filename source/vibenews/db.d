@@ -230,7 +230,7 @@ class Controller {
 		return m_articles.count(["groups."~escapeGroup(groupname): ["$exists": true]]);
 	}
 
-	void postArticle(Article art)
+	void postArticle(ref Article art)
 	{
 		string relay_version = art.getHeader("Relay-Version");
 		string posting_version = art.getHeader("Posting-Version");
@@ -259,8 +259,7 @@ class Controller {
 			BsonObjectID threadid;
 			auto rart = reply_to.length ? m_articles.findOne(["id": reply_to]) : Bson(null);
 			if( !rart.isNull() && !rart.groups.isNull() ){
-				auto grefs = rart.groups.get!(Bson[string]);
-				auto gref = grefs[grp];
+				auto gref = rart.groups[escapeGroup(grp)];
 				if( !gref.isNull() ) threadid = gref.threadId.get!BsonObjectID;
 			}
 
@@ -446,6 +445,7 @@ long countLines(const(ubyte)[] str)
 	long sum = 1;
 	while(str.length > 0){
 		auto idx = str.countUntil('\n');
+		if( idx < 0 ) break;
 		str = str[idx+1 .. $];
 		sum++;
 	}

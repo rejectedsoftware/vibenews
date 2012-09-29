@@ -12,7 +12,9 @@ block body
 	p
 		a(href="./") Back to thread
 		
-	form(action="reply", method="POST")
+	form(action='#{"post" in req.query ? "reply" : "post"}', method="POST")
+		- if( "post" in req.query )
+			input(type="hidden", name="article", value='#{req.query["post"]}')
 		table
 			tr
 				td
@@ -34,3 +36,5 @@ block body
 					label(for="message") Message:
 				td
 					textarea#message(name="message")
+
+		button(type="submit") Post

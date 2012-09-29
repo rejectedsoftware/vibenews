@@ -11,6 +11,7 @@ block body
 		a(href="../")= info.group.name
 
 	- foreach( i, post; info.posts )
+		a(id='#{post.id}')
 		div(class='#{i==0?"first odd":i%2==0?"odd":"even"}')
 			h2= post.subject
 			.post-info
@@ -21,7 +22,7 @@ block body
 				p Posted #{post.date}
 					- if( post.repliedToPoster.email.length )
 						| in reply to
-						a(href="#{req.rootDir}/users/#{post.repliedToPoster.email}") post.repliedToPoster.name
+						a(href="#{post.repliedToPostId}")= post.repliedToPoster.name
 				p
 					a(href="reply?post=#{post.id}") Reply
 			.post-content

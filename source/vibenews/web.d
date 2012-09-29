@@ -1,6 +1,7 @@
 module vibenews.web;
 
 import vibenews.db;
+import vibenews.vibenews : g_hostname;
 
 import vibe.core.log;
 import vibe.crypto.passwordhash;
@@ -38,9 +39,12 @@ class WebInterface {
 		auto router = new UrlRouter;
 		router.get("/", &showIndex);
 		router.get("/groups/:group/", &showGroup);
+		router.get("/groups/:group/post", &showPostTopic);
+		router.post("/groups/:group/post", &postTopic);
 		router.get("/groups/:group/:thread/", &showThread);
 		router.get("/groups/:group/:thread/reply", &showReply);
 		router.post("/groups/:group/:thread/reply", &postReply);
+		router.get("/groups/:group/:thread/:post", &showPost);
 		router.get("*", serveStaticFiles("public"));
 
 		listenHttp(settings, router);
@@ -122,7 +126,10 @@ class WebInterface {
 		info.group = GroupInfo(grp, m_ctrl);
 
 		m_ctrl.enumerateThreadPosts(threadid, grp.name, 0, 10, (idx, art){
-			info.posts ~= PostInfo(art, art);
+			Article replart;
+			try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
+			catch( Exception ){}
+			info.posts ~= PostInfo(art, replart);
 		});
 
 		res.renderCompat!("vibenews.web.view_thread.dt",
@@ -130,13 +137,77 @@ class WebInterface {
 			Info3*, "info")(Variant(req), Variant(&info));
 	}
 
-	void showReply(HttpServerRequest req, HttpServerResponse res)
+	void showPost(HttpServerRequest req, HttpServerResponse res)
 	{
 		static struct Info4 {
 			string title;
 			GroupInfo group;
+			PostInfo post;
 		}
 		Info4 info;
+
+		auto postid = BsonObjectID.fromString(req.params["post"]);
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		info.group = GroupInfo(grp, m_ctrl);
+
+		auto art = m_ctrl.getArticle(postid);
+		Article replart;
+		try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
+		catch( Exception ){}
+		info.post = PostInfo(art, replart);
+
+		res.renderCompat!("vibenews.web.view_post.dt",
+			HttpServerRequest, "req",
+			Info4*, "info")(Variant(req), Variant(&info));
+	}
+
+	void showPostTopic(HttpServerRequest req, HttpServerResponse res)
+	{
+		static struct Info5 {
+			string title;
+			GroupInfo group;
+		}
+		Info5 info;
+
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		info.group = GroupInfo(grp, m_ctrl);
+
+		res.renderCompat!("vibenews.web.reply.dt",
+			HttpServerRequest, "req",
+			Info5*, "info")(Variant(req), Variant(&info));
+	}
+
+	void postTopic(HttpServerRequest req, HttpServerResponse res)
+	{
+		// TODO: do extensive string validation!
+
+		auto groupname = req.params["group"];
+
+		Article art;
+		art._id = BsonObjectID.generate();
+		art.id = "<"~art._id.toString()~"@"~g_hostname~">";
+		art.addHeader("Subject", req.form["subject"]);
+		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
+		art.addHeader("Newsgroups", groupname);
+		art.addHeader("Date", Clock.currTime().toRFC822DateTimeString());
+		art.addHeader("User-Agent", "VibeNews Web");
+		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
+
+		art.peerAddress = req.peer;
+		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
+
+		m_ctrl.postArticle(art);
+
+		res.redirect(formatString("/groups/%s/%s/", groupname, art.groups[escapeGroup(groupname)].threadId.toString()));
+	}
+
+	void showReply(HttpServerRequest req, HttpServerResponse res)
+	{
+		static struct Info5 {
+			string title;
+			GroupInfo group;
+		}
+		Info5 info;
 
 		auto threadid = BsonObjectID.fromString(req.params["thread"]);
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
@@ -144,15 +215,39 @@ class WebInterface {
 
 		res.renderCompat!("vibenews.web.reply.dt",
 			HttpServerRequest, "req",
-			Info4*, "info")(Variant(req), Variant(&info));
+			Info5*, "info")(Variant(req), Variant(&info));
 	}
 
 	void postReply(HttpServerRequest req, HttpServerResponse res)
 	{
+		// TODO: do extensive string validation!
+
 		auto groupname = req.params["group"];
 		auto threadid = req.params["thread"];
+		auto repartid = BsonObjectID.fromString(req.form["article"]);
+		auto repart = m_ctrl.getArticle(repartid);
+		auto refs = repart.getHeader("References");
+		if( refs.length ) refs ~= " ";
+		refs ~= repart.id;
 
-		res.redirect(formatString("/%s/%s/", groupname, threadid));
+		Article art;
+		art._id = BsonObjectID.generate();
+		art.id = "<"~art._id.toString()~"@"~g_hostname~">";
+		art.addHeader("Subject", req.form["subject"]);
+		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
+		art.addHeader("Newsgroups", groupname);
+		art.addHeader("Date", Clock.currTime().toRFC822DateTimeString());
+		art.addHeader("User-Agent", "VibeNews Web");
+		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
+		art.addHeader("In-Reply-To", repart.id);
+		art.addHeader("References", refs);
+
+		art.peerAddress = req.peer;
+		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
+
+		m_ctrl.postArticle(art);
+
+		res.redirect(formatString("/groups/%s/%s/", groupname, threadid));
 	}
 }
 
@@ -201,6 +296,7 @@ struct PostInfo {
 		subject = art.getHeader("Subject");
 		poster = PosterInfo(art.getHeader("From"));
 		repliedToPoster = PosterInfo(repl_art.getHeader("From"));
+		repliedToPostId = repl_art._id;
 		date = art.getHeader("Date");
 		message = sanitizeUTF8(art.message);
 	}
@@ -209,6 +305,7 @@ struct PostInfo {
 	string subject;
 	PosterInfo poster;
 	PosterInfo repliedToPoster;
+	BsonObjectID repliedToPostId;
 	//SysTime date;
 	string date;
 	string message;

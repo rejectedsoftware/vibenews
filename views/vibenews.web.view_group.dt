@@ -9,6 +9,9 @@ block body
 
 	p
 		a(href="../../") Forum index
+		
+	p
+		a(href="post") Post new topic
 
 	table
 		tr

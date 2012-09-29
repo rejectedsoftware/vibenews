@@ -1,0 +1,29 @@
+extends layout
+
+block title
+	- auto title = info.title;
+
+block body
+
+	p
+		a(href="../../../") Forum index
+	p
+		a(href="../")= info.group.name
+	p
+		a(href="./") Back to thread
+
+		div.first
+			h2= info.post.subject
+			.post-info
+				p
+					a(href="#{req.rootDir}/users/#{info.post.poster.email}/")= info.post.poster.name
+				p
+					img(src="http://www.gravatar.com/#{info.post.poster.email}")
+				p Posted #{info.post.date}
+					- if( info.post.repliedToPoster.email.length )
+						| in reply to
+						a(href="#{info.post.repliedToPostId}")= info.post.repliedToPoster.name
+				p
+					a(href="reply?post=#{info.post.id}") Reply
+			.post-content
+				pre= info.post.message
