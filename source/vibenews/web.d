@@ -18,6 +18,7 @@ import std.datetime;
 import std.encoding;
 import std.exception;
 import std.string;
+import std.utf;
 
 
 class WebInterface {
@@ -216,7 +217,43 @@ struct PostInfo {
 struct PosterInfo {
 	this(string str)
 	{
-		str = str.strip();
+		scope(failure) logDebug("emailbase %s", str);
+		Appender!string text;
+		while(!str.empty){
+			auto idx = str.indexOf("=?");
+			if( idx >= 0 ){
+				auto end = str.indexOf("?=");
+				enforce(end > idx);
+				text.put(str[0 .. idx]);
+				auto code = str[idx+2 .. end];
+				str = str[end+2 .. $];
+
+				idx = code.indexOf('?');
+				auto cs = code[0 .. idx];
+				auto enc = code[idx+1];
+				auto data = code[idx+3 .. $];
+				ubyte[] textenc;
+				switch(enc){
+					default: textenc = cast(ubyte[])data; break;
+					case 'B': textenc = Base64.decode(data); break;
+					case 'Q': textenc = QuotedPrintable.decode(data); break;
+				}
+
+				switch(cs){
+					default: text.put(sanitizeUTF8(textenc)); break;
+					case "UTF-8": text.put(cast(string)textenc); break;
+					case "ISO-8859-15": // hack...
+					case "ISO-8859-1": string tmp; transcode(cast(Latin1String)textenc, tmp); text.put(tmp); break;
+				}
+			} else {
+				text.put(str);
+				break;
+			}
+		}
+
+		str = text.data().strip();
+
+		scope(failure) logDebug("emaildec %s", str);
 		if( str.length ){
 			if( str[$-1] == '>' ){
 				auto sidx = str.lastIndexOf('<');
@@ -226,41 +263,15 @@ struct PosterInfo {
 
 				if( str[0] == '"' ){
 					name = str[1 .. $-1];
-				} else if( str.startsWith("=?") ){
-					enforce(str.endsWith("?="));
-					str = str[2 .. $-2];
-					auto idx = str.indexOf('?');
-					auto cs = str[0 .. idx];
-					auto enc = str[idx+1];
-					auto text = str[idx+3 .. $];
-
-					switch(enc){
-						default: break;
-						case 'B':
-							text = cast(string)Base64.decode(text);
-							break;
-						case 'Q':
-							text = cast(string)QuotedPrintable.decode(text);
-							break;
-					}
-
-					switch(cs){
-						default: break;
-						case "UTF-8": break;
-						case "ISO-8859-1":
-						string utf;
-							transcode(cast(Latin1String)text, utf);
-							text = utf;
-							break;
-					}
-
-					name = text;
+				} else {
+					name = str.strip();
 				}
 			} else {
-				email = str;
 				name = str;
+				email = str;
 			}
 		}
+		validate(name);
 	}
 
 	string name;
