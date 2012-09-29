@@ -11,9 +11,13 @@ import vibe.http.fileserver;
 import vibe.inet.message;
 import vibe.utils.string;
 
+import std.array;
+import std.base64;
 import std.conv;
 import std.datetime;
+import std.encoding;
 import std.exception;
+import std.string;
 
 
 class WebInterface {
@@ -212,7 +216,51 @@ struct PostInfo {
 struct PosterInfo {
 	this(string str)
 	{
-		name = str;
+		str = str.strip();
+		if( str.length ){
+			if( str[$-1] == '>' ){
+				auto sidx = str.lastIndexOf('<');
+				enforce(sidx >= 0);
+				email = str[sidx+1 .. $-1];
+				str = str[0 .. sidx].strip();
+
+				if( str[0] == '"' ){
+					name = str[1 .. $-1];
+				} else if( str.startsWith("=?") ){
+					enforce(str.endsWith("?="));
+					str = str[2 .. $-2];
+					auto idx = str.indexOf('?');
+					auto cs = str[0 .. idx];
+					auto enc = str[idx+1];
+					auto text = str[idx+3 .. $];
+
+					switch(enc){
+						default: break;
+						case 'B':
+							text = cast(string)Base64.decode(text);
+							break;
+						case 'Q':
+							text = cast(string)QuotedPrintable.decode(text);
+							break;
+					}
+
+					switch(cs){
+						default: break;
+						case "UTF-8": break;
+						case "ISO-8859-1":
+						string utf;
+							transcode(cast(Latin1String)text, utf);
+							text = utf;
+							break;
+					}
+
+					name = text;
+				}
+			} else {
+				email = str;
+				name = str;
+			}
+		}
 	}
 
 	string name;
@@ -222,4 +270,18 @@ struct PosterInfo {
 struct Category {
 	string title;
 	GroupInfo[] groups;
+}
+
+struct QuotedPrintable {
+	static ubyte[] decode(in char[] input)
+	{
+		auto ret = appender!(ubyte[])();
+		for( size_t i = 0; i < input.length; i++ ){
+			if( input[i] == '=' ){
+				ret.put(parse!ubyte(input[i+1 .. i+3], 16));
+				i += 2;
+			} else ret.put(input[i]);
+		}
+		return ret.data();
+	}
 }
