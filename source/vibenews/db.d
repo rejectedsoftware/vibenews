@@ -241,6 +241,10 @@ class Controller {
 		string messageid = art.getHeader("Message-ID");
 		string path = art.getHeader("Path");
 		string reply_to = art.getHeader("In-Reply-To");
+		if( reply_to.length == 0 ){
+			auto refs = art.getHeader("References").split(" ");
+			if( refs.length > 0 ) reply_to = refs[$-1];
+		}
 
 		if( messageid.length == 0 ) art.addHeader("Message-ID", art.id);
 		art.messageLength = art.message.length;
@@ -318,6 +322,10 @@ class Controller {
 			// extract reply-to and subject headers
 			string repl = a.getHeader("In-Reply-To");
 			string subject = a.getHeader("Subject");
+			if( repl.length == 0 ){
+				auto refs = a.getHeader("References").split(" ");
+				if( refs.length > 0 ) repl = refs[$-1];
+			}
 			auto rart = repl.length ? m_articles.findOne(["id": repl]) : Bson(null);
 
 			foreach( gname; a.groups.byKey() ){
