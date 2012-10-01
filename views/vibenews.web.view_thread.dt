@@ -4,12 +4,12 @@ block title
 	- import vibe.crypto.md5;
 	- import vibe.textfilter.markdown;
 
-	- auto title = info.title ~ " - " ~ info.thread.subject;
+	- auto title = info.title ~ ": " ~ info.thread.subject;
 
 block body
 
 	nav
-		a(href="../../../") Forum index
+		a(href="../../../../") Forum index
 		a(href="../")= info.group.name
 
 	- foreach( i, post; info.posts )
@@ -25,16 +25,18 @@ block body
 				p Posted #{post.date}
 					- if( post.repliedToPoster.email.length )
 						| in reply to
-						a(href="#{post.repliedToPostId}")= post.repliedToPoster.name
+						a(href="#{post.repliedToPostNumber}")= post.repliedToPoster.name
 				p
-					a(href="reply?post=#{post.id}") Reply
+					a(href="nntp://#{info.hostName}:119/#{info.group.name}/#{post.number}") NNTP Message
+				p
+					a(href="reply?post=#{post.number}") Reply
 			.post-content
 				!= filterMarkdown(post.message)
 
 	- if( info.pageCount > 1 )
 		p.pages
 			- foreach( i; 0 .. info.pageCount )
-				- if( info.start == i*info.pageSize )
+				- if( info.page == i )
 					|= i+1
 				- else
-					a.page(href="#{req.rootDir}groups/#{info.group.name}/#{info.threadId}/?start=#{i*info.pageSize}")= i+1
+					a.page(href="#{req.rootDir}groups/#{info.group.name}/#{info.thread.firstPost.number}/?page=#{i+1}")= i+1

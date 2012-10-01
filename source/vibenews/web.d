@@ -45,10 +45,10 @@ class WebInterface {
 		router.get("/groups/:group/", &showGroup);
 		router.get("/groups/:group/post", &showPostArticle);
 		router.post("/groups/:group/post", &postArticle);
-		router.get("/groups/:group/:thread/", &showThread);
-		router.get("/groups/:group/:thread/reply", &showPostArticle);
-		router.post("/groups/:group/:thread/reply", &postArticle);
-		router.get("/groups/:group/:thread/:post", &showPost);
+		router.get("/groups/:group/thread/:thread/", &showThread);
+		router.get("/groups/:group/thread/:thread/reply", &showPostArticle);
+		router.post("/groups/:group/thread/:thread/reply", &postArticle);
+		router.get("/groups/:group/thread/:thread/:post", &showPost);
 		router.get("*", serveStaticFiles("public"));
 
 		listenHttp(settings, router);
@@ -87,16 +87,16 @@ class WebInterface {
 			string title;
 			GroupInfo group;
 			ThreadInfo[] threads;
-			size_t start = 0;
+			size_t page = 0;
 			size_t pageSize = 10;
 			size_t pageCount;
 		}
 		Info2 info;
 		info.title = m_title;
-		if( auto ps = "start" in req.query ) info.start = to!size_t(*ps);
+		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps)-1;
 
 		info.group = GroupInfo(grp, m_ctrl);
-		m_ctrl.enumerateThreads(grp._id, info.start, info.pageSize, (idx, thr){
+		m_ctrl.enumerateThreads(grp._id, info.page*info.pageSize, info.pageSize, (idx, thr){
 			info.threads ~= ThreadInfo(thr, m_ctrl, info.pageSize, grp.name);
 		});
 		
@@ -115,11 +115,11 @@ class WebInterface {
 
 		static struct Info3 {
 			string title;
+			string hostName;
 			GroupInfo group;
 			PostInfo[] posts;
-			BsonObjectID threadId;
 			ThreadInfo thread;
-			size_t start;
+			size_t page;
 			size_t postCount;
 			size_t pageSize = 10;
 			size_t pageCount;
@@ -127,18 +127,19 @@ class WebInterface {
 		Info3 info;
 
 		info.title = m_title;
-		if( auto ps = "start" in req.query ) info.start = to!size_t(*ps);
-		info.threadId = BsonObjectID.fromString(req.params["thread"]);
-		info.thread = ThreadInfo(m_ctrl.getThread(info.threadId), m_ctrl, info.pageSize, grp.name);
+		info.hostName = g_hostname;
+		auto threadnum = req.params["thread"].to!long();
+		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
+		info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, threadnum), m_ctrl, info.pageSize, grp.name);
 		info.group = GroupInfo(grp, m_ctrl);
-		info.postCount = cast(size_t)m_ctrl.getThreadPostCount(info.threadId, grp.name);
+		info.postCount = cast(size_t)m_ctrl.getThreadPostCount(info.thread.id, grp.name);
 		info.pageCount = (info.postCount + info.pageSize-1) / info.pageSize;
 
-		m_ctrl.enumerateThreadPosts(info.threadId, grp.name, info.start, info.pageSize, (idx, art){
+		m_ctrl.enumerateThreadPosts(info.thread.id, grp.name, info.page*info.pageSize, info.pageSize, (idx, art){
 			Article replart;
 			try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
 			catch( Exception ){}
-			info.posts ~= PostInfo(art, replart);
+			info.posts ~= PostInfo(art, replart, info.group.name);
 		});
 
 		res.renderCompat!("vibenews.web.view_thread.dt",
@@ -154,21 +155,23 @@ class WebInterface {
 
 		static struct Info4 {
 			string title;
+			string hostName;
 			GroupInfo group;
 			PostInfo post;
 		}
 		Info4 info;
 
-		auto postid = BsonObjectID.fromString(req.params["post"]);
+		auto postnum = req.params["post"].to!long();
 
 		info.title = m_title;
+		info.hostName = g_hostname;
 		info.group = GroupInfo(grp, m_ctrl);
 
-		auto art = m_ctrl.getArticle(postid);
+		auto art = m_ctrl.getArticle(grp.name, postnum);
 		Article replart;
 		try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
 		catch( Exception ){}
-		info.post = PostInfo(art, replart);
+		info.post = PostInfo(art, replart, info.group.name);
 
 		res.renderCompat!("vibenews.web.view_post.dt",
 			HttpServerRequest, "req",
@@ -177,6 +180,10 @@ class WebInterface {
 
 	void showPostArticle(HttpServerRequest req, HttpServerResponse res)
 	{
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
+			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
 		static struct Info5 {
 			string title;
 			GroupInfo group;
@@ -186,15 +193,14 @@ class WebInterface {
 		Info5 info;
 
 		if( "post" in req.query ){
-			auto repartid = BsonObjectID.fromString(req.query["post"]);
-			auto repart = m_ctrl.getArticle(repartid);
+			auto repartnum = req.query["post"].to!long();
+			auto repart = m_ctrl.getArticle(grp.name, repartnum);
 			info.subject = repart.getHeader("Subject");
 			if( !info.subject.startsWith("Re:") ) info.subject = "Re: " ~ info.subject;
 			info.message = "On "~repart.getHeader("Date")~", "~PosterInfo(repart.getHeader("From")).name~" wrote:\r\n";
 			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(cast(string)repart.message)).join("\r\n");
 			info.message ~= "\r\n\r\n";
 		}
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 		info.title = m_title;
 		info.group = GroupInfo(grp, m_ctrl);
 
@@ -225,8 +231,8 @@ class WebInterface {
 		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
 
 		if( "article" in req.form ){
-			auto repartid = BsonObjectID.fromString(req.form["article"]);
-			auto repart = m_ctrl.getArticle(repartid);
+			auto repartnum = req.form["article"].to!long();
+			auto repart = m_ctrl.getArticle(grp.name, repartnum, false);
 			auto refs = repart.getHeader("References");
 			if( refs.length ) refs ~= " ";
 			refs ~= repart.id;
@@ -239,7 +245,10 @@ class WebInterface {
 
 		m_ctrl.postArticle(art);
 
-		res.redirect(formatString("/groups/%s/%s/", urlEncode(grp.name), art.groups[escapeGroup(grp.name)].threadId.toString()));
+		auto thr = m_ctrl.getThread(art.groups[escapeGroup(grp.name)].threadId);
+		auto refs = m_ctrl.getArticleGruopRefs(thr.firstArticleId);
+
+		res.redirect(formatString("/groups/%s/thread/%s/", urlEncode(grp.name), refs[escapeGroup(grp.name)].articleNumber));
 	}
 }
 
@@ -268,7 +277,7 @@ struct GroupInfo {
 }
 
 struct ThreadInfo {
-	this(Thread thr, Controller ctrl, size_t page_size, string groupname = null)
+	this(Thread thr, Controller ctrl, size_t page_size, string groupname)
 	{
 		id = thr._id;
 		subject = thr.subject;
@@ -278,44 +287,46 @@ struct ThreadInfo {
 
 		try {
 			auto firstpost = ctrl.getArticle(thr.firstArticleId);
-			firstPoster = PosterInfo(firstpost.getHeader("From"));
-			firstPostDate = firstpost.getHeader("Date");//.parseRFC822DateTimeString();
+			firstPost.poster = PosterInfo(firstpost.getHeader("From"));
+			firstPost.date = firstpost.getHeader("Date");//.parseRFC822DateTimeString();
+			firstPost.number = firstpost.groups[escapeGroup(groupname)].articleNumber;
+			
 			auto lastpost = ctrl.getArticle(thr.lastArticleId);
-			lastPoster = PosterInfo(lastpost.getHeader("From"));
-			lastPostDate = lastpost.getHeader("Date");//.parseRFC822DateTimeString();
+			lastPost.poster = PosterInfo(lastpost.getHeader("From"));
+			lastPost.date = lastpost.getHeader("Date");//.parseRFC822DateTimeString();
+			lastPost.number = firstpost.groups[escapeGroup(groupname)].articleNumber;
 		} catch( Exception ){}
 	}
 
 	BsonObjectID id;
 	string subject;
-	PosterInfo firstPoster;
-	//SysTime firstPostDate;
-	string firstPostDate;
-	PosterInfo lastPoster;
-	//SysTime lastPostDate;
-	string lastPostDate;
+	PostInfo firstPost;
+	PostInfo lastPost;
 	size_t pageSize;
 	size_t pageCount;
 	size_t postCount;
 }
 
 struct PostInfo {
-	this(Article art, Article repl_art)
+	this(Article art, Article repl_art, string groupname)
 	{
 		id = art._id;
 		subject = art.getHeader("Subject");
 		poster = PosterInfo(art.getHeader("From"));
 		repliedToPoster = PosterInfo(repl_art.getHeader("From"));
-		repliedToPostId = repl_art._id;
+		if( auto pg = escapeGroup(groupname) in repl_art.groups )
+			repliedToPostNumber = pg.articleNumber;
 		date = art.getHeader("Date");
 		message = sanitizeUTF8(art.message);
+		number = art.groups[escapeGroup(groupname)].articleNumber;
 	}
 
 	BsonObjectID id;
+	long number;
 	string subject;
 	PosterInfo poster;
 	PosterInfo repliedToPoster;
-	BsonObjectID repliedToPostId;
+	long repliedToPostNumber;
 	//SysTime date;
 	string date;
 	string message;

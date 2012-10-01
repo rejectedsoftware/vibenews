@@ -3,7 +3,7 @@ extends layout
 block title
 	- import vibe.textfilter.urlencode;
 
-	- auto title = info.title ~ " - " ~ info.group.name;
+	- auto title = info.title ~ ": " ~ info.group.name;
 
 block body
 
@@ -22,26 +22,26 @@ block body
 			tr
 				td
 					.primary
-						a.title(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/")= thr.subject
+						a.title(href="#{req.rootDir}groups/#{info.group.name}/thread/#{thr.firstPost.number}/")= thr.subject
 					.secondary
 						| by 
-						a(href="#{req.rootDir}users/#{urlEncode(thr.firstPoster.email)}")= thr.firstPoster.name
-						| on #{thr.firstPostDate}
+						a(href="#{req.rootDir}users/#{urlEncode(thr.firstPost.poster.email)}")= thr.firstPost.poster.name
+						| on #{thr.firstPost.date}
 					- if( thr.pageCount > 1 )
 						span.pages Pages: 
 							- foreach( i; 0 .. thr.pageCount )
-								a.page(href="#{req.rootDir}groups/#{info.group.name}/#{thr.id}/?start=#{i*thr.pageSize}")= i+1
+								a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
 				td= thr.postCount-1
 				td
 					| by 
-					a(href="#{req.rootDir}users/#{urlEncode(thr.lastPoster.email)}/")= thr.lastPoster.name
+					a(href="#{req.rootDir}users/#{urlEncode(thr.lastPost.poster.email)}/")= thr.lastPost.poster.name
 					| on 
-					|= thr.lastPostDate
+					|= thr.lastPost.date
 					
 	- if( info.pageCount > 1 )
 		p.pages
 			- foreach( i; 0 .. info.pageCount )
-				- if( info.start == i*info.pageSize )
+				- if( info.page == i )
 					|= i+1
 				- else
-					a.page(href="#{req.rootDir}groups/#{info.group.name}/?start=#{i*info.pageSize}")= i+1
+					a.page(href="#{req.rootDir}groups/#{info.group.name}/?page=#{i+1}")= i+1

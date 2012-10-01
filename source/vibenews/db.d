@@ -129,6 +129,17 @@ class Controller {
 		return t;
 	}
 
+	Thread getThreadForFirstArticle(string groupname, long articlenum)
+	{
+		auto art = m_articles.findOne(["groups."~escapeGroup(groupname)~".articleNumber": articlenum], ["_id": 1]);
+		enforce(!art.isNull(), "Invalid article group/number");
+		auto bt = m_threads.findOne(["firstArticleId": art._id]);
+		enforce(!bt.isNull(), "Article is not the first of any thread.");
+		Thread t;
+		deserializeBson(t, bt);
+		return t;
+	}
+
 	void enumerateThreads(BsonObjectID group, size_t skip, size_t max_count, void delegate(size_t, Thread) del)
 	{
 		size_t idx = skip;
@@ -185,8 +196,18 @@ class Controller {
 		auto nummatch = Bson(number);
 		auto ba = m_articles.findOne(["groups."~egrp~".articleNumber": nummatch, "active": Bson(true)], msgbdy ? null : ["message": 0]);
 		enforce(!ba.isNull(), "Article "~to!string(number)~" not found for group "~groupname~"!");
+		if( !msgbdy ) ba["message"] = Bson(BsonBinData());
 		Article ret;
 		deserializeBson(ret, ba);
+		return ret;
+	}
+
+	GroupRef[string] getArticleGruopRefs(BsonObjectID id)
+	{
+		auto art = m_articles.findOne(["_id": id], ["groups": 1]);
+		enforce(!art.isNull(), "Unknown article id!");
+		GroupRef[string] ret;
+		deserializeBson(ret, art.groups);
 		return ret;
 	}
 
