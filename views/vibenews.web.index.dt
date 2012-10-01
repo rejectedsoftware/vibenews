@@ -27,8 +27,9 @@ block body
 						td= grp.numberOfTopics
 						td= grp.numberOfPosts
 						td
-							.primary
-								| by 
-								a(href="#{req.rootDir}users/#{urlEncode(grp.lastPoster.email)}/")= grp.lastPoster.name
-							.secondary
-								|= grp.lastPostDate
+							- if( grp.lastPostDate.length )
+								.primary
+									| by 
+									a(href="#{req.rootDir}users/#{urlEncode(grp.lastPoster.email)}/")= grp.lastPoster.name
+								.secondary
+									|= grp.lastPostDate

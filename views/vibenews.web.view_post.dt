@@ -1,6 +1,9 @@
 extends layout
 
 block title
+	- import vibe.crypto.md5;
+	- import vibe.textfilter.markdown;
+
 	- auto title = info.title;
 
 block body
@@ -15,10 +18,11 @@ block body
 		div.post.first
 			h2= info.post.subject
 			.post-info
-				p
-					a(href="#{req.rootDir}/users/#{info.post.poster.email}/")= info.post.poster.name
-				p
-					img(src="http://www.gravatar.com/#{info.post.poster.email}")
+				- auto hash = toLower(md5(toLower(info.post.poster.email)));
+				a(href="http://www.gravatar.com/#{hash}")
+					img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&s=120")
+				br
+				a(href="#{req.rootDir}/users/#{info.post.poster.email}/")= info.post.poster.name
 				p Posted #{info.post.date}
 					- if( info.post.repliedToPoster.email.length )
 						| in reply to
@@ -26,4 +30,4 @@ block body
 				p
 					a(href="reply?post=#{info.post.id}") Reply
 			.post-content
-				pre= info.post.message
+				!= filterMarkdown(info.post.message)

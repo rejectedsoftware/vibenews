@@ -4,7 +4,7 @@ body {
 	color: white;
 	background-color: #333;
 	padding: 0;
-	margin: 0;
+	margin: 15pt;
 }
 
 h1 {
@@ -15,7 +15,8 @@ h1 {
 	background-image:      -o-linear-gradient(top, #E0D8D0, #B0A8A0);
 	color: black;
 	font-weight: normal;
-	margin: 0;
+	margin: -15pt;
+	margin-bottom: 0;
 	padding: 3.75pt 15pt;
 }
 

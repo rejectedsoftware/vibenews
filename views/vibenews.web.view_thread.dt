@@ -17,7 +17,9 @@ block body
 		div.post(class='#{i==0?"first odd":i%2==0?"odd":"even"}')
 			h2= post.subject
 			.post-info
-				img(src="http://www.gravatar.com/avatar/#{toLower(md5(toLower(post.poster.email)))}?d=mm&s=120")
+				- auto hash = toLower(md5(toLower(post.poster.email)));
+				a(href="http://www.gravatar.com/#{hash}")
+					img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&s=120")
 				br
 				a(href="#{req.rootDir}/users/#{post.poster.email}/")= post.poster.name
 				p Posted #{post.date}
