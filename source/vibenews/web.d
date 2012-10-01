@@ -12,6 +12,7 @@ import vibe.http.fileserver;
 import vibe.inet.message;
 import vibe.textfilter.urlencode;
 import vibe.utils.string;
+import vibe.utils.validation;
 
 import std.algorithm : map;
 import std.array;
@@ -42,11 +43,11 @@ class WebInterface {
 		auto router = new UrlRouter;
 		router.get("/", &showIndex);
 		router.get("/groups/:group/", &showGroup);
-		router.get("/groups/:group/post", &showPostTopic);
-		router.post("/groups/:group/post", &postTopic);
+		router.get("/groups/:group/post", &showPostArticle);
+		router.post("/groups/:group/post", &postArticle);
 		router.get("/groups/:group/:thread/", &showThread);
-		router.get("/groups/:group/:thread/reply", &showReply);
-		router.post("/groups/:group/:thread/reply", &postReply);
+		router.get("/groups/:group/:thread/reply", &showPostArticle);
+		router.post("/groups/:group/:thread/reply", &postArticle);
 		router.get("/groups/:group/:thread/:post", &showPost);
 		router.get("*", serveStaticFiles("public"));
 
@@ -174,7 +175,7 @@ class WebInterface {
 			Info4*, "info")(Variant(req), Variant(&info));
 	}
 
-	void showPostTopic(HttpServerRequest req, HttpServerResponse res)
+	void showPostArticle(HttpServerRequest req, HttpServerResponse res)
 	{
 		static struct Info5 {
 			string title;
@@ -184,6 +185,15 @@ class WebInterface {
 		}
 		Info5 info;
 
+		if( "post" in req.query ){
+			auto repartid = BsonObjectID.fromString(req.query["post"]);
+			auto repart = m_ctrl.getArticle(repartid);
+			info.subject = repart.getHeader("Subject");
+			if( !info.subject.startsWith("Re:") ) info.subject = "Re: " ~ info.subject;
+			info.message = "On "~repart.getHeader("Date")~", "~PosterInfo(repart.getHeader("From")).name~" wrote:\r\n";
+			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(cast(string)repart.message)).join("\r\n");
+			info.message ~= "\r\n\r\n";
+		}
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 		info.title = m_title;
 		info.group = GroupInfo(grp, m_ctrl);
@@ -193,13 +203,16 @@ class WebInterface {
 			Info5*, "info")(Variant(req), Variant(&info));
 	}
 
-	void postTopic(HttpServerRequest req, HttpServerResponse res)
+	void postArticle(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
 			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
 
-		// TODO: do extensive string validation!
+		validateEmail(req.form["email"]);
+		validateString(req.form["name"], 3, 64, "The poster name");
+		validateString(req.form["subject"], 1, 64, "The message subject");
+		validateString(req.form["message"], 0, 128*1024, "The message body");
 
 		Article art;
 		art._id = BsonObjectID.generate();
@@ -210,6 +223,16 @@ class WebInterface {
 		art.addHeader("Date", Clock.currTime().toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
 		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
+
+		if( "article" in req.form ){
+			auto repartid = BsonObjectID.fromString(req.form["article"]);
+			auto repart = m_ctrl.getArticle(repartid);
+			auto refs = repart.getHeader("References");
+			if( refs.length ) refs ~= " ";
+			refs ~= repart.id;
+			art.addHeader("In-Reply-To", repart.id);
+			art.addHeader("References", refs);
+		}
 
 		art.peerAddress = req.peer;
 		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
@@ -217,71 +240,6 @@ class WebInterface {
 		m_ctrl.postArticle(art);
 
 		res.redirect(formatString("/groups/%s/%s/", urlEncode(grp.name), art.groups[escapeGroup(grp.name)].threadId.toString()));
-	}
-
-	void showReply(HttpServerRequest req, HttpServerResponse res)
-	{
-		static struct Info5 {
-			string title;
-			GroupInfo group;
-			string subject;
-			string message;
-		}
-		Info5 info;
-
-		auto threadid = BsonObjectID.fromString(req.params["thread"]);
-		Article repart;
-		if( "post" in req.query ){
-			auto repartid = BsonObjectID.fromString(req.query["post"]);
-			repart = m_ctrl.getArticle(repartid);
-		}
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
-		info.title = m_title;
-		info.group = GroupInfo(grp, m_ctrl);
-		info.subject = repart.getHeader("Subject");
-		if( !info.subject.startsWith("Re:") ) info.subject = "Re: " ~ info.subject;
-		info.message = "On "~repart.getHeader("Date")~", "~PosterInfo(repart.getHeader("From")).name~" wrote:\r\n";
-		info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(cast(string)repart.message)).join("\r\n");
-		info.message ~= "\r\n\r\n";
-
-		res.renderCompat!("vibenews.web.reply.dt",
-			HttpServerRequest, "req",
-			Info5*, "info")(Variant(req), Variant(&info));
-	}
-
-	void postReply(HttpServerRequest req, HttpServerResponse res)
-	{
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
-		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
-			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
-
-		// TODO: do extensive string validation!
-
-		auto threadid = req.params["thread"];
-		auto repartid = BsonObjectID.fromString(req.form["article"]);
-		auto repart = m_ctrl.getArticle(repartid);
-		auto refs = repart.getHeader("References");
-		if( refs.length ) refs ~= " ";
-		refs ~= repart.id;
-
-		Article art;
-		art._id = BsonObjectID.generate();
-		art.id = "<"~art._id.toString()~"@"~g_hostname~">";
-		art.addHeader("Subject", req.form["subject"]);
-		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
-		art.addHeader("Newsgroups", grp.name);
-		art.addHeader("Date", Clock.currTime().toRFC822DateTimeString());
-		art.addHeader("User-Agent", "VibeNews Web");
-		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
-		art.addHeader("In-Reply-To", repart.id);
-		art.addHeader("References", refs);
-
-		art.peerAddress = req.peer;
-		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
-
-		m_ctrl.postArticle(art);
-
-		res.redirect(formatString("/groups/%s/%s/", urlEncode(grp.name), threadid));
 	}
 }
 
