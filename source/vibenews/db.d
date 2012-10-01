@@ -3,6 +3,7 @@ module vibenews.db;
 import vibe.vibe;
 
 import std.algorithm;
+import std.base64;
 
 
 class Controller {
@@ -572,7 +573,26 @@ struct Article {
 		return false;
 	}
 
-	void addHeader(string name, string value) { headers ~= ArticleHeader(name, value); }
+	void addHeader(string name, string value)
+	{
+		string encode(string str)
+		{
+			size_t first_non_ascii = size_t.max, last_non_ascii = 0;
+			foreach( i; 0 .. str.length )
+				if( (str[i] & 0x80) ){
+					if( first_non_ascii == size_t.max )
+						first_non_ascii = i;
+					last_non_ascii = i;
+				}
+			if( last_non_ascii < first_non_ascii ) return str;
+
+			auto non_ascii = str[first_non_ascii .. last_non_ascii+1];
+			auto encoded = "=?UTF-8?B?"~cast(string)Base64.encode(cast(ubyte[])non_ascii)~"?=";
+			return str[0 .. first_non_ascii] ~ encoded ~ str[last_non_ascii+1 .. $];
+		}
+		assert(!hasHeader(name));
+		headers ~= ArticleHeader(encode(name), encode(value));
+	}
 }
 
 struct GroupRef {
