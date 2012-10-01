@@ -8,9 +8,14 @@ import vibe.data.bson;
 import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
+import vibe.textfilter.urlencode;
 
+import std.algorithm : map;
+import std.array;
 import std.conv;
 import std.exception;
+import std.string;
+
 
 class AdminInterface {
 	private {
@@ -46,7 +51,7 @@ class AdminInterface {
 		Group[] groups;
 		m_ctrl.enumerateGroups((idx, group){
 				groups ~= group;
-			});
+			}, true);
 		res.renderCompat!("vibenews.admin.dt",
 				HttpServerRequest, "req",
 				Group[], "groups"
@@ -55,7 +60,7 @@ class AdminInterface {
 
 	void showGroup(HttpServerRequest req, HttpServerResponse res)
 	{
-		auto group = m_ctrl.getGroupByName(req.params["groupname"]);
+		auto group = m_ctrl.getGroupByName(req.params["groupname"], true);
 		res.renderCompat!("vibenews.editgroup.dt",
 				HttpServerRequest, "req",
 				Group*, "group"
@@ -64,33 +69,27 @@ class AdminInterface {
 
 	void createGroup(HttpServerRequest req, HttpServerResponse res)
 	{
-		enforce(!m_ctrl.groupExists(req.form["name"]), "A group with the specified name already exists");
-		enforce(req.form["password"] == req.form["passwordConfirmation"]);
-
+		enforce(!m_ctrl.groupExists(req.form["name"], true), "A group with the specified name already exists");
+	
 		Group group;
 		group._id = BsonObjectID.generate();
+		group.active = false;
 		group.name = req.form["name"];
 		group.description = req.form["description"];
-		group.username = req.form["username"];
-		if( req.form["password"].length > 0 )
-			group.passwordHash = generateSimplePasswordHash(req.form["password"]);
-
 		m_ctrl.addGroup(group);
 
-		res.redirect("/");
+		res.redirect("/groups/"~urlEncode(group.name)~"/show");
 	}
 
 	void updateGroup(HttpServerRequest req, HttpServerResponse res)
 	{
-		auto group = m_ctrl.getGroupByName(req.params["groupname"]);
+		auto group = m_ctrl.getGroupByName(req.params["groupname"], true);
 		group.description = req.form["description"];
-		group.username = req.form["username"];
 		group.active = ("active" in req.form) !is null;
-		enforce(req.form["password"] == req.form["passwordConfirmation"]);
-		if( req.form["password"].length > 0 )
-			group.passwordHash = generateSimplePasswordHash(req.form["password"]);
+		group.readOnlyAuthTags = req.form["roauthtags"].split(",").map!(s => strip(s))().array();
+		group.readWriteAuthTags = req.form["rwauthtags"].split(",").map!(s => strip(s))().array();
 		m_ctrl.updateGroup(group);
-		res.redirect("/");
+		res.redirect("/groups/"~urlEncode(group.name)~"/show");
 	}
 
 	void purgeGroup(HttpServerRequest req, HttpServerResponse res)

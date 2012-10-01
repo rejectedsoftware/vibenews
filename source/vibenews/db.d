@@ -1,6 +1,9 @@
 module vibenews.db;
 
-import vibe.d;
+import vibe.vibe;
+
+import std.algorithm;
+
 
 class Controller {
 	private {
@@ -8,6 +11,7 @@ class Controller {
 		MongoCollection m_groups;
 		MongoCollection m_articles;
 		MongoCollection m_threads;
+		MongoCollection m_users;
 	}
 
 	this()
@@ -16,6 +20,7 @@ class Controller {
 		m_groups = m_db["vibenews.groups"];
 		m_articles = m_db["vibenews.articles"];
 		m_threads = m_db["vibenews.threads"];
+		m_users = m_db["users"];
 
 		// fixup old article format
 		foreach( a; m_articles.find(["number": ["$exists": true]]) ){
@@ -33,6 +38,14 @@ class Controller {
 			m_articles.update(["_id": a._id], ["$set": ["groups": grprefs]]);
 			m_articles.update(["_id": a._id], ["$unset": ["number": true]]);
 		}
+
+		// find old group auth format
+		foreach( g; m_groups.find(["passwordHash": ["$exists": true]]) ){
+			Bson[] tags;
+			if( g.passwordHash.length > 0 ) tags ~= g.name;
+			m_groups.update(["_id": g._id], ["$set": ["readOnlyAuthTags": tags, "readWriteAuthTags": tags]]);
+			m_groups.update(["_id": g._id], ["$unset": ["username": true, "passwordHash": true]]);
+		}
 	}
 
 
@@ -40,44 +53,48 @@ class Controller {
 	/* Groups                  */
 	/***************************/
 
-	void enumerateGroups(void delegate(size_t idx, Group) cb)
+	void enumerateGroups(void delegate(size_t idx, Group) cb, bool allow_inactive = false)
 	{
 		Group group;
-		foreach( idx, bg; m_groups.find(["active": true]) ){
+		foreach( idx, bg; m_groups.find() ){
+			if( !allow_inactive && !bg.active.get!bool )
+				continue;
 			deserializeBson(group, bg);
 			cb(idx, group);
 		}
 	}
 
-	void enumerateNewGroups(SysTime date, void delegate(size_t idx, Group) del)
+	void enumerateNewGroups(SysTime date, void delegate(size_t idx, Group) del, bool allow_inactive = false)
 	{
 		Group group;
 		Bson idmatch = Bson(BsonObjectID.createDateID(date));
-		foreach( idx, bg; m_groups.find(["_id": Bson(["$gte": idmatch]), "active": Bson(true)]) ){
+		foreach( idx, bg; m_groups.find(["_id": Bson(["$gte": idmatch])]) ){
+			if( !allow_inactive && !bg.active.get!bool )
+				continue;
 			deserializeBson(group, bg);
 			del(idx, group);
 		}
 	}
 
-	bool groupExists(string name)
+	bool groupExists(string name, bool allow_inactive = false)
 	{
-		auto bg = m_groups.findOne(["name": Bson(name), "active": Bson(true)], ["_id": 1]);
-		return !bg.isNull();
+		auto bg = m_groups.findOne(["name": Bson(name)], ["active": 1]);
+		return !bg.isNull() && (allow_inactive || bg.active.get!bool);
 	}
 
-	Group getGroup(BsonObjectID id)
+	Group getGroup(BsonObjectID id, bool allow_inactive = false)
 	{
-		auto bg = m_groups.findOne(["_id": Bson(id), "active": Bson(true)]);
-		enforce(!bg.isNull(), "Unknown group id!");
+		auto bg = m_groups.findOne(["_id": Bson(id)]);
+		enforce(!bg.isNull() && (allow_inactive || bg.active.get!bool), "Unknown group id!");
 		Group ret;
 		deserializeBson(ret, bg);
 		return ret;
 	}
 
-	Group getGroupByName(string name)
+	Group getGroupByName(string name, bool allow_inactive = false)
 	{
-		auto bg = m_groups.findOne(["name": Bson(name), "active": Bson(true)]);
-		enforce(!bg.isNull(), "Group "~name~" not found!");
+		auto bg = m_groups.findOne(["name": Bson(name)]);
+		enforce(!bg.isNull() && (allow_inactive || bg.active.get!bool), "Group "~name~" not found!");
 		Group ret;
 		deserializeBson(ret, bg);
 		return ret;
@@ -291,6 +308,131 @@ class Controller {
 		m_articles.insert(art);
 	}
 
+	void deactivateArticle(BsonObjectID artid)
+	{
+		auto oldart = m_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": false]]);
+		if( !oldart.active.get!bool ) return; // was already deactivated
+
+		// update the group counters
+		foreach( string gname, grp; oldart.groups ){
+			string numfield = "groups."~gname~".articleNumber";
+			auto groupname = Bson(unescapeGroup(gname));
+			auto articlequery = Bson([numfield: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
+			m_groups.update(["name": groupname], ["$inc": ["articleCount": -1]]);
+			auto g = m_groups.findOne(["name": groupname]);
+			auto num = grp.articleNumber;
+			if( g.minArticleNumber == num ){
+				auto minorder = serializeToBson([numfield: 1]);
+				auto minart = m_articles.findOne(["query": articlequery, "orderby": minorder]);
+				long newnum = minart.groups[gname].articleNumber.get!long;
+				m_groups.update(["name": groupname, "minArticleNumber": num], ["$set": ["minArticleNumber": newnum]]);
+			}
+			if( g.maxArticleNumber == num ){
+				auto maxorder = serializeToBson([numfield: -1]);
+				auto maxart = m_articles.findOne(["query": articlequery, "orderby": maxorder]);
+				long newnum = maxart.groups[gname].articleNumber.get!long;
+				m_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
+			}
+		}
+
+		// TODO: update thread first/lastArticleId
+	}
+
+	void activateArticle(BsonObjectID artid)
+	{
+		auto oldart = m_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": true]]);
+		if( oldart.active.get!bool ) return; // was already deactivated
+
+		// update the group counters
+		foreach( string gname, num; oldart.groups ){
+			string numfield = "groups."~gname~".articleNumber";
+			auto groupname = Bson(unescapeGroup(gname));
+			m_groups.update(["name": groupname], ["$inc": ["articleCount": 1]]);
+			m_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
+			m_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
+		}
+
+		// TODO: update thread first/lastArticleId
+	}
+
+	void deleteArticle(BsonObjectID artid)
+	{
+		deactivateArticle(artid);
+		m_articles.remove(["_id": artid]);
+	}
+
+	// deletes all inactive articles from the group
+	void purgeGroup(string name)
+	{
+		m_articles.remove(["active": Bson(false), "groups."~escapeGroup(name): Bson(["$exists": Bson(true)])]);
+	}
+
+
+	/***************************/
+	/* Users                   */
+	/***************************/
+
+	User getUser(BsonObjectID id)
+	{
+		User usr;
+		auto busr = m_users.findOne(["_id": id]);
+		deserializeBson(usr, busr);
+		return usr;
+	}
+
+	User getUserByEmail(string email)
+	{
+		User usr;
+		auto busr = m_users.findOne(["email": email]);
+		enforce(!busr.isNull(), "Unknown user email address.");
+		deserializeBson(usr, busr);
+		return usr;
+	}
+
+	BsonObjectID registerUser(string email, string name, string password)
+	{
+		enforce(m_users.count(["email": email]) == 0, "Email address is already registered.");
+
+		User usr;
+		usr._id = BsonObjectID.generate();
+		usr.email = email;
+		usr.fullName = name;
+		usr.passwordHash = generateSimplePasswordHash(password);
+		m_users.insert(usr);
+		return usr._id;
+	}
+
+	bool isAuthorizedForReadingGroup(BsonObjectID user, string groupname)
+	{
+		auto usr = getUser(user);
+		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
+		if( grp.isNull() ) return false;
+		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
+		foreach( g; grp.readOnlyAuthTags )
+			if( usr.authTags.canFind(g.get!string) )
+				return true;
+		foreach( g; grp.readWriteAuthTags )
+			if( usr.authTags.canFind(g.get!string) )
+				return true;
+		return false;
+	}
+
+	bool isAuthorizedForWritingGroup(BsonObjectID user, string groupname)
+	{
+		auto usr = getUser(user);
+		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
+		if( grp.isNull() ) return false;
+		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
+		foreach( g; grp.readWriteAuthTags )
+			if( usr.authTags.canFind(g.get!string) )
+				return true;
+		return false;
+	}
+
+	/***************************/
+	/* DB Repair               */
+	/***************************/
+
 	void repairGroupNumbers()
 	{
 		foreach( grp; m_groups.find(Bson.EmptyObject) ){
@@ -361,64 +503,6 @@ class Controller {
 		}
 	}
 
-	void deactivateArticle(BsonObjectID artid)
-	{
-		auto oldart = m_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": false]]);
-		if( !oldart.active.get!bool ) return; // was already deactivated
-
-		// update the group counters
-		foreach( string gname, grp; oldart.groups ){
-			string numfield = "groups."~gname~".articleNumber";
-			auto groupname = Bson(unescapeGroup(gname));
-			auto articlequery = Bson([numfield: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
-			m_groups.update(["name": groupname], ["$inc": ["articleCount": -1]]);
-			auto g = m_groups.findOne(["name": groupname]);
-			auto num = grp.articleNumber;
-			if( g.minArticleNumber == num ){
-				auto minorder = serializeToBson([numfield: 1]);
-				auto minart = m_articles.findOne(["query": articlequery, "orderby": minorder]);
-				long newnum = minart.groups[gname].articleNumber.get!long;
-				m_groups.update(["name": groupname, "minArticleNumber": num], ["$set": ["minArticleNumber": newnum]]);
-			}
-			if( g.maxArticleNumber == num ){
-				auto maxorder = serializeToBson([numfield: -1]);
-				auto maxart = m_articles.findOne(["query": articlequery, "orderby": maxorder]);
-				long newnum = maxart.groups[gname].articleNumber.get!long;
-				m_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
-			}
-		}
-
-		// TODO: update thread first/lastArticleId
-	}
-
-	void activateArticle(BsonObjectID artid)
-	{
-		auto oldart = m_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": true]]);
-		if( oldart.active.get!bool ) return; // was already deactivated
-
-		// update the group counters
-		foreach( string gname, num; oldart.groups ){
-			string numfield = "groups."~gname~".articleNumber";
-			auto groupname = Bson(unescapeGroup(gname));
-			m_groups.update(["name": groupname], ["$inc": ["articleCount": 1]]);
-			m_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
-			m_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
-		}
-
-		// TODO: update thread first/lastArticleId
-	}
-
-	void deleteArticle(BsonObjectID artid)
-	{
-		deactivateArticle(artid);
-		m_articles.remove(["_id": artid]);
-	}
-
-	// deletes all inactive articles from the group
-	void purgeGroup(string name)
-	{
-		m_articles.remove(["active": Bson(false), "groups."~escapeGroup(name): Bson(["$exists": Bson(true)])]);
-	}
 }
 
 
@@ -510,8 +594,8 @@ struct Group {
 	long minArticleNumber = 1;
 	long maxArticleNumber = 0;
 	long articleNumberCounter = 0;
-	string username;
-	string passwordHash;
+	string[] readOnlyAuthTags;
+	string[] readWriteAuthTags;
 }
 
 struct Thread {
@@ -520,4 +604,12 @@ struct Thread {
 	string subject;
 	BsonObjectID firstArticleId;
 	BsonObjectID lastArticleId;
+}
+
+struct User {
+	BsonObjectID _id;
+	string fullName;
+	string email;
+	string passwordHash;
+	string[] authTags;
 }

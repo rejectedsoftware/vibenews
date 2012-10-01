@@ -216,10 +216,19 @@ class VibeNewsServer {
 				break;
 			case "pass":
 				req.enforce(isTaskLocalSet("authUser"), NntpStatus.AuthRejected, "specify user first");
-				setTaskLocal("authPassword", req.parameters[1]);
-				res.status = NntpStatus.AuthAccepted;
-				res.statusText = "authentication stored";
-				res.writeVoidBody();
+				auto password = req.parameters[1];
+				try {
+					auto usr = m_ctrl.getUserByEmail(getTaskLocal!string("authUser"));
+					enforce(testSimplePasswordHash(usr.passwordHash, password));
+					setTaskLocal("authUserId", usr._id.toString());
+					res.status = NntpStatus.AuthAccepted;
+					res.statusText = "authentication successful";
+					res.writeVoidBody();
+				} catch( Exception e ){
+					res.status = NntpStatus.AuthRejected;
+					res.statusText = "authentication failed";
+					res.writeVoidBody();
+				}
 				break;
 		}
 	}
@@ -494,25 +503,26 @@ class VibeNewsServer {
 
 	bool testAuth(vibenews.db.Group grp, NntpServerResponse res = null)
 	{
-		if( grp.username.length == 0 ) return true;
-		if( !isTaskLocalSet("authUser") || !isTaskLocalSet("authPassword") ){
-			if( res ){
-				res.status = NntpStatus.AuthRequired;
-				res.statusText = "auth info required";
-				res.writeVoidBody();
-			}
+		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
+			return true;
+
+		BsonObjectID uid;
+		try uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
+		catch(Exception){
+			res.status = NntpStatus.AuthRequired;
+			res.statusText = "auth info required";
+			res.writeVoidBody();
 			return false;
 		}
-		auto user = getTaskLocal!string("authUser");
-		auto pass = getTaskLocal!string("authPassword");
-		if( user != grp.username || !testSimplePasswordHash(grp.passwordHash, pass) ){
-			if( res ){
-				res.status = NntpStatus.AccessFailure;
-				res.statusText = "auth info not valid for group";
-				res.writeVoidBody();
-			}
+
+		try {
+			enforce(m_ctrl.isAuthorizedForWritingGroup(uid, grp.name));
+			return true;
+		} catch(Exception){
+			res.status = NntpStatus.AccessFailure;
+			res.statusText = "auth info not valid for group";
+			res.writeVoidBody();
 			return false;
 		}
-		return true;
 	}
 }

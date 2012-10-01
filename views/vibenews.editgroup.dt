@@ -8,28 +8,33 @@ block body
 		a(href="#{req.rootDir}") Back to overview
 
 	form(method="POST", action="/groups/#{group.name}/update")
-		p
-			label(for="description") Description:
-			input(type="text", name="description", value="#{group.description}")
-		p
-			- if( group.active )
-				input(type="checkbox", name="active", value="yes", checked)
-			- else
-				input(type="checkbox", name="active", value="yes")
-			label(for="active") Active
-		p
-			label(for="username") User name:
-			input(type="text", name="username", value="#{group.username}")
-			br
-			| leave blank for public groups
-		p
-			label(for="password") Change password:
-			input(type="password", name="password")
-		p
-			label(for="passwordConfirmation") Confirm password:
-			input(type="password", name="passwordConfirmation")
-		p
-			input(type="submit", value="Apply changes")
+		table 
+			col.caption
+			tr
+				td
+					label(for="description") Description
+				td
+					input(type="text", name="description", value="#{group.description}")
+			tr
+				td
+					label(for="active") Active
+				td
+					- if( group.active )
+						input(type="checkbox", name="active", value="yes", checked)
+					- else
+						input(type="checkbox", name="active", value="yes")
+			tr
+				td
+					label(for="roauthtags") Read-only auth tags
+				td
+					input#roauthtags(type="text", name="roauthtags", value='#{join(group.readOnlyAuthTags, ", ")}')
+			tr
+				td
+					label(for="rwauthtags") Read-write auth tags
+				td
+					input#rwauthtags(type="text", name="rwauthtags", value='#{join(group.readWriteAuthTags, ", ")}')
+		input(type="submit", value="Apply changes")
+		p Auth tags are separated by commas, leave blank if group is public
 
 	form(method="GET", action="/groups/#{group.name}/articles")
 		input(type="submit", value="Manage articles")

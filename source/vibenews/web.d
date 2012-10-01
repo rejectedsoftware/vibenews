@@ -10,6 +10,7 @@ import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
 import vibe.inet.message;
+import vibe.textfilter.urlencode;
 import vibe.utils.string;
 
 import std.algorithm : map;
@@ -63,7 +64,11 @@ class WebInterface {
 
 		Category cat;
 		cat.title = "All";
-		m_ctrl.enumerateGroups((idx, grp){ cat.groups ~= GroupInfo(grp, m_ctrl); });
+		m_ctrl.enumerateGroups((idx, grp){
+			if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
+				return;
+			cat.groups ~= GroupInfo(grp, m_ctrl);
+		});
 		info.groupCategories ~= cat;
 
 		res.renderCompat!("vibenews.web.index.dt",
@@ -73,6 +78,10 @@ class WebInterface {
 
 	void showGroup(HttpServerRequest req, HttpServerResponse res)
 	{
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
+			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
 		static struct Info2 {
 			string title;
 			GroupInfo group;
@@ -85,7 +94,6 @@ class WebInterface {
 		info.title = m_title;
 		if( auto ps = "start" in req.query ) info.start = to!size_t(*ps);
 
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 		info.group = GroupInfo(grp, m_ctrl);
 		m_ctrl.enumerateThreads(grp._id, info.start, info.pageSize, (idx, thr){
 			info.threads ~= ThreadInfo(thr, m_ctrl, info.pageSize, grp.name);
@@ -100,6 +108,10 @@ class WebInterface {
 
 	void showThread(HttpServerRequest req, HttpServerResponse res)
 	{
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
+			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
 		static struct Info3 {
 			string title;
 			GroupInfo group;
@@ -112,8 +124,6 @@ class WebInterface {
 			size_t pageCount;
 		}
 		Info3 info;
-
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
 		info.title = m_title;
 		if( auto ps = "start" in req.query ) info.start = to!size_t(*ps);
@@ -137,6 +147,10 @@ class WebInterface {
 
 	void showPost(HttpServerRequest req, HttpServerResponse res)
 	{
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
+			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
 		static struct Info4 {
 			string title;
 			GroupInfo group;
@@ -145,7 +159,6 @@ class WebInterface {
 		Info4 info;
 
 		auto postid = BsonObjectID.fromString(req.params["post"]);
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
 		info.title = m_title;
 		info.group = GroupInfo(grp, m_ctrl);
@@ -182,16 +195,18 @@ class WebInterface {
 
 	void postTopic(HttpServerRequest req, HttpServerResponse res)
 	{
-		// TODO: do extensive string validation!
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
+			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
 
-		auto groupname = req.params["group"];
+		// TODO: do extensive string validation!
 
 		Article art;
 		art._id = BsonObjectID.generate();
 		art.id = "<"~art._id.toString()~"@"~g_hostname~">";
 		art.addHeader("Subject", req.form["subject"]);
 		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
-		art.addHeader("Newsgroups", groupname);
+		art.addHeader("Newsgroups", grp.name);
 		art.addHeader("Date", Clock.currTime().toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
 		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
@@ -201,7 +216,7 @@ class WebInterface {
 
 		m_ctrl.postArticle(art);
 
-		res.redirect(formatString("/groups/%s/%s/", groupname, art.groups[escapeGroup(groupname)].threadId.toString()));
+		res.redirect(formatString("/groups/%s/%s/", urlEncode(grp.name), art.groups[escapeGroup(grp.name)].threadId.toString()));
 	}
 
 	void showReply(HttpServerRequest req, HttpServerResponse res)
@@ -236,9 +251,12 @@ class WebInterface {
 
 	void postReply(HttpServerRequest req, HttpServerResponse res)
 	{
+		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
+			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
 		// TODO: do extensive string validation!
 
-		auto groupname = req.params["group"];
 		auto threadid = req.params["thread"];
 		auto repartid = BsonObjectID.fromString(req.form["article"]);
 		auto repart = m_ctrl.getArticle(repartid);
@@ -251,7 +269,7 @@ class WebInterface {
 		art.id = "<"~art._id.toString()~"@"~g_hostname~">";
 		art.addHeader("Subject", req.form["subject"]);
 		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
-		art.addHeader("Newsgroups", groupname);
+		art.addHeader("Newsgroups", grp.name);
 		art.addHeader("Date", Clock.currTime().toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
 		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
@@ -263,7 +281,7 @@ class WebInterface {
 
 		m_ctrl.postArticle(art);
 
-		res.redirect(formatString("/groups/%s/%s/", groupname, threadid));
+		res.redirect(formatString("/groups/%s/%s/", urlEncode(grp.name), threadid));
 	}
 }
 
