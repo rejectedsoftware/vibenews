@@ -25,9 +25,10 @@ block body
 				- if( info.post.repliedToPoster.email.length )
 					| in reply to
 					a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
+			p Permalink: 
+				a(href="#{info.post.number}") HTTP
+				a(href="nntp://#{info.hostName}:119/#{info.group.name}/#{info.post.number}") NNTP
 			p
 				a(href="reply?post=#{info.post.number}") Reply
-			p
-				a(href="nntp://#{info.hostName}:119/#{info.group.name}/#{info.post.number}") NNTP message
 		.post-content
 			!= filterMarkdown(info.post.message)
