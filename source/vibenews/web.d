@@ -440,6 +440,6 @@ string decodeMessage(Article art)
 {
 	// TODO: do character encoding etc.
 	auto msg = art.message;
-	msg = msg.replace(cast(ubyte[])"=\r\n", cast(ubyte[])"\r\n");
+	msg = msg.replace(cast(ubyte[])"=\r\n", cast(ubyte[])"");
 	return sanitizeUTF8(msg);
 }
