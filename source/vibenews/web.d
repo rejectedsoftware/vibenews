@@ -428,7 +428,10 @@ struct QuotedPrintable {
 		auto ret = appender!(ubyte[])();
 		for( size_t i = 0; i < input.length; i++ ){
 			if( input[i] == '=' ){
-				ret.put(parse!ubyte(input[i+1 .. i+3], 16));
+				auto code = input[i+1 .. i+3];
+				i += 2;
+				if( code != cast(ubyte[])"\r\n" )
+					ret.put(code.parse!ubyte(16));
 				i += 2;
 			} else ret.put(input[i]);
 		}
@@ -438,8 +441,12 @@ struct QuotedPrintable {
 
 string decodeMessage(Article art)
 {
-	// TODO: do character encoding etc.
 	auto msg = art.message;
-	msg = msg.replace(cast(ubyte[])"=\r\n", cast(ubyte[])"");
+	switch( art.getHeader("Content-Transfer-Encoding") ){
+		default: break;
+		case "quoted-printable": msg = QuotedPrintable.decode(cast(string)msg); break;
+		case "base64": msg = Base64.decode(msg); break;
+	}
+	// TODO: do character encoding etc.
 	return sanitizeUTF8(msg);
 }
