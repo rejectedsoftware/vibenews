@@ -9,9 +9,13 @@ block title
 block body
 
 	nav
-		a(href="../../../") Forum index
-		a(href="../")= info.group.name
-		a(href="./") Back to thread
+		- if( "post" in req.query )
+			a(href="../../../../") Forum index
+			a(href="../../")= info.group.name
+			a(href="./") Back to thread
+		- else
+			a(href="../../") Forum index
+			a(href="./")= info.group.name
 		
 	form(action='#{"post" in req.query ? "reply" : "post"}', method="POST")
 		- if( "post" in req.query )
