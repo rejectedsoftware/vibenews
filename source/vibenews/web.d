@@ -208,7 +208,7 @@ class WebInterface {
 			info.subject = repart.getHeader("Subject");
 			if( !info.subject.startsWith("Re:") ) info.subject = "Re: " ~ info.subject;
 			info.message = "On "~repart.getHeader("Date")~", "~PosterInfo(repart.getHeader("From")).name~" wrote:\r\n";
-			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(cast(string)repart.message)).join("\r\n");
+			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(decodeMessage(repart))).join("\r\n");
 			info.message ~= "\r\n\r\n";
 		}
 		info.title = m_title;
@@ -338,7 +338,7 @@ struct PostInfo {
 		if( auto pg = escapeGroup(groupname) in repl_art.groups )
 			repliedToPostNumber = pg.articleNumber;
 		date = art.getHeader("Date");
-		message = sanitizeUTF8(art.message);
+		message = decodeMessage(art);
 		number = art.groups[escapeGroup(groupname)].articleNumber;
 	}
 
@@ -434,4 +434,12 @@ struct QuotedPrintable {
 		}
 		return ret.data();
 	}
+}
+
+string decodeMessage(Article art)
+{
+	// TODO: do character encoding etc.
+	auto msg = art.message;
+	msg = msg.replace(cast(ubyte[])"=\r\n", cast(ubyte[])"\r\n");
+	return sanitizeUTF8(msg);
 }
