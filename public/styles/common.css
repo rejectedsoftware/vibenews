@@ -137,6 +137,10 @@ quot {
 	border: 1px solid black;
 }
 
+.post-info .posting-info { color: #555; }
+.post-info .posting-info a { color: #555; }
+.post-info .reply-link { margin-top: 7.5pt; }
+
 .post-content {
 	margin: 0;
 	margin-left: 210pt;
@@ -177,6 +181,15 @@ input, textarea {
 		float: left;
 		margin-right: 15pt;
 	}
+	/* clearfix */
+	.post-info:after {
+		content: ".";
+		display: block;
+		clear: both;
+		visibility: hidden;
+		line-height: 0;
+		height: 0;
+	}
 
 	.post-info .avatar img {
 		max-width: 96px;
@@ -187,5 +200,12 @@ input, textarea {
 		margin-left: 0;
 		border-left: none;
 		border-top: 1px solid #877;
+	}
+}
+
+@media (max-width: 400pt)
+{
+	.post-info .avatar img {
+		max-width: 64px;
 	}
 }

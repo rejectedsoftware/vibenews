@@ -28,12 +28,11 @@ block body
 			.poster-name
 				a(href="#{req.rootDir}/users/!{htmlAllEscape(info.post.poster.email)}/")= info.post.poster.name
 
-			.reply-info
-				p Posted #{info.post.date}
-					- if( info.post.repliedToPoster.email.length )
-						| in reply to
-						a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
-				p
-					a(href="reply?post=#{info.post.number}") Reply
+			.posting-info Posted #{info.post.date}
+				- if( info.post.repliedToPoster.email.length )
+					| in reply to
+					a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
+			.reply-link
+				a(href="reply?post=#{info.post.number}") Reply
 		.post-content
 			!= filterMarkdown(info.post.message, true)
