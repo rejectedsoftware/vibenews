@@ -10,7 +10,7 @@ block body
 
 	nav
 		a(href="../../../../") Forum index
-		a(href="../")= info.group.name
+		a(href="../../")= info.group.name
 
 	- foreach( i, post; info.posts )
 		a(id='#{post.id}')

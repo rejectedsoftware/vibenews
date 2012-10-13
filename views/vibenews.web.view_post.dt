@@ -10,7 +10,7 @@ block body
 
 	nav
 		a(href="../../../../") Forum index
-		a(href="../")= info.group.name
+		a(href="../../")= info.group.name
 		a(href="./") Back to thread
 
 	div.post.first
