@@ -2,9 +2,12 @@
 html
 	head
 		block title
-		link(rel="stylesheet", href="#{req.rootDir}styles/common.css", type="text/css")
 		title= title
-	body
+		link(rel="stylesheet", href="#{req.rootDir}styles/common.css", type="text/css")
+		link(rel="stylesheet", href="#{req.rootDir}prettify/prettify.css", type="text/css")
+		script(type="text/javascript", src="#{req.rootDir}prettify/prettify.js")/**/
+		
+	body(onload="prettyPrint()")
 		h1= title
 		
 		block body
