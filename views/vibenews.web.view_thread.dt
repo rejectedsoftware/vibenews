@@ -32,7 +32,7 @@ block body
 				p
 					a(href="reply?post=#{post.number}") Reply
 			.post-content
-				!= filterMarkdown(post.message)
+				!= filterMarkdown(post.message, true)
 
 	- if( info.pageCount > 1 )
 		p.pages
@@ -40,4 +40,4 @@ block body
 				- if( info.page == i )
 					|= i+1
 				- else
-					a.page(href="#{req.rootDir}groups/#{info.group.name}/#{info.thread.firstPost.number}/?page=#{i+1}")= i+1
+					a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{info.thread.firstPost.number}/?page=#{i+1}")= i+1

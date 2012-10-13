@@ -31,4 +31,4 @@ block body
 			p
 				a(href="reply?post=#{info.post.number}") Reply
 		.post-content
-			!= filterMarkdown(info.post.message)
+			!= filterMarkdown(info.post.message, true)

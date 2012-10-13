@@ -36,6 +36,7 @@ block body
 					p(style="color: gray;") Note that you can use 
 						a(href="http://daringfireball.net/projects/markdown/basics", target="_blank") Markdown
 						| to markup your message.
+					p(style="color: gray;") In addition to vanilla Markdown, line breaks will appear in the output and triple back-ticks (```) can be used to embed a block of code.
 				td
 					textarea#message(name="message", rows="18")= info.message
 
