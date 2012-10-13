@@ -13,22 +13,27 @@ block body
 		a(href="../../")= info.group.name
 		a(href="./") Back to thread
 
-	div.post.first
-		h2= info.post.subject
-		.post-info
-			- auto hash = toLower(md5(toLower(info.post.poster.email)));
-			a(href="http://www.gravatar.com/#{hash}")
-				img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&s=120")
-			br
-			a(href="#{req.rootDir}/users/!{htmlAllEscape(info.post.poster.email)}/")= info.post.poster.name
-			p Posted #{info.post.date}
-				- if( info.post.repliedToPoster.email.length )
-					| in reply to
-					a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
-			p Permalink: 
+	.post.first
+		.post-header
+			h2.skeleton= info.post.subject
+			.permalink Permalink: 
 				a(href="#{info.post.number}") HTTP
 				a(href="nntp://#{info.hostName}:119/#{info.group.name}/#{info.post.number}") NNTP
-			p
-				a(href="reply?post=#{info.post.number}") Reply
+		.post-info
+			.avatar
+				- auto hash = toLower(md5(toLower(info.post.poster.email)));
+				a(href="http://www.gravatar.com/#{hash}")
+					img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&s=120")
+
+			.poster-name
+				a(href="#{req.rootDir}/users/!{htmlAllEscape(info.post.poster.email)}/")= info.post.poster.name
+
+			.reply-info
+				p Posted #{info.post.date}
+					- if( info.post.repliedToPoster.email.length )
+						| in reply to
+						a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
+				p
+					a(href="reply?post=#{info.post.number}") Reply
 		.post-content
 			!= filterMarkdown(info.post.message, true)

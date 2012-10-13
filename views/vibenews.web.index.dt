@@ -9,7 +9,7 @@ block body
 
 	- foreach( cat; info.groupCategories )
 		section
-			h2= cat.title
+			h2.skeleton= cat.title
 			
 			table
 				tr

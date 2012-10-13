@@ -7,7 +7,7 @@ body {
 	margin: 15pt;
 }
 
-h1 {
+h1.skeleton {
 	background-color: #E0D8D0;
 	background-image: -webkit-linear-gradient(top, #E0D8D0, #B0A8A0);
 	background-image:    -moz-linear-gradient(top, #E0D8D0, #B0A8A0);
@@ -105,7 +105,7 @@ quot {
 }
 
 
-.post h2 {
+.post .post-header {
 	background-color: #666;
 	background-image: -webkit-linear-gradient(top, #777, #444);
 	background-image:    -moz-linear-gradient(top, #777, #444);
@@ -113,11 +113,19 @@ quot {
 	background-image:      -o-linear-gradient(top, #777, #444);
 	border-bottom: 1px solid #877;
 	color: white;
+	height: 20pt;
+}
+
+.post h2.skeleton {
 	margin: 0;
 	padding: 0 4pt;
 	font-size: 12pt;
 	font-weight: normal;
+	float: left;
 }
+
+.post .permalink { color: #ddd; text-align: right; padding-right: 7.5pt; }
+.post .permalink a { color: #ddd; }
 
 .post-info {
 	width: 180pt;
@@ -155,4 +163,29 @@ input, textarea {
 	border: 1px solid #aaa;
 	background-color: white;
 	overflow: auto;
+}
+
+
+@media (max-width: 580pt)
+{
+	.post-info {
+		float: none;
+		width: auto;
+	}
+
+	.post-info .avatar {
+		float: left;
+		margin-right: 15pt;
+	}
+
+	.post-info .avatar img {
+		max-width: 96px;
+	}
+
+	.post-content {
+		float: none;
+		margin-left: 0;
+		border-left: none;
+		border-top: 1px solid #877;
+	}
 }

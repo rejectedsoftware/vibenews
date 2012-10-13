@@ -39,7 +39,7 @@ class WebInterface {
 
 		auto settings = new HttpServerSettings;
 		settings.port = 8009;
-		settings.bindAddresses = ["127.0.0.1"];
+		settings.bindAddresses = ["0.0.0.0"];
 
 		auto router = new UrlRouter;
 		router.get("/", &showIndex);
