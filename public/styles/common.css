@@ -113,7 +113,7 @@ quot {
 	background-image:      -o-linear-gradient(top, #777, #444);
 	border-bottom: 1px solid #877;
 	color: white;
-	height: 20pt;
+	min-height: 20pt;
 }
 
 .post h2.skeleton {
