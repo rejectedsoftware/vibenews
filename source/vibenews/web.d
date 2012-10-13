@@ -10,6 +10,7 @@ import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
 import vibe.inet.message;
+import vibe.textfilter.markdown;
 import vibe.textfilter.urlencode;
 import vibe.utils.string;
 import vibe.utils.validation;
@@ -42,6 +43,7 @@ class WebInterface {
 
 		auto router = new UrlRouter;
 		router.get("/", &showIndex);
+		router.post("/markup", &markupArticle);
 		router.get("/groups/:group/", &showGroup);
 		router.get("/groups/:group/post", &showPostArticle);
 		router.post("/groups/:group/post", &postArticle);
@@ -207,6 +209,13 @@ class WebInterface {
 		res.renderCompat!("vibenews.web.reply.dt",
 			HttpServerRequest, "req",
 			Info5*, "info")(Variant(req), Variant(&info));
+	}
+
+	void markupArticle(HttpServerRequest req, HttpServerResponse res)
+	{
+		auto msg = req.form["message"];
+		validateString(msg, 0, 128*1024, "The message body");
+		res.writeBody(filterMarkdown(msg, true), "text/html");
 	}
 
 	void postArticle(HttpServerRequest req, HttpServerResponse res)

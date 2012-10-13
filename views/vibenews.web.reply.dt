@@ -3,6 +3,9 @@ extends layout
 block title
 	- auto title = info.title ~ " - Reply";
 
+	script(type="text/javascript", src="#{req.rootDir}scripts/jquery.js")
+	script(type="text/javascript", src="#{req.rootDir}scripts/vibenews-reply.js")
+
 block body
 
 	nav
@@ -38,6 +41,10 @@ block body
 						| to markup your message.
 					p(style="color: gray;") In addition to vanilla Markdown, line breaks will appear in the output and triple back-ticks (```) can be used to embed a block of code.
 				td
-					textarea#message(name="message", rows="18")= info.message
+					#message-area
+						textarea#message(name="message", rows="18")= info.message
+						#message-preview(style="display: none;")
+					input#preview-checkbox(type="checkbox", onchange="previewToggle()", style="width: auto;")
+					label(for="preview-checkbox") Preview
 
 		button(type="submit") Post

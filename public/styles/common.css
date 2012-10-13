@@ -150,3 +150,9 @@ quot {
 input, textarea {
 	width: 100%;
 }
+
+#message-preview {
+	border: 1px solid #aaa;
+	background-color: white;
+	overflow: auto;
+}
