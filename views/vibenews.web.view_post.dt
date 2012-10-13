@@ -26,7 +26,7 @@ block body
 					img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&s=120")
 
 			.poster-name
-				a(href="#{req.rootDir}/users/!{htmlAllEscape(info.post.poster.email)}/")= info.post.poster.name
+				a(href="#{req.rootDir}users/!{htmlAllEscape(info.post.poster.email)}/")= info.post.poster.name
 
 			.posting-info Posted #{info.post.date}
 				- if( info.post.repliedToPoster.email.length )

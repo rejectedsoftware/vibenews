@@ -26,12 +26,12 @@ block body
 				td
 					label(for="name") Name
 				td
-					input#name(type="text", name="name")
+					input#name(type="text", name="name", value="#{info.name}")
 			tr
 				td
 					label(for="email") Email
 				td
-					input#email(type="text", name="email")
+					input#email(type="text", name="email", value="#{info.email}")
 			tr
 				td
 					label(for="subject") Subject

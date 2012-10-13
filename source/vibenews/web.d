@@ -40,6 +40,7 @@ class WebInterface {
 		auto settings = new HttpServerSettings;
 		settings.port = 8009;
 		settings.bindAddresses = ["0.0.0.0"];
+		settings.sessionStore = new MemorySessionStore;
 
 		auto router = new UrlRouter;
 		router.get("/", &showIndex);
@@ -189,10 +190,17 @@ class WebInterface {
 		static struct Info5 {
 			string title;
 			GroupInfo group;
+			string name;
+			string email;
 			string subject;
 			string message;
 		}
 		Info5 info;
+
+		if( req.session ){
+			info.name = req.session["name"];
+			info.email = req.session["email"];
+		}
 
 		if( "post" in req.query ){
 			auto repartnum = req.query["post"].to!long();
@@ -257,6 +265,10 @@ class WebInterface {
 		auto thr = m_ctrl.getThread(art.groups[escapeGroup(grp.name)].threadId);
 		auto refs = m_ctrl.getArticleGruopRefs(thr.firstArticleId);
 
+		Session session = req.session;
+		if( !session ) session = res.startSession();
+		session["name"] = req.form["name"].idup;
+		session["email"] = req.form["email"].idup;
 		res.redirect(formatString("/groups/%s/thread/%s/", urlEncode(grp.name), refs[escapeGroup(grp.name)].articleNumber));
 	}
 }
