@@ -25,7 +25,7 @@ block body
 						a.title(href="#{req.rootDir}groups/#{info.group.name}/thread/#{thr.firstPost.number}/")= thr.subject
 					.secondary
 						| by 
-						a(href="#{req.rootDir}users/#{urlEncode(thr.firstPost.poster.email)}")= thr.firstPost.poster.name
+						a(href="#{req.rootDir}users/!{htmlAllEscape(thr.firstPost.poster.email)}")= thr.firstPost.poster.name
 						| on #{thr.firstPost.date}
 					- if( thr.pageCount > 1 )
 						span.pages Pages: 
@@ -34,7 +34,7 @@ block body
 				td= thr.postCount-1
 				td
 					| by 
-					a(href="#{req.rootDir}users/#{urlEncode(thr.lastPost.poster.email)}/")= thr.lastPost.poster.name
+					a(href="#{req.rootDir}users/!{htmlAllEscape(thr.lastPost.poster.email)}/")= thr.lastPost.poster.name
 					| on 
 					|= thr.lastPost.date
 					
