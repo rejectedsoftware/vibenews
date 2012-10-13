@@ -217,7 +217,7 @@ class WebInterface {
 
 		validateEmail(req.form["email"]);
 		validateString(req.form["name"], 3, 64, "The poster name");
-		validateString(req.form["subject"], 1, 64, "The message subject");
+		validateString(req.form["subject"], 1, 128, "The message subject");
 		validateString(req.form["message"], 0, 128*1024, "The message body");
 
 		Article art;
