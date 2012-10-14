@@ -13,7 +13,7 @@ block body
 				a(href="../../") Forum index
 		
 	p
-		a(href="post") Post new topic
+		a.link-button(href="post") Post new topic
 
 	- if( info.pageCount > 1 )
 		p.pages Pages: 

@@ -101,6 +101,23 @@ quot {
 	padding-left: 7.5pt;
 }
 
+.link-button {
+	display: block;
+	margin-top: 7.5pt;
+	max-width: 100pt;
+	padding: 1pt 3.75pt;
+	background-color: #ccc;
+	background-image:      -o-linear-gradient(top, #eee, #bbb);
+	background-image:    -moz-linear-gradient(top, #eee, #bbb);
+	background-image: -webkit-linear-gradient(top, #eee, #bbb);
+	border: 1px solid #555;
+	border-radius: 3pt;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	clear: both;
+}
+
 .post {
 	margin-bottom: 15pt;
 	background-color: #eae8dd;
@@ -157,22 +174,6 @@ quot {
 
 .post-info .posting-info { color: #555; }
 .post-info .posting-info a { color: #555; }
-.post-info .reply-link {
-	display: block;
-	margin-top: 7.5pt;
-	max-width: 50%;
-	padding: 1pt 3.75pt;
-	background-color: #ccc;
-	background-image:      -o-linear-gradient(top, #eee, #bbb);
-	background-image:    -moz-linear-gradient(top, #eee, #bbb);
-	background-image: -webkit-linear-gradient(top, #eee, #bbb);
-	border: 1px solid #555;
-	border-radius: 3pt;
-	text-align: center;
-	text-decoration: none;
-	color: black;
-	clear: both;
-}
 
 .post-content {
 	margin: 0;
@@ -206,6 +207,10 @@ input, textarea {
 .post-content { margin: 0; width: 100%; }
 
 @media (max-width: 580pt) {
+	.post-body { display: block; }
+	.post-info, .post-content { display: block; }
+	.post-content { margin: 0; width: auto; }
+
 	.post-info {
 		float: none;
 		width: auto;

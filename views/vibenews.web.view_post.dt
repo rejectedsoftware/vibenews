@@ -37,6 +37,6 @@ block body
 					- if( info.post.repliedToPoster.email.length )
 						| in reply to
 						a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
-				a.reply-link(href="reply?post=#{info.post.number}") Reply
+				a.reply-link.link-button(href="reply?post=#{info.post.number}") Reply
 			.post-content
 				!= filterMarkdown(info.post.message, true)

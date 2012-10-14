@@ -1,7 +1,7 @@
 extends layout
 
 block title
-	- auto title = info.title ~ " - Reply";
+	- auto title = info.title ~ ("post" in req.query ? ": Reply" : ": Post new topic");
 
 	script(type="text/javascript", src="#{req.rootDir}scripts/jquery.js")
 	script(type="text/javascript", src="#{req.rootDir}scripts/vibenews-reply.js")
