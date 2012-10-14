@@ -32,6 +32,10 @@ class AdminInterface {
 
 		auto router = new UrlRouter;
 		router.get("/", &showAdminPanel);
+		router.post("/categories/create", &createGroupCategory);
+		router.get("/categories/:category/show", &showGroupCategory);
+		router.post("/categories/:category/update", &updateGroupCategory);
+		router.post("/categories/:category/delete", &deleteGroupCategory);
 		router.post("/groups/create", &createGroup);
 		router.post("/groups/repair-numbers", &repairGroupNumbers);
 		router.post("/groups/repair-threads", &repairGroupThreads);
@@ -49,13 +53,43 @@ class AdminInterface {
 	void showAdminPanel(HttpServerRequest req, HttpServerResponse res)
 	{
 		Group[] groups;
-		m_ctrl.enumerateGroups((idx, group){
-				groups ~= group;
-			}, true);
+		GroupCategory[] categories;
+		m_ctrl.enumerateGroups((idx, group){ groups ~= group; }, true);
+		m_ctrl.enumerateGroupCategories((idx, cat){ categories ~= cat; });
 		res.renderCompat!("vibenews.admin.dt",
 				HttpServerRequest, "req",
-				Group[], "groups"
-			)(Variant(req), Variant(groups));
+				Group[], "groups",
+				GroupCategory[], "categories"
+			)(Variant(req), Variant(groups), Variant(categories));
+	}
+
+	void showGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	{
+		auto category = m_ctrl.getGroupCategory(BsonObjectID.fromString(req.params["category"]));
+		Group[] groups;
+		m_ctrl.enumerateGroups((idx, grp){ groups ~= grp; });
+		res.renderCompat!("vibenews.admin.editcategory.dt",
+			HttpServerRequest, "req",
+			GroupCategory*, "category",
+			Group[], "groups")(Variant(req), Variant(&category), Variant(groups));
+	}
+
+	void updateGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	{
+		auto id = BsonObjectID.fromString(req.params["category"]);
+		auto caption = req.form["caption"];
+		auto index = req.form["index"].to!int();
+		BsonObjectID[] groups;
+		m_ctrl.enumerateGroups((idx, grp){ if( grp._id.toString() in req.form ) groups ~= grp._id; });
+		m_ctrl.updateGroupCategory(id, caption, index, groups);
+		res.redirect("/categories/"~id.toString()~"/show");
+	}
+
+	void deleteGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	{
+		auto id = BsonObjectID.fromString(req.params["category"]);
+		m_ctrl.deleteGroupCategory(id);
+		res.redirect("/");
 	}
 
 	void showGroup(HttpServerRequest req, HttpServerResponse res)
@@ -67,6 +101,12 @@ class AdminInterface {
 			)(Variant(req), Variant(&group));
 	}
 
+	void createGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	{
+		auto id = m_ctrl.createGroupCategory(req.form["caption"], req.form["index"].to!int());
+		res.redirect("/categories/"~id.toString()~"/show");
+	}
+
 	void createGroup(HttpServerRequest req, HttpServerResponse res)
 	{
 		enforce(!m_ctrl.groupExists(req.form["name"], true), "A group with the specified name already exists");
@@ -75,7 +115,7 @@ class AdminInterface {
 		group._id = BsonObjectID.generate();
 		group.active = false;
 		group.name = req.form["name"];
-		group.description = req.form["description"];
+		group.caption = req.form["caption"];
 		m_ctrl.addGroup(group);
 
 		res.redirect("/groups/"~urlEncode(group.name)~"/show");
@@ -84,6 +124,7 @@ class AdminInterface {
 	void updateGroup(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto group = m_ctrl.getGroupByName(req.params["groupname"], true);
+		group.caption = req.form["caption"];
 		group.description = req.form["description"];
 		group.active = ("active" in req.form) !is null;
 		group.readOnlyAuthTags = req.form["roauthtags"].split(",").map!(s => strip(s))().array();

@@ -10,6 +10,7 @@ class Controller {
 	private {
 		MongoDB m_db;
 		MongoCollection m_groups;
+		MongoCollection m_groupCategories;
 		MongoCollection m_articles;
 		MongoCollection m_threads;
 		MongoCollection m_users;
@@ -19,6 +20,7 @@ class Controller {
 	{
 		m_db = connectMongoDB("127.0.0.1");
 		m_groups = m_db["vibenews.groups"];
+		m_groupCategories = m_db["vibenews.groupCategories"];
 		m_articles = m_db["vibenews.articles"];
 		m_threads = m_db["vibenews.threads"];
 		m_users = m_db["users"];
@@ -47,6 +49,60 @@ class Controller {
 			m_groups.update(["_id": g._id], ["$set": ["readOnlyAuthTags": tags, "readWriteAuthTags": tags]]);
 			m_groups.update(["_id": g._id], ["$unset": ["username": true, "passwordHash": true]]);
 		}
+
+		// create missing fields
+		Bson[string] fields = ["caption": Bson("Group caption")];
+		foreach( k, v; fields ){
+			m_groups.update([k: ["$exists": false]], ["$set": [k: v]], UpdateFlags.MultiUpdate);
+		}
+	}
+
+
+	/***************************/
+	/* Group categories        */
+	/***************************/
+
+	void enumerateGroupCategories(void delegate(size_t idx, GroupCategory) del)
+	{
+		foreach( idx, bc; m_groupCategories.find() ){
+			GroupCategory c;
+			deserializeBson(c, bc);
+			del(idx, c);
+		}
+	}
+
+	GroupCategory getGroupCategory(BsonObjectID id)
+	{
+		auto bc = m_groupCategories.findOne(["_id": id]);
+		enforce(!bc.isNull(), "Invalid category id");
+		GroupCategory cat;
+		deserializeBson(cat, bc);
+		return cat;
+	}
+
+	BsonObjectID createGroupCategory(string caption, int index)
+	{
+		GroupCategory cat;
+		cat._id = BsonObjectID.generate();
+		cat.caption = caption;
+		cat.index = index;
+		m_groupCategories.insert(cat);
+		return cat._id;
+	}
+
+	void updateGroupCategory(BsonObjectID category, string caption, int index, BsonObjectID[] groups)
+	{
+		GroupCategory cat;
+		cat._id = category;
+		cat.caption = caption;
+		cat.index = index;
+		cat.groups = groups;
+		m_groupCategories.update(["_id": category], cat);
+	}
+
+	void deleteGroupCategory(BsonObjectID id)
+	{
+		m_groupCategories.remove(["_id": id]);
 	}
 
 
@@ -626,10 +682,18 @@ struct ArticleHeader {
 	string value;
 }
 
+struct GroupCategory {
+	BsonObjectID _id;
+	string caption;
+	int index;
+	BsonObjectID[] groups;
+}
+
 struct Group {
 	BsonObjectID _id;
 	bool active = true;
 	string name;
+	string caption;
 	string description;
 	long articleCount = 0;
 	long minArticleNumber = 1;

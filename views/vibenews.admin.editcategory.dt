@@ -1,0 +1,41 @@
+extends layout
+
+block title
+	- import std.algorithm;
+	
+	- auto title = "VibeNews - Edit category " ~ category.caption;
+	
+block body
+	p
+		a(href="#{req.rootDir}") Back to overview
+
+	form(method="POST", action="/categories/#{category._id}/update")
+		table 
+			col.caption
+			tr
+				td
+					label(for="caption") Caption
+				td
+					input#caption(type="text", name="caption", value="#{category.caption}")
+			tr
+				td
+					label(for="index") Index
+				td
+					input#index(type="text", name="index", value="#{category.index}")
+			tr
+				td Groups
+				td
+					- foreach( grp; groups )
+						p
+							- if( canFind(category.groups, grp._id) )
+								input.checkbox(id="#{grp._id}", type="checkbox", name="#{grp._id}", checked)
+							- else
+								input.checkbox(id="#{grp._id}", type="checkbox", name="#{grp._id}")
+							label(for="#{grp._id}")= grp.name
+			tr
+				td
+				td
+					input(type="submit", value="Apply changes")
+
+	form(method="POST", action="/categories/#{category._id}/delete")
+		input(type="submit", value="Delete category")

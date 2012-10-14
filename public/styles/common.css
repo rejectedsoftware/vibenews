@@ -101,6 +101,8 @@ quot {
 	padding-left: 7.5pt;
 }
 
+input.checkbox { width: auto; }
+
 .link-button {
 	display: block;
 	margin-top: 7.5pt;

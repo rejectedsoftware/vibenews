@@ -12,17 +12,22 @@ block body
 			col.caption
 			tr
 				td
+					label(for="caption") Caption
+				td
+					input#caption(type="text", name="caption", value="#{group.caption}")
+			tr
+				td
 					label(for="description") Description
 				td
-					input(type="text", name="description", value="#{group.description}")
+					input#description(type="text", name="description", value="#{group.description}")
 			tr
 				td
 					label(for="active") Active
 				td
 					- if( group.active )
-						input(type="checkbox", name="active", value="yes", checked)
+						input#active.checkbox(type="checkbox", name="active", value="yes", checked)
 					- else
-						input(type="checkbox", name="active", value="yes")
+						input#active.checkbox(type="checkbox", name="active", value="yes")
 			tr
 				td
 					label(for="roauthtags") Read-only auth tags
@@ -33,8 +38,11 @@ block body
 					label(for="rwauthtags") Read-write auth tags
 				td
 					input#rwauthtags(type="text", name="rwauthtags", value='#{join(group.readWriteAuthTags, ", ")}')
-		input(type="submit", value="Apply changes")
-		p Auth tags are separated by commas, leave blank if group is public
+			tr
+				td
+				td
+					input(type="submit", value="Apply changes")
+		p Note: Auth tags are separated by commas, leave blank if group is public
 
 	form(method="GET", action="/groups/#{group.name}/articles")
 		input(type="submit", value="Manage articles")

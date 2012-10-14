@@ -5,32 +5,50 @@ block title
 	
 block body
 	h2 Groups
-	table
-		tr
-			th Name
-			th Description
-			th Active
-			th Public
-		- foreach( g; groups )
+	form(method="POST", action="/groups/create")
+		table
+			tr
+				th Name
+				th Caption
+				th Active
+				th Public
+			- foreach( g; groups )
+				tr
+					td
+						a(href="/groups/#{g.name}/show")= g.name
+					td= g.caption
+					td= g.active ? "yes" : "no"
+					td= g.readOnlyAuthTags.length || g.readWriteAuthTags.length ? "no" : "yes"
 			tr
 				td
-					a(href="/groups/#{g.name}/show")= g.name
-				td= g.description
-				td= g.active ? "yes" : "no"
-				td= g.readOnlyAuthTags.length || g.readWriteAuthTags.length ? "no" : "yes"
+					input#name(type="text", name="name")
+				td
+					input#caption(type="text", name="caption")
+				td(colspan="2")
+					input(type="submit", value="Create")
 
-	h3 Create new group
-	form(method="POST", action="/groups/create")
-		p
-			label(for="name") Name:
-			input#name(type="text", name="name")
-		p
-			label(for="description") Description:
-			input#description(type="text", name="description")
-		p
-			input(type="submit", value="Create new group")
-			
-	h3 Maintainance
+	h2 Categories
+	form(method="POST", action="/categories/create")
+		table
+			tr
+				th Caption
+				th Index
+				th Groups
+			- foreach( cat; categories )
+				tr
+					td
+						a(href="/categories/#{cat._id}/show")= cat.caption
+					td= cat.index
+					td= cat.groups.length
+			tr
+				td
+					input#name(type="text", name="caption")
+				td
+					input#name(type="text", name="index")
+				td
+					input(type="submit", value="Create")
+	
+	h2 Maintainance
 	form(method="POST", action="/groups/repair-numbers")
 		input(type="submit", value="Repair group numbers")
 	form(method="POST", action="/groups/repair-threads")

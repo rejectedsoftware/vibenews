@@ -7,7 +7,8 @@ block title
 
 block body
 
-	- foreach( cat; info.groupCategories )
+	- foreach( cat; info.categories )
+		- if( cat.groups.length == 0 ) continue;
 		section
 			h2.skeleton= cat.title
 			
@@ -25,7 +26,7 @@ block body
 					tr
 						td.forum
 							.primary
-								a.title(href="#{req.rootDir}groups/#{grp.name}/")= grp.name
+								a.title(href="#{req.rootDir}groups/#{grp.name}/")= grp.caption
 							.secondary
 								|= grp.description
 						td.num-topics= grp.numberOfTopics

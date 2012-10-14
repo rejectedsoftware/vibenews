@@ -15,7 +15,7 @@ import vibe.textfilter.urlencode;
 import vibe.utils.string;
 import vibe.utils.validation;
 
-import std.algorithm : map;
+import std.algorithm : map, sort;
 import std.array;
 import std.base64;
 import std.conv;
@@ -61,19 +61,22 @@ class WebInterface {
 	{
 		static struct Info1 {
 			string title;
-			Category[] groupCategories;
+			Category[] categories;
 		}
 		Info1 info;
 		info.title = m_title;
 
-		Category cat;
-		cat.title = "All";
+		Group[] groups;
 		m_ctrl.enumerateGroups((idx, grp){
 			if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
 				return;
-			cat.groups ~= GroupInfo(grp, m_ctrl);
+			groups ~= grp;
 		});
-		info.groupCategories ~= cat;
+		m_ctrl.enumerateGroupCategories((idx, cat){ info.categories ~= Category(cat, groups, m_ctrl); });
+
+		if( !info.categories.length ) info.categories ~= Category("All", groups, m_ctrl);
+
+		info.categories.sort!"a.index < b.index"();
 
 		res.renderCompat!("vibenews.web.index.dt",
 			HttpServerRequest, "req",
@@ -283,12 +286,14 @@ struct GroupInfo {
 		} catch( Exception ){}
 
 		name = grp.name;
+		caption = grp.caption;
 		description = grp.description;
 		numberOfPosts = cast(size_t)grp.articleCount;
 		numberOfTopics = cast(size_t)ctrl.getThreadCount(grp._id);
 	}
 
 	string name;
+	string caption;
 	string description;
 	size_t numberOfTopics;
 	size_t numberOfPosts;
@@ -419,7 +424,25 @@ struct PosterInfo {
 
 struct Category {
 	string title;
+	int index;
 	GroupInfo[] groups;
+
+	this(GroupCategory cat, Group[] groups, Controller ctrl)
+	{
+		title = cat.caption;
+		index = cat.index;
+		foreach( id; cat.groups )
+			foreach( grp; groups )
+				if( grp._id == id )
+					this.groups ~= GroupInfo(grp, ctrl);
+	}
+
+	this(string title, Group[] groups, Controller ctrl)
+	{
+		this.title = title;
+		foreach( grp; groups )
+			this.groups ~= GroupInfo(grp, ctrl);
+	}
 }
 
 struct QuotedPrintable {
