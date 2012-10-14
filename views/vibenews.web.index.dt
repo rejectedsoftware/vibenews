@@ -12,21 +12,25 @@ block body
 			h2.skeleton= cat.title
 			
 			table
+				col.forum
+				col.num-topics
+				col.num-posts
+				col.last-post
 				tr
-					th Forum
-					th Topics
-					th Posts
-					th Last post
+					th.forum Forum
+					th.num-topics Topics
+					th.num-posts Posts
+					th.last-post Last post
 				- foreach( grp; cat.groups )
 					tr
-						td
+						td.forum
 							.primary
 								a.title(href="#{req.rootDir}groups/#{grp.name}/")= grp.name
 							.secondary
 								|= grp.description
-						td= grp.numberOfTopics
-						td= grp.numberOfPosts
-						td
+						td.num-topics= grp.numberOfTopics
+						td.num-posts= grp.numberOfPosts
+						td.last-post
 							- if( grp.lastPostDate.length )
 								.primary
 									| by 

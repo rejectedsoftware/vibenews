@@ -9,13 +9,19 @@ block title
 block body
 
 	nav
-		- if( "post" in req.query )
-			a(href="../../../../") Forum index
-			a(href="../../")= info.group.name
-			a(href="./") Back to thread
-		- else
-			a(href="../../") Forum index
-			a(href="./")= info.group.name
+		ul
+			- if( "post" in req.query )
+				li
+					a(href="../../../../") Forum index
+				li
+					a(href="../../")= info.group.name
+				li
+					a(href="./") Back to thread
+			- else
+				li
+					a(href="../../") Forum index
+				li
+					a(href="./")= info.group.name
 		
 	form(action='#{"post" in req.query ? "reply" : "post"}', method="POST")
 		- if( "post" in req.query )
@@ -50,5 +56,7 @@ block body
 						#message-preview(style="display: none;")
 					input#preview-checkbox(type="checkbox", onchange="previewToggle()", style="width: auto;")
 					label(for="preview-checkbox") Preview
-
-		button(type="submit") Post
+			tr
+				td
+				td
+					button(type="submit") Post

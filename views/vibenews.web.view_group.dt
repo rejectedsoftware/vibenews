@@ -8,19 +8,24 @@ block title
 block body
 
 	nav
-		a(href="../../") Forum index
+		ul
+			li
+				a(href="../../") Forum index
 		
 	p
 		a(href="post") Post new topic
 
 	table
+		col.topic
+		col.num-answers
+		col.last-post
 		tr
-			th Topic
-			th Answers
-			th Last post
+			th.topic Topic
+			th.num-answers Answers
+			th.last-post Last post
 		- foreach( thr; info.threads )
 			tr
-				td
+				td.topic
 					.primary
 						a.title(href="#{req.rootDir}groups/#{info.group.name}/thread/#{thr.firstPost.number}/")= thr.subject
 					.secondary
@@ -31,8 +36,8 @@ block body
 						span.pages Pages: 
 							- foreach( i; 0 .. thr.pageCount )
 								a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
-				td= thr.postCount-1
-				td
+				td.num-answers= thr.postCount-1
+				td.last-post
 					| by 
 					a(href="#{req.rootDir}users/!{htmlAllEscape(thr.lastPost.poster.email)}/")= thr.lastPost.poster.name
 					| on 

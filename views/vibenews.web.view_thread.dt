@@ -9,8 +9,11 @@ block title
 block body
 
 	nav
-		a(href="../../../../") Forum index
-		a(href="../../")= info.group.name
+		ul
+			li
+				a(href="../../../../") Forum index
+			li
+				a(href="../../")= info.group.name
 
 	- foreach( i, post; info.posts )
 		a(id='#{post.id}')
@@ -20,23 +23,23 @@ block body
 				.permalink Permalink: 
 					a(href="#{post.number}") HTTP
 					a(href="nntp://#{info.hostName}:119/#{info.group.name}/#{post.number}") NNTP
-			.post-info
-				.avatar
-					- auto hash = toLower(md5(toLower(post.poster.email)));
-					a(href="http://www.gravatar.com/#{hash}")
-						img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&s=120")
-				
-				.poster-name
-					a(href="#{req.rootDir}users/!{htmlAllEscape(post.poster.email)}/")= post.poster.name
-				
-				.posting-info Posted #{post.date}
-					- if( post.repliedToPoster.email.length )
-						| in reply to
-						a(href="#{post.repliedToPostNumber}")= post.repliedToPoster.name
-				.reply-link
-					a(href="reply?post=#{post.number}") Reply
-			.post-content
-				!= filterMarkdown(post.message, true)
+			.post-body
+				.post-info
+					.avatar
+						- auto hash = toLower(md5(toLower(post.poster.email)));
+						a(href="http://www.gravatar.com/#{hash}")
+							img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&s=120")
+					
+					.poster-name
+						a(href="#{req.rootDir}users/!{htmlAllEscape(post.poster.email)}/")= post.poster.name
+					
+					.posting-info Posted #{post.date}
+						- if( post.repliedToPoster.email.length )
+							| in reply to
+							a(href="#{post.repliedToPostNumber}")= post.repliedToPoster.name
+					a.reply-link(href="reply?post=#{post.number}") Reply
+				.post-content
+					!= filterMarkdown(post.message, true)
 
 	- if( info.pageCount > 1 )
 		p.pages
