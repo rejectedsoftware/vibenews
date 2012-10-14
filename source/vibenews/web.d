@@ -432,7 +432,6 @@ struct QuotedPrintable {
 				i += 2;
 				if( code != cast(ubyte[])"\r\n" )
 					ret.put(code.parse!ubyte(16));
-				i += 2;
 			} else ret.put(input[i]);
 		}
 		return ret.data();
