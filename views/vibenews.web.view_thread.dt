@@ -15,6 +15,14 @@ block body
 			li
 				a(href="../../")= info.group.name
 
+	- if( info.pageCount > 1 )
+		p.pages Pages: 
+			- foreach( i; 0 .. info.pageCount )
+				- if( info.page == i )
+					|= i+1
+				- else
+					a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{info.thread.firstPost.number}/?page=#{i+1}")= i+1
+
 	- foreach( i, post; info.posts )
 		a(id='#{post.id}')
 		.post(class='#{i==0?"first odd":i%2==0?"odd":"even"}')
@@ -42,7 +50,7 @@ block body
 					!= filterMarkdown(post.message, true)
 
 	- if( info.pageCount > 1 )
-		p.pages
+		p.pages Pages: 
 			- foreach( i; 0 .. info.pageCount )
 				- if( info.page == i )
 					|= i+1

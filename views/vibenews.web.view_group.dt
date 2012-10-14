@@ -15,6 +15,13 @@ block body
 	p
 		a(href="post") Post new topic
 
+	- if( info.pageCount > 1 )
+		p.pages Pages: 
+			- foreach( i; 0 .. info.pageCount )
+				- if( info.page == i )
+					|= i+1
+				- else
+					a.page(href="#{req.rootDir}groups/#{info.group.name}/?page=#{i+1}")= i+1
 	table
 		col.topic
 		col.num-answers
@@ -44,7 +51,7 @@ block body
 					|= thr.lastPost.date
 					
 	- if( info.pageCount > 1 )
-		p.pages
+		p.pages Pages: 
 			- foreach( i; 0 .. info.pageCount )
 				- if( info.page == i )
 					|= i+1
