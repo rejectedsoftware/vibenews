@@ -14,14 +14,14 @@ block body
 				li
 					a(href="../../../../") Forum index
 				li
-					a(href="../../")= info.group.name
+					a(href="../../")= info.group.caption
 				li
 					a(href="./") Back to thread
 			- else
 				li
 					a(href="../../") Forum index
 				li
-					a(href="./")= info.group.name
+					a(href="./")= info.group.caption
 		
 	form(action='#{"post" in req.query ? "reply" : "post"}', method="POST")
 		- if( "post" in req.query )

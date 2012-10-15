@@ -13,7 +13,7 @@ block body
 			li
 				a(href="../../../../") Forum index
 			li
-				a(href="../../")= info.group.name
+				a(href="../../")= info.group.caption
 
 	- if( info.pageCount > 1 )
 		p.pages Pages: 
