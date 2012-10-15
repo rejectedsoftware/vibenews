@@ -51,7 +51,8 @@ class WebInterface {
 		router.get("/groups/:group/thread/:thread/", &showThread);
 		router.get("/groups/:group/thread/:thread/reply", &showPostArticle);
 		router.post("/groups/:group/thread/:thread/reply", &postArticle);
-		router.get("/groups/:group/thread/:thread/:post", &showPost);
+		router.get("/groups/:group/post/:post", &showPost);
+		router.get("/groups/:group/thread/:thread/:post", &showPost); // deprecated
 		router.get("*", serveStaticFiles("public"));
 
 		listenHttp(settings, router);
@@ -164,6 +165,7 @@ class WebInterface {
 			string hostName;
 			GroupInfo group;
 			PostInfo post;
+			ThreadInfo thread;
 		}
 		Info4 info;
 
@@ -178,6 +180,7 @@ class WebInterface {
 		try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
 		catch( Exception ){}
 		info.post = PostInfo(art, replart, info.group.name);
+		info.thread = ThreadInfo(m_ctrl.getThread(art.groups[escapeGroup(grp.name)].threadId), m_ctrl, 0, grp.name);
 
 		res.renderCompat!("vibenews.web.view_post.dt",
 			HttpServerRequest, "req",
@@ -308,7 +311,7 @@ struct ThreadInfo {
 		id = thr._id;
 		subject = thr.subject;
 		postCount = cast(size_t)ctrl.getThreadPostCount(thr._id, groupname);
-		pageCount = (postCount + page_size-1) / page_size;
+		if( page_size ) pageCount = (postCount + page_size-1) / page_size;
 		pageSize = page_size;
 
 		try {
