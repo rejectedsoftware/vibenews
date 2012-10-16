@@ -3,6 +3,7 @@ extends layout
 block title
 	- import vibe.crypto.md5;
 	- import vibe.textfilter.markdown;
+	- import vibe.textfilter.html;
 
 	- auto title = info.title ~ ": " ~ info.post.subject;
 
@@ -39,4 +40,4 @@ block body
 						a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
 				a.reply-link.link-button(href="reply?post=#{info.post.number}") Reply
 			.post-content
-				!= filterMarkdown(info.post.message, true)
+				!= filterMarkdown(htmlEscape(info.post.message), true)

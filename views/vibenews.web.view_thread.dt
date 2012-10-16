@@ -3,6 +3,7 @@ extends layout
 block title
 	- import vibe.crypto.md5;
 	- import vibe.textfilter.markdown;
+	- import vibe.textfilter.html;
 
 	- auto title = info.title ~ ": " ~ info.thread.subject;
 
@@ -47,7 +48,7 @@ block body
 							a(href="#{post.repliedToPostNumber}")= post.repliedToPoster.name
 					a.reply-link.link-button(href="reply?post=#{post.number}") Reply
 				.post-content
-					!= filterMarkdown(post.message, true)
+					!= filterMarkdown(htmlEscape(post.message), true)
 
 	- if( info.pageCount > 1 )
 		p.pages Pages: 
