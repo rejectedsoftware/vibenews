@@ -40,4 +40,4 @@ block body
 						a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
 				a.reply-link.link-button(href="reply?post=#{info.post.number}") Reply
 			.post-content
-				!= filterMarkdown(htmlEscape(info.post.message), true)
+				!= filterMarkdown(htmlEscapeMin(info.post.message), true)

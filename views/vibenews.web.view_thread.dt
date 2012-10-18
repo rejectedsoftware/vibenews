@@ -48,7 +48,7 @@ block body
 							a(href="#{post.repliedToPostNumber}")= post.repliedToPoster.name
 					a.reply-link.link-button(href="reply?post=#{post.number}") Reply
 				.post-content
-					!= filterMarkdown(htmlEscape(post.message), true)
+					!= filterMarkdown(htmlEscapeMin(post.message), true)
 
 	- if( info.pageCount > 1 )
 		p.pages Pages: 
