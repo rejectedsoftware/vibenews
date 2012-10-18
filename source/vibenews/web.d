@@ -470,7 +470,21 @@ string decodeMessage(Article art)
 	switch( art.getHeader("Content-Transfer-Encoding") ){
 		default: break;
 		case "quoted-printable": msg = QuotedPrintable.decode(cast(string)msg); break;
-		case "base64": msg = Base64.decode(msg); break;
+		case "base64":
+			try msg = Base64.decode(msg);
+			catch(Exception e){
+				auto dst = appender!(ubyte[])();
+				try {
+					auto dec = Base64.decoder(msg);
+					while( !dec.empty )
+						dst.put(dec.front);
+				} catch(Exception e){
+					dst.put(cast(ubyte[])"\r\n-------\r\nDECODING ERROR: ");
+					dst.put(cast(ubyte[])e.msg);
+				}
+				msg = dst.data();
+			}
+			break;
 	}
 	// TODO: do character encoding etc.
 	return sanitizeUTF8(msg);
