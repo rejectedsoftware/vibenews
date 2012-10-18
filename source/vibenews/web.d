@@ -15,7 +15,7 @@ import vibe.textfilter.urlencode;
 import vibe.utils.string;
 import vibe.utils.validation;
 
-import std.algorithm : map, sort;
+import std.algorithm : filter, map, sort;
 import std.array;
 import std.base64;
 import std.conv;
@@ -476,7 +476,7 @@ string decodeMessage(Article art)
 			catch(Exception e){
 				auto dst = appender!(ubyte[])();
 				try {
-					auto dec = Base64.decoder(msg);
+					auto dec = Base64.decoder(msg.filter!(ch => ch != '\r' && ch != '\n')());
 					while( !dec.empty )
 						dst.put(dec.front);
 				} catch(Exception e){
