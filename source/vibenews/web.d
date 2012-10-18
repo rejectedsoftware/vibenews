@@ -229,7 +229,7 @@ class WebInterface {
 	{
 		auto msg = req.form["message"];
 		validateString(msg, 0, 128*1024, "The message body");
-		res.writeBody(filterMarkdown(msg, true), "text/html");
+		res.writeBody(filterMarkdown(msg, MarkdownFlags.forumDefault), "text/html");
 	}
 
 	void postArticle(HttpServerRequest req, HttpServerResponse res)
