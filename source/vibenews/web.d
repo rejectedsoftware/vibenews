@@ -480,7 +480,7 @@ string decodeMessage(Article art)
 						dst.put(dec.front);
 				} catch(Exception e){
 					dst.put(cast(ubyte[])"\r\n-------\r\nDECODING ERROR: ");
-					dst.put(cast(ubyte[])e.msg);
+					dst.put(cast(ubyte[])e.toString());
 				}
 				msg = dst.data();
 			}
