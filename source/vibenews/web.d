@@ -477,8 +477,10 @@ string decodeMessage(Article art)
 				auto dst = appender!(ubyte[])();
 				try {
 					auto dec = Base64.decoder(msg.filter!(ch => ch != '\r' && ch != '\n')());
-					while( !dec.empty )
+					while( !dec.empty ){
 						dst.put(dec.front);
+						dec.popFront()
+					}
 				} catch(Exception e){
 					dst.put(cast(ubyte[])"\r\n-------\r\nDECODING ERROR: ");
 					dst.put(cast(ubyte[])e.toString());
