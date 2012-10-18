@@ -249,7 +249,7 @@ class WebInterface {
 		art.addHeader("Subject", req.form["subject"]);
 		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
 		art.addHeader("Newsgroups", grp.name);
-		art.addHeader("Date", Clock.currTime().toRFC822DateTimeString());
+		art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
 		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
 

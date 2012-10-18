@@ -342,6 +342,7 @@ class Controller {
 		}
 
 		if( messageid.length == 0 ) art.addHeader("Message-ID", art.id);
+		if( date.length == 0 ) art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
 		art.messageLength = art.message.length;
 		art.messageLines = countLines(art.message);
 
