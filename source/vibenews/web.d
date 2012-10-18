@@ -383,7 +383,7 @@ struct PosterInfo {
 				switch(enc){
 					default: textenc = cast(ubyte[])data; break;
 					case 'B': textenc = Base64.decode(data); break;
-					case 'Q': textenc = QuotedPrintable.decode(data); break;
+					case 'Q': textenc = QuotedPrintable.decode(data, true); break;
 				}
 
 				switch(cs){
@@ -449,7 +449,7 @@ struct Category {
 }
 
 struct QuotedPrintable {
-	static ubyte[] decode(in char[] input)
+	static ubyte[] decode(in char[] input, bool in_header = false)
 	{
 		auto ret = appender!(ubyte[])();
 		for( size_t i = 0; i < input.length; i++ ){
@@ -458,7 +458,8 @@ struct QuotedPrintable {
 				i += 2;
 				if( code != cast(ubyte[])"\r\n" )
 					ret.put(code.parse!ubyte(16));
-			} else ret.put(input[i]);
+			} else if( in_header && input[i] == '_') ret.put(' ');
+			else ret.put(input[i]);
 		}
 		return ret.data();
 	}
