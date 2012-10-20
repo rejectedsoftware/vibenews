@@ -31,7 +31,7 @@ block body
 				h2.skeleton= post.subject
 				.permalink Permalink: 
 					a(href="../../post/#{post.number}") HTTP
-					a(href="nntp://#{info.hostName}:119/#{info.group.name}/#{post.number}") NNTP
+					a(href="nntp://#{info.hostName}/#{info.group.name}/#{post.number}") NNTP
 			.post-body
 				.post-info
 					.avatar
