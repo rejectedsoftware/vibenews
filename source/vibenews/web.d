@@ -468,7 +468,7 @@ struct QuotedPrintable {
 string decodeMessage(Article art)
 {
 	auto msg = art.message;
-	switch( art.getHeader("Content-Transfer-Encoding") ){
+	switch( art.getHeader("Content-Transfer-Encoding").toLower() ){
 		default: break;
 		case "quoted-printable": msg = QuotedPrintable.decode(cast(string)msg); break;
 		case "base64":
