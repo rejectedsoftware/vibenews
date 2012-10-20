@@ -95,7 +95,7 @@ td.even {
 	background-color: #ddd;
 }
 
-quot {
+blockquote {
 	display: block;
 	border-left: 2px solid gray;
 	padding-left: 7.5pt;
