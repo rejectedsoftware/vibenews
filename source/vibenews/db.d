@@ -536,7 +536,7 @@ class Controller {
 	{
 		m_threads.remove(Bson.EmptyObject);
 
-		foreach( ba; m_articles.find() ){
+		foreach( ba; m_articles.find(["active": true]) ){
 			Article a;
 			deserializeBson(a, ba);
 
