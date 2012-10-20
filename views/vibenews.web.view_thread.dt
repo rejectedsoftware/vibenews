@@ -37,7 +37,7 @@ block body
 					.avatar
 						- auto hash = toLower(md5(toLower(post.poster.email)));
 						a(href="http://www.gravatar.com/#{hash}")
-							img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&amp;s=120")
+							img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&amp;s=120", alt="avatar")
 					
 					.poster-name
 						a(href="#{req.rootDir}users/!{htmlAllEscape(post.poster.email)}/")= post.poster.name
