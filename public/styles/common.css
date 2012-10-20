@@ -99,6 +99,7 @@ blockquote {
 	display: block;
 	border-left: 2px solid gray;
 	padding-left: 7.5pt;
+	margin-left: 0;
 }
 
 input.checkbox { width: auto; }
