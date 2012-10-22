@@ -252,6 +252,7 @@ class WebInterface {
 		art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
 		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
+		art.addHeader("Content-Transfer-Encoding", "8bit");
 
 		if( "article" in req.form ){
 			auto repartnum = req.form["article"].to!long();
