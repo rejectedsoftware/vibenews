@@ -119,7 +119,7 @@ class NntpBodyWriter : OutputStream {
 			} else {
 				foreach( i; 1 .. min(m_lineStateString.length, bytes.length) )
 					if( bytes[$-i .. $] == m_lineStateString[0 .. i] ){
-						m_lineState = i;
+						m_lineState = cast(int)i;
 						break;
 					}
 				m_stream.write(bytes[0 .. $-m_lineState]);
