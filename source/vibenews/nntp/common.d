@@ -61,6 +61,9 @@ class NntpBodyWriter : OutputStream {
 	private {
 		OutputStream m_stream;
 		bool m_finalized = false;
+		int m_lineState = 0;
+		static immutable ubyte[] m_lineStateString = cast(immutable(ubyte)[])"\r\n.";
+		bool m_empty = true;
 	}
 
 	this(OutputStream stream)
@@ -68,10 +71,64 @@ class NntpBodyWriter : OutputStream {
 		m_stream = stream;
 	}
 
-	void write(in ubyte[] bytes, bool do_flush = true)
+	void write(in ubyte[] bytes_, bool do_flush = true)
 	{
-		m_stream.write(bytes, do_flush);
-		logDebug("<%s>", cast(string)bytes);
+		const(ubyte)[] bytes = bytes_;
+		assert(!m_finalized);
+
+		if( bytes.length ){
+			if( m_empty && bytes[0] == '.' ){
+				m_stream.write("..", false);
+				logDebug("WS <..>", cast(string)bytes[0 .. $-m_lineState]);
+				bytes = bytes[1 .. $];
+			}
+			m_empty = false;
+		}
+
+		// test any already started prefix
+		if( m_lineState > 0 ){
+			foreach( i; m_lineState .. min(m_lineStateString.length, bytes.length+m_lineState) ){
+				if( bytes[i-m_lineState] != m_lineStateString[i] ){
+					m_stream.write(m_lineStateString[0 .. i]);
+					bytes = bytes[i-m_lineState .. $];
+					logDebug("WPM <%s>", cast(string)m_lineStateString[0 .. i]);
+					m_lineState = 0;
+					break;
+				}
+			}
+			if( m_lineState > 0 ){
+				if( m_lineStateString.length > bytes.length+m_lineState ){
+					m_lineState += bytes.length;
+					bytes = null;
+				} else {
+					m_stream.write("\r\n..", false);
+					logDebug("WEM <\\r\\n..>");
+					bytes = bytes[m_lineStateString.length-m_lineState .. $];
+					m_lineState = 0;
+				}
+			}
+		}
+
+		while( bytes.length ){
+			auto idx = bytes.countUntil(m_lineStateString);
+			if( idx >= 0 ){
+				m_stream.write(bytes[0 .. idx]);
+				m_stream.write("\r\n..", false);
+				logDebug("WMM <%s\\r\\n..>", cast(string)bytes[0 .. idx]);
+				bytes = bytes[idx+m_lineStateString.length .. $];
+			} else {
+				foreach( i; 1 .. min(m_lineStateString.length, bytes.length) )
+					if( bytes[$-i .. $] == m_lineStateString[0 .. i] ){
+						m_lineState = i;
+						break;
+					}
+				m_stream.write(bytes[0 .. $-m_lineState]);
+				logDebug("WP <%s>", cast(string)bytes[0 .. $-m_lineState]);
+				bytes = null;
+			}
+		}
+
+		if( do_flush ) flush();
 	}
 
 	void flush()
@@ -81,10 +138,12 @@ class NntpBodyWriter : OutputStream {
 
 	void finalize()
 	{
+		if( m_lineState > 0 ) m_stream.write(m_lineStateString[0 .. m_lineState], false);
 		enforce(!m_finalized);
 		m_finalized = true;
-		m_stream.write("\r\n.\r\n");
-		logDebug("<.>");
+		if( m_empty ) m_stream.write(".\r\n");
+		else m_stream.write("\r\n.\r\n");
+		logDebug("WF <\\r\\n.\\r\\n>");
 	}
 
 	void write(InputStream stream, ulong nbytes = 0, bool do_flush = true)

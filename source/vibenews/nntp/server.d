@@ -124,7 +124,7 @@ class NntpServerRequest {
 class NntpServerResponse {
 	private {
 		TcpConnection m_stream;
-		CountingOutputStream m_bodyWriter;
+		NntpBodyWriter m_bodyWriter;
 		string m_certFile;
 		string m_keyFile;
 		bool m_headerWritten = false;
@@ -146,7 +146,6 @@ class NntpServerResponse {
 	void restart()
 	{
 		finalize();
-		m_bodyWritten = false;
 		m_headerWritten = false;
 	}
 
@@ -159,12 +158,8 @@ class NntpServerResponse {
 
 	@property OutputStream bodyWriter()
 	{
-		if( !m_headerWritten )
-			writeHeader();
-		m_bodyWritten = true;
-
-		if( !m_bodyWriter )
-			m_bodyWriter = new CountingOutputStream(m_stream);
+		if( !m_headerWritten ) writeHeader();
+		if( !m_bodyWriter ) m_bodyWriter = new NntpBodyWriter(m_stream);
 		return m_bodyWriter;
 	}
 
@@ -189,11 +184,9 @@ class NntpServerResponse {
 
 	private void finalize()
 	{
-		if( m_bodyWritten ){
-			if( m_bodyWriter.bytesWritten )
-				m_stream.write("\r\n.\r\n");
-			else
-				m_stream.write(".\r\n");
+		if( m_bodyWriter ){
+			m_bodyWriter.finalize();
+			m_bodyWriter = null;
 		}
 	}
 }
