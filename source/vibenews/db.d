@@ -536,7 +536,7 @@ class Controller {
 	{
 		m_threads.remove(Bson.EmptyObject);
 
-		foreach( ba; m_articles.find(["active": true]) ){
+		foreach( ba; m_articles.find(["query": ["active": Bson(true)], "orderby": ["_id": Bson(1)]]) ){
 			Article a;
 			deserializeBson(a, ba);
 
