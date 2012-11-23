@@ -216,7 +216,7 @@ class Controller {
 	void enumerateThreadPosts(BsonObjectID thread, string groupname, size_t skip, size_t max_count, void delegate(size_t, Article) del)
 	{
 		size_t idx = skip;
-		foreach( bart; m_articles.find(["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], null, QueryFlags.None, cast(int)skip) ){
+		foreach( bart; m_articles.find(["query": ["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], "orderby": ["_id": Bson(1)]], null, QueryFlags.None, cast(int)skip) ){
 			Article art;
 			deserializeBson(art, bart);
 			del(idx, art);
