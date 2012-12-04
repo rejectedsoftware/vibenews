@@ -56,7 +56,7 @@ class AdminInterface {
 		GroupCategory[] categories;
 		m_ctrl.enumerateGroups((idx, group){ groups ~= group; }, true);
 		m_ctrl.enumerateGroupCategories((idx, cat){ categories ~= cat; });
-		res.renderCompat!("vibenews.admin.dt",
+		res.renderCompat!("vibenews.admin.index.dt",
 				HttpServerRequest, "req",
 				Group[], "groups",
 				GroupCategory[], "categories"
@@ -95,7 +95,7 @@ class AdminInterface {
 	void showGroup(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto group = m_ctrl.getGroupByName(req.params["groupname"], true);
-		res.renderCompat!("vibenews.editgroup.dt",
+		res.renderCompat!("vibenews.admin.editgroup.dt",
 				HttpServerRequest, "req",
 				Group*, "group"
 			)(Variant(req), Variant(&group));
@@ -168,7 +168,7 @@ class AdminInterface {
 		info.articleCount = cast(int)m_ctrl.getAllArticlesCount(info.groupname);
 		info.pageCount = (info.articleCount-1)/info.articlesPerPage + 1;
 
-		res.renderCompat!("vibenews.listarticles.dt",
+		res.renderCompat!("vibenews.admin.listarticles.dt",
 			HttpServerRequest, "req",
 			Info*, "info")(Variant(req), Variant(&info));
 	}
