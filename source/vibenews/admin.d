@@ -164,7 +164,7 @@ class AdminInterface {
 		Info info;
 		info.groupname = req.params["groupname"];
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
-		m_ctrl.enumerateAllArticles(info.groupname, info.page*info.articlesPerPage, info.articlesPerPage, (ref art){ info.articles ~= art; });
+		m_ctrl.enumerateAllArticlesBackwards(info.groupname, info.page*info.articlesPerPage, info.articlesPerPage, (ref art){ info.articles ~= art; });
 		info.articleCount = cast(int)m_ctrl.getAllArticlesCount(info.groupname);
 		info.pageCount = (info.articleCount-1)/info.articlesPerPage + 1;
 

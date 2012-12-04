@@ -23,7 +23,7 @@ class Controller {
 		m_groupCategories = m_db["vibenews.groupCategories"];
 		m_articles = m_db["vibenews.articles"];
 		m_threads = m_db["vibenews.threads"];
-		m_users = m_db["users"];
+		m_users = m_db["vibenews.users"];
 
 		// fixup old article format
 		foreach( a; m_articles.find(["number": ["$exists": true]]) ){
@@ -306,13 +306,13 @@ class Controller {
 		}
 	}
 
-	void enumerateAllArticles(string groupname, int first, int count, void delegate(ref Article art) del)
+	void enumerateAllArticlesBackwards(string groupname, int first, int count, void delegate(ref Article art) del)
 	{
 		auto egrp = escapeGroup(groupname);
 		logDebug("%s %s", groupname, egrp);
 		auto query = serializeToBson(["groups."~egrp: ["$exists": true]]);
-		//auto order = serializeToBson(["groups."~egrp~".articleNumber": 1]);
-		foreach( idx, ba; m_articles.find(/*["query": query, "orderby": order]*/query, null, QueryFlags.None, first, count) ){
+		auto order = serializeToBson(["groups."~egrp~".articleNumber": -1]);
+		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], null, QueryFlags.None, first, count) ){
 			Article art;
 			deserializeBson(art, ba);
 			del(art);

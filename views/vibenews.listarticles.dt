@@ -12,8 +12,9 @@ block body
 	table
 		tr
 			th Date
-			th Subject
+			th Origin
 			th Poster
+			th Subject
 			th Action
 		
 		- foreach( art; info.articles )
@@ -22,6 +23,7 @@ block body
 				- auto idx = countUntil(from, '<');
 				- if( idx >= 0 ) from = from[idx .. $];
 				td= art.getHeader("Date")
+				td= art.peerAddress
 				td= from
 				td= art.getHeader("Subject")
 				td
