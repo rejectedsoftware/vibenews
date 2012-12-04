@@ -264,9 +264,9 @@ class WebInterface {
 			art.addHeader("References", refs);
 		}
 
-		art.peerAddress = req.peer;
 		if( auto pp = "X-Forwarded-For" in req.headers )
-			art.peerAddress ~= ", " ~ *pp;
+			art.peerAddress = *pp ~ ", " ~ req.peer;
+		else art.peerAddress = req.peer;
 		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
 
 		m_ctrl.postArticle(art);
