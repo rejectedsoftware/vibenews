@@ -198,6 +198,7 @@ class Controller {
 
 	void enumerateThreads(BsonObjectID group, size_t skip, size_t max_count, void delegate(size_t, Thread) del)
 	{
+		assert(skip <= int.max);
 		size_t idx = skip;
 		foreach( bthr; m_threads.find(["query": ["groupId": Bson(group)], "orderby": ["lastArticleId": Bson(-1)]], null, QueryFlags.None, cast(int)skip) ){
 			Thread thr;
@@ -215,6 +216,7 @@ class Controller {
 
 	void enumerateThreadPosts(BsonObjectID thread, string groupname, size_t skip, size_t max_count, void delegate(size_t, Article) del)
 	{
+		assert(skip <= int.max);
 		size_t idx = skip;
 		foreach( bart; m_articles.find(["query": ["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], "orderby": ["_id": Bson(1)]], null, QueryFlags.None, cast(int)skip) ){
 			Article art;
@@ -353,7 +355,7 @@ class Controller {
 			auto bgpre = m_groups.findAndModify(["name": grp], ["$inc": ["articleNumberCounter": 1]], ["articleNumberCounter": 1]);
 			if( bgpre.isNull() ) continue; // ignore non-existant groups
 			m_groups.update(["name": grp], ["$inc": ["articleCount": 1]]);
-			logDebug("GRP: %s", bgpre.get!Json.toString());
+			logDebug("GRP: %s", bgpre.toJson());
 
 			// try to find the thread of any reply-to message
 			BsonObjectID threadid;
