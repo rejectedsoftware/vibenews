@@ -16,13 +16,23 @@ block body
 			li
 				a(href="../../")= info.group.caption
 
-	- if( info.pageCount > 1 )
-		p.pages Pages: 
-			- foreach( i; 0 .. info.pageCount )
-				- if( info.page == i )
-					|= i+1
-				- else
-					a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{info.thread.firstPost.number}/?page=#{i+1}")= i+1
+	- void pageLinks()
+		- if( info.pageCount > 1 )
+			p.pages Pages: 
+				- bool last = true;
+				- foreach( i; 0 .. info.pageCount )
+					- if( i > 3 && i+4 < info.pageCount && (i+4 < info.page || i > info.page+4) )
+						- last = false;
+						- continue;
+					- if( !last )
+						| …
+						- last = true;
+					- if( info.page == i )
+						|= i+1
+					- else
+						a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{info.thread.firstPost.number}/?page=#{i+1}")= i+1
+
+	- pageLinks();
 
 	- foreach( i, post; info.posts )
 		a(id='#{post.id}')
@@ -50,10 +60,4 @@ block body
 				.post-content
 					!= filterMarkdown(post.message, MarkdownFlags.forumDefault)
 
-	- if( info.pageCount > 1 )
-		p.pages Pages: 
-			- foreach( i; 0 .. info.pageCount )
-				- if( info.page == i )
-					|= i+1
-				- else
-					a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{info.thread.firstPost.number}/?page=#{i+1}")= i+1
+	- pageLinks();

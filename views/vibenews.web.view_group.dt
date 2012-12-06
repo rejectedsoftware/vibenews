@@ -15,13 +15,24 @@ block body
 	p
 		a.link-button(href="post") Post new topic
 
-	- if( info.pageCount > 1 )
-		p.pages Pages: 
-			- foreach( i; 0 .. info.pageCount )
-				- if( info.page == i )
-					|= i+1
-				- else
-					a.page(href="#{req.rootDir}groups/#{info.group.name}/?page=#{i+1}")= i+1
+	- void pageLinks()
+		- if( info.pageCount > 1 )
+			p.pages Pages: 
+				- bool last = true;
+				- foreach( i; 0 .. info.pageCount )
+					- if( i > 3 && i+4 < info.pageCount && (i+4 < info.page || i > info.page+4) )
+						- last = false;
+						- continue;
+					- if( !last )
+						| …
+						- last = true;
+					- if( info.page == i )
+						|= i+1
+					- else
+						a.page(href="#{req.rootDir}groups/#{info.group.name}/?page=#{i+1}")= i+1
+
+	- pageLinks();
+
 	table
 		col.topic
 		col.num-answers
@@ -41,7 +52,14 @@ block body
 						| on #{thr.firstPost.date}
 					- if( thr.pageCount > 1 )
 						span.pages Pages: 
+							- bool last = true;
 							- foreach( i; 0 .. thr.pageCount )
+								- if( i > 4 && i+5 < thr.pageCount )
+									- last = false;
+									- continue;
+								- if( !last )
+									| …
+									- last = true;
 								a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
 				td.num-answers= thr.postCount-1
 				td.last-post
@@ -50,10 +68,4 @@ block body
 					| on 
 					|= thr.lastPost.date
 					
-	- if( info.pageCount > 1 )
-		p.pages Pages: 
-			- foreach( i; 0 .. info.pageCount )
-				- if( info.page == i )
-					|= i+1
-				- else
-					a.page(href="#{req.rootDir}groups/#{info.group.name}/?page=#{i+1}")= i+1
+	- pageLinks();
