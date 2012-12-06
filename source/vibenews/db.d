@@ -442,26 +442,35 @@ class Controller {
 				long newnum = maxart.groups[gname].articleNumber.get!long;
 				m_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
 			}
-		}
 
-		// TODO: update thread first/lastArticleId
+			auto threadid = grp.threadId;
+			auto newfirstart = m_articles.findOne(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(1)]], ["_id": true]);
+			auto newfirstid = newfirstart.isNull() ? BsonObjectID() : newfirstart._id.get!BsonObjectID;
+			auto newlastart = m_articles.findOne(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(-1)]], ["_id": true]);
+			auto newlastid = newfirstart.isNull() ? BsonObjectID() : newlastart._id.get!BsonObjectID;
+			m_threads.update(["_id": threadid, "firstArticleId": oldart._id], ["$set": ["firstArticleId": newfirstid]]);
+			m_threads.update(["_id": threadid, "lastArticleId": oldart._id], ["$set": ["lastArticleId": newlastid]]);
+		}
 	}
 
 	void activateArticle(BsonObjectID artid)
 	{
 		auto oldart = m_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": true]]);
-		if( oldart.active.get!bool ) return; // was already deactivated
+		if( oldart.active.get!bool ) return; // was already activated by someone else
 
 		// update the group counters
-		foreach( string gname, num; oldart.groups ){
+		foreach( string gname, gref; oldart.groups ){
+			auto num = gref.articleNumber;
+			auto threadid = gref.threadId;
 			string numfield = "groups."~gname~".articleNumber";
 			auto groupname = Bson(unescapeGroup(gname));
 			m_groups.update(["name": groupname], ["$inc": ["articleCount": 1]]);
 			m_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
 			m_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
-		}
 
-		// TODO: update thread first/lastArticleId
+			m_threads.update(["_id": threadid, "firstArticleId": Bson(["$gt": oldart._id])], ["$set": ["firstArticleId": oldart._id]]);
+			m_threads.update(["_id": threadid, "lastArticleId": Bson(["$lt": oldart._id])], ["$set": ["lastArticleId": oldart._id]]);
+		}
 	}
 
 	void deleteArticle(BsonObjectID artid)
