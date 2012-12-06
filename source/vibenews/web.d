@@ -139,8 +139,8 @@ class WebInterface {
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
 		info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, threadnum), m_ctrl, info.pageSize, grp.name);
 		info.group = GroupInfo(grp, m_ctrl);
-		info.postCount = cast(size_t)m_ctrl.getThreadPostCount(info.thread.id, grp.name);
-		info.pageCount = (info.postCount + info.pageSize-1) / info.pageSize;
+		info.postCount = info.thread.postCount;
+		info.pageCount = info.thread.pageCount;
 
 		m_ctrl.enumerateThreadPosts(info.thread.id, grp.name, info.page*info.pageSize, info.pageSize, (idx, art){
 			Article replart;

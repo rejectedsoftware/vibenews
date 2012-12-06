@@ -65,6 +65,9 @@ class Controller {
 		// create indexes
 		m_users.ensureIndex(["email": 1], IndexFlags.Unique);
 		m_groups.ensureIndex(["name": 1], IndexFlags.Unique);
+		m_threads.ensureIndex(["groupId": 1]);
+		m_threads.ensureIndex(["firstArticleId": 1]);
+		m_threads.ensureIndex(["lastArticleId": -1]);
 		m_articles.ensureIndex(["id": 1], IndexFlags.Unique);
 		foreach( grp; m_groups.find(Bson.EmptyObject, ["name": 1]) )
 			createGroupIndexes(grp.name.get!string());
@@ -239,7 +242,7 @@ class Controller {
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
-		foreach( bart; m_articles.find(["query": ["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], "orderby": ["_id": Bson(1)]], null, QueryFlags.None, cast(int)skip) ){
+		foreach( bart; m_articles.find(["query": ["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], "orderby": ["_id": Bson(1)]], null, QueryFlags.None, cast(int)skip, cast(int)max_count) ){
 			Article art;
 			deserializeBson(art, bart);
 			del(idx, art);
