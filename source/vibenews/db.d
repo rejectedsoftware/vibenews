@@ -3,7 +3,9 @@ module vibenews.db;
 import vibe.vibe;
 
 import std.algorithm;
+import std.array;
 import std.base64;
+import std.string;
 
 
 class Controller {
@@ -55,6 +57,10 @@ class Controller {
 		foreach( k, v; fields ){
 			m_groups.update([k: ["$exists": false]], ["$set": [k: v]], UpdateFlags.MultiUpdate);
 		}
+
+		// upgrade old peerAddress format
+		foreach( art; m_articles.find(["$where" : "!Array.isArray(this.peerAddress)"], ["peerAddress": 1]) )
+			m_articles.update(["_id": art._id], ["$set": ["peerAddress": art.peerAddress.get!string.split(",").map!strip().array()]]);
 
 		// create indexes
 		m_users.ensureIndex(["email": 1], IndexFlags.Unique);
@@ -654,7 +660,7 @@ struct Article {
 	ubyte[] message;
 	long messageLength;
 	long messageLines;
-	string peerAddress;
+	string[] peerAddress; // list of hops starting from the original client
 
 	string getHeader(string name)
 	const {

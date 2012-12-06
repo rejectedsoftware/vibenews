@@ -411,7 +411,7 @@ class VibeNewsServer {
 			res.writeVoidBody();
 			return;
 		}
-		art.peerAddress = req.peerAddress;
+		art.peerAddress = [req.peerAddress];
 
 		m_ctrl.postArticle(art);
 
