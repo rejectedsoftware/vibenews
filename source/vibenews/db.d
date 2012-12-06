@@ -55,6 +55,13 @@ class Controller {
 		foreach( k, v; fields ){
 			m_groups.update([k: ["$exists": false]], ["$set": [k: v]], UpdateFlags.MultiUpdate);
 		}
+
+		// create indexes
+		m_users.ensureIndex(["email": 1], IndexFlags.Unique);
+		m_groups.ensureIndex(["name": 1], IndexFlags.Unique);
+		m_articles.ensureIndex(["id": 1], IndexFlags.Unique);
+		foreach( grp; m_groups.find(Bson.EmptyObject, ["name": 1]) )
+			createGroupIndexes(grp.name.get!string());
 	}
 
 
@@ -104,7 +111,6 @@ class Controller {
 	{
 		m_groupCategories.remove(["_id": id]);
 	}
-
 
 	/***************************/
 	/* Groups                  */
@@ -160,11 +166,20 @@ class Controller {
 	void addGroup(Group g)
 	{
 		m_groups.insert(g);
+		createGroupIndexes(g.name);
 	}
 
 	void updateGroup(Group g)
 	{
 		m_groups.update(["_id": g._id], g);
+	}
+
+	void createGroupIndexes(string grpname)
+	{
+		string egrp = escapeGroup(grpname);
+		string grpfield = "groups."~egrp;
+		m_articles.ensureIndex([grpfield~".articleNumber": 1], IndexFlags.Sparse);
+		m_articles.ensureIndex([grpfield~".threadId": 1], IndexFlags.Sparse);
 	}
 
 	/***************************/
@@ -272,9 +287,10 @@ class Controller {
 	void enumerateArticles(string groupname, void delegate(size_t idx, BsonObjectID _id, string msgid, long msgnum) del)
 	{
 		auto egrp = escapeGroup(groupname);
+		auto numkey = "groups."~egrp~".articleNumber";
 		auto numquery = serializeToBson(["$exists": true]);
-		auto query = serializeToBson(["groups."~egrp: numquery, "active": Bson(true)]);
-		auto order = serializeToBson(["groups."~egrp~".articleNumber": 1]);
+		auto query = serializeToBson([numkey: numquery, "active": Bson(true)]);
+		auto order = serializeToBson([numkey: 1]);
 		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], ["_id": 1, "id": 1, "groups": 1]) ){
 			del(idx, ba._id.get!BsonObjectID, ba.id.get!string, ba.groups[escapeGroup(groupname)].articleNumber.get!long);
 		}
@@ -284,9 +300,10 @@ class Controller {
 	{
 		Article art;
 		string gpne = escapeGroup(groupname);
+		auto numkey = "groups."~gpne~".articleNumber";
 		auto numquery = serializeToBson(["$gte": from, "$lte": to]);
-		auto query = serializeToBson(["groups."~gpne~".articleNumber": numquery, "active": Bson(true)]);
-		auto order = serializeToBson(["groups."~gpne~".articleNumber": 1]);
+		auto query = serializeToBson([numkey: numquery, "active": Bson(true)]);
+		auto order = serializeToBson([numkey: 1]);
 		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], ["message": 0]) ){
 			ba["message"] = Bson(BsonBinData(BsonBinData.Type.Generic, null));
 			if( ba.groups[gpne].articleNumber.get!long > to )
@@ -301,8 +318,9 @@ class Controller {
 		Bson idmatch = Bson(BsonObjectID.createDateID(date));
 		Bson groupmatch = Bson(true);
 		auto egrp = escapeGroup(groupname);
-		auto query = serializeToBson(["_id" : Bson(["$gte": idmatch]), "groups."~egrp: Bson(["$exists": groupmatch]), "active": Bson(true)]);
-		auto order = serializeToBson(["groups."~egrp~".articleNumber": 1]);
+		auto numkey = "groups."~egrp~".articleNumber";
+		auto query = serializeToBson(["_id" : Bson(["$gte": idmatch]), numkey: Bson(["$exists": groupmatch]), "active": Bson(true)]);
+		auto order = serializeToBson([numkey: 1]);
 		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], ["_id": 1, "id": 1, "groups": 1]) ){
 			del(idx, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba.groups[escapeGroup(groupname)].articleNumber.get!long);
 		}
@@ -311,9 +329,10 @@ class Controller {
 	void enumerateAllArticlesBackwards(string groupname, int first, int count, void delegate(ref Article art) del)
 	{
 		auto egrp = escapeGroup(groupname);
+		auto numkey = "groups."~egrp~".articleNumber";
 		logDebug("%s %s", groupname, egrp);
-		auto query = serializeToBson(["groups."~egrp: ["$exists": true]]);
-		auto order = serializeToBson(["groups."~egrp~".articleNumber": -1]);
+		auto query = serializeToBson([numkey: ["$exists": true]]);
+		auto order = serializeToBson([numkey: -1]);
 		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], null, QueryFlags.None, first, count) ){
 			Article art;
 			deserializeBson(art, ba);
@@ -324,7 +343,7 @@ class Controller {
 
 	ulong getAllArticlesCount(string groupname)
 	{
-		return m_articles.count(["groups."~escapeGroup(groupname): ["$exists": true]]);
+		return m_articles.count(["groups."~escapeGroup(groupname)~".articleNumber": ["$exists": true]]);
 	}
 
 	void postArticle(ref Article art)
@@ -445,7 +464,7 @@ class Controller {
 	// deletes all inactive articles from the group
 	void purgeGroup(string name)
 	{
-		m_articles.remove(["active": Bson(false), "groups."~escapeGroup(name): Bson(["$exists": Bson(true)])]);
+		m_articles.remove(["active": Bson(false), "groups."~escapeGroup(name)~".articleNumber": Bson(["$exists": Bson(true)])]);
 	}
 
 
