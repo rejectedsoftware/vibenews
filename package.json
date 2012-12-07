@@ -1,16 +1,7 @@
 {
     "name": "vibenews",
-	"description": "Minimalistic NNTP server for custom newsgroups",
+	"description": "Combined web forum and NNTP server implementation for stand-alone newsgroups",
 	"homepage": "https://github.com/rejectedsoftware/vibenews",
-    "authors": [
-		"Sönke Ludwig",
-	],
-    "version": "0.5.6",
-    "dependencies": {
-    },
-	"repository": {
-		"kind": "github",
-		"owner": "rejectedsoftware",
-		"project": "vibenews"
-	}
+    "authors": ["Sönke Ludwig"],
+    "version": "0.5.6"
 }
