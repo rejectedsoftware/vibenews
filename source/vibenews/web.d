@@ -140,7 +140,10 @@ class WebInterface {
 		auto threadnum = req.params["thread"].to!long();
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
 		try info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, threadnum), m_ctrl, info.pageSize, grp.name);
-		catch( Exception e ) redirectToThreadPost(res, grp.name, threadnum);
+		catch( Exception e ){
+			redirectToThreadPost(res, grp.name, threadnum);
+			return;
+		}
 		info.group = GroupInfo(grp, m_ctrl);
 		info.postCount = info.thread.postCount;
 		info.pageCount = info.thread.pageCount;
