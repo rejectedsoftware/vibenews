@@ -23,9 +23,10 @@ block body
 				li
 					a(href="./")= info.group.caption
 		
-	form(action='#{"post" in req.query ? "reply" : "post"}', method="POST")
-		- if( "post" in req.query )
-			input(type="hidden", name="article", value='#{req.query["post"]}')
+	form(action='post', method="POST")
+		input(type="hidden", name="group", value="#{info.group.name}")
+		- if( "reply-to" in req.query )
+			input(type="hidden", name="reply-to", value='#{req.query["reply-to"]}')
 		table
 			col.caption
 			tr

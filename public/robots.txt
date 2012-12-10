@@ -1,4 +1,3 @@
 User-agent: *
 User-agent: googlebot
-Disallow: /*/reply*
-Disallow: /*/post
+Disallow: /post

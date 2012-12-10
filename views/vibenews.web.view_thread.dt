@@ -56,7 +56,7 @@ block body
 						- if( post.repliedToPoster.email.length )
 							| in reply to
 							a(href="#{post.repliedToPostNumber}")= post.repliedToPoster.name
-					a.reply-link.link-button(href="reply?post=#{post.number}") Reply
+					a.reply-link.link-button(href="../../../post?group=#{info.group.name}&amp;reply-to=#{post.number}") Reply
 				.post-content
 					!= filterMarkdown(post.message, MarkdownFlags.forumDefault)
 

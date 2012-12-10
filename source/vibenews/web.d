@@ -47,11 +47,9 @@ class WebInterface {
 		router.get("/", &showIndex);
 		router.post("/markup", &markupArticle);
 		router.get("/groups/:group/", &showGroup);
-		router.get("/groups/:group/post", &showPostArticle);
-		router.post("/groups/:group/post", &postArticle);
+		router.get("/groups/post", &showPostArticle);
+		router.post("/groups/post", &postArticle);
 		router.get("/groups/:group/thread/:thread/", &showThread);
-		router.get("/groups/:group/thread/:thread/reply", &showPostArticle);
-		router.post("/groups/:group/thread/:thread/reply", &postArticle);
 		router.get("/groups/:group/post/:post", &showPost);
 		router.get("/groups/:group/thread/:thread/:post", &redirectShowPost); // deprecated
 		router.get("*", serveStaticFiles("public"));
@@ -200,7 +198,7 @@ class WebInterface {
 
 	void showPostArticle(HttpServerRequest req, HttpServerResponse res)
 	{
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		auto grp = m_ctrl.getGroupByName(req.query["group"]);
 		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
 			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
 
@@ -219,8 +217,8 @@ class WebInterface {
 			info.email = req.session["email"];
 		}
 
-		if( "post" in req.query ){
-			auto repartnum = req.query["post"].to!long();
+		if( "reply-to" in req.query ){
+			auto repartnum = req.query["reply-to"].to!long();
 			auto repart = m_ctrl.getArticle(grp.name, repartnum);
 			info.subject = repart.getHeader("Subject");
 			if( !info.subject.startsWith("Re:") ) info.subject = "Re: " ~ info.subject;
@@ -245,7 +243,7 @@ class WebInterface {
 
 	void postArticle(HttpServerRequest req, HttpServerResponse res)
 	{
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		auto grp = m_ctrl.getGroupByName(req.form["group"]);
 		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
 			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
 
@@ -265,8 +263,8 @@ class WebInterface {
 		art.addHeader("Content-Type", "text/plain; charset=UTF-8; format=flowed");
 		art.addHeader("Content-Transfer-Encoding", "8bit");
 
-		if( "article" in req.form ){
-			auto repartnum = req.form["article"].to!long();
+		if( auto prepto = "reply-to" in req.form ){
+			auto repartnum = to!long(*prepto);
 			auto repart = m_ctrl.getArticle(grp.name, repartnum, false);
 			auto refs = repart.getHeader("References");
 			if( refs.length ) refs ~= " ";
