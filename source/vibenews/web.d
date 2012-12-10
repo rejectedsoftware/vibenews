@@ -290,12 +290,12 @@ class WebInterface {
 	void redirectToThreadPost(HttpServerResponse res, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HttpStatus redirect_status_code = HttpStatus.Found)
 	{
 		if( thread_id == BsonObjectID() ){
-			auto art = m_ctrl.getArticle(groupname, article_number);
-			thread_id = art.groups[escapeGroup(groupname)].threadId;
+			auto refs = m_ctrl.getArticleGroupRefs(groupname, article_number);
+			thread_id = refs[escapeGroup(groupname)].threadId;
 		}
 		auto thr = m_ctrl.getThread(thread_id);
-		auto refs = m_ctrl.getArticleGruopRefs(thr.firstArticleId);
-		auto first_art_num = refs[escapeGroup(groupname)].articleNumber;
+		auto first_art_refs = m_ctrl.getArticleGroupRefs(thr.firstArticleId);
+		auto first_art_num = first_art_refs[escapeGroup(groupname)].articleNumber;
 		auto url = "/groups/"~groupname~"/thread/"~first_art_num.to!string()~"/";
 		if( article_number != first_art_num ){
 			auto index = m_ctrl.getThreadArticleIndex(thr._id, article_number, groupname);

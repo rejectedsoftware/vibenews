@@ -303,9 +303,18 @@ class Controller {
 		return ret;
 	}
 
-	GroupRef[string] getArticleGruopRefs(BsonObjectID id)
+	GroupRef[string] getArticleGroupRefs(BsonObjectID id)
 	{
 		auto art = m_articles.findOne(["_id": id], ["groups": 1]);
+		enforce(!art.isNull(), "Unknown article id!");
+		GroupRef[string] ret;
+		deserializeBson(ret, art.groups);
+		return ret;
+	}
+
+	GroupRef[string] getArticleGroupRefs(string group_name, long article_number)
+	{
+		auto art = m_articles.findOne(["groups."~escapeGroup(group_name)~".articleNumber": article_number], ["groups": 1]);
 		enforce(!art.isNull(), "Unknown article id!");
 		GroupRef[string] ret;
 		deserializeBson(ret, art.groups);
