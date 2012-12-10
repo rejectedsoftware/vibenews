@@ -35,7 +35,7 @@ block body
 	- pageLinks();
 
 	- foreach( i, post; info.posts )
-		a(id='#{post.id}')
+		a(id='post-#{post.number}')
 		.post(class='#{i==0?"first odd":i%2==0?"odd":"even"}')
 			.post-header
 				h2.skeleton= post.subject

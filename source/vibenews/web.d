@@ -30,6 +30,7 @@ class WebInterface {
 	private {
 		Controller m_ctrl;
 		string m_title;
+		size_t m_postsPerPage = 10;
 	}
 
 	this(Controller ctrl, string title)
@@ -52,7 +53,7 @@ class WebInterface {
 		router.get("/groups/:group/thread/:thread/reply", &showPostArticle);
 		router.post("/groups/:group/thread/:thread/reply", &postArticle);
 		router.get("/groups/:group/post/:post", &showPost);
-		router.get("/groups/:group/thread/:thread/:post", &showPost); // deprecated
+		router.get("/groups/:group/thread/:thread/:post", &redirectShowPost); // deprecated
 		router.get("*", serveStaticFiles("public"));
 
 		listenHttp(settings, router);
@@ -135,9 +136,11 @@ class WebInterface {
 
 		info.title = m_title;
 		info.hostName = g_hostname;
+		info.pageSize = m_postsPerPage;
 		auto threadnum = req.params["thread"].to!long();
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
-		info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, threadnum), m_ctrl, info.pageSize, grp.name);
+		try info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, threadnum), m_ctrl, info.pageSize, grp.name);
+		catch( Exception e ) redirectToThreadPost(res, grp.name, threadnum);
 		info.group = GroupInfo(grp, m_ctrl);
 		info.postCount = info.thread.postCount;
 		info.pageCount = info.thread.pageCount;
@@ -185,6 +188,11 @@ class WebInterface {
 		res.renderCompat!("vibenews.web.view_post.dt",
 			HttpServerRequest, "req",
 			Info4*, "info")(Variant(req), Variant(&info));
+	}
+
+	void redirectShowPost(HttpServerRequest req, HttpServerResponse res)
+	{
+		res.redirect("/groups/"~req.params["group"]~"/post/"~req.params["post"], HttpStatus.MovedPermanently);
 	}
 
 	void showPostArticle(HttpServerRequest req, HttpServerResponse res)
@@ -271,14 +279,31 @@ class WebInterface {
 
 		m_ctrl.postArticle(art);
 
-		auto thr = m_ctrl.getThread(art.groups[escapeGroup(grp.name)].threadId);
-		auto refs = m_ctrl.getArticleGruopRefs(thr.firstArticleId);
-
 		Session session = req.session;
 		if( !session ) session = res.startSession();
 		session["name"] = req.form["name"].idup;
 		session["email"] = req.form["email"].idup;
-		res.redirect(formatString("/groups/%s/thread/%s/", urlEncode(grp.name), refs[escapeGroup(grp.name)].articleNumber));
+
+		redirectToThreadPost(res, grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
+	}
+
+	void redirectToThreadPost(HttpServerResponse res, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HttpStatus redirect_status_code = HttpStatus.Found)
+	{
+		if( thread_id == BsonObjectID() ){
+			auto art = m_ctrl.getArticle(groupname, article_number);
+			thread_id = art.groups[escapeGroup(groupname)].threadId;
+		}
+		auto thr = m_ctrl.getThread(thread_id);
+		auto refs = m_ctrl.getArticleGruopRefs(thr.firstArticleId);
+		auto first_art_num = refs[escapeGroup(groupname)].articleNumber;
+		auto url = "/groups/"~groupname~"/thread/"~first_art_num.to!string()~"/";
+		if( article_number != first_art_num ){
+			auto index = m_ctrl.getThreadArticleIndex(thr._id, article_number, groupname);
+			auto page = index / m_postsPerPage + 1;
+			if( page > 1 ) url ~= "?page="~to!string(page);
+			url ~= "#post-"~to!string(article_number);
+		}
+		res.redirect(url, redirect_status_code);
 	}
 }
 

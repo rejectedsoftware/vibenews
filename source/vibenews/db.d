@@ -250,6 +250,25 @@ class Controller {
 		}
 	}
 
+	long getThreadArticleIndex(BsonObjectID thread_id, long article_number, string group_name = null)
+	{
+		if( group_name.length == 0 ){
+			auto thr = m_threads.findOne(["_id": thread_id], ["groupId": true]);
+			enforce(!thr.isNull());
+			auto grp = m_groups.findOne(["_id": thr.groupId], ["name": true]);
+			enforce(!grp.isNull());
+			
+			group_name = grp.name.get!string;
+		}
+
+		Bson[string] query;
+		query["groups."~escapeGroup(group_name)~".threadId"] = Bson(thread_id);
+		query["groups."~escapeGroup(group_name)~".articleNumber"] = serializeToBson(["$lt": article_number]);
+		query["active"] = Bson(true);
+
+		return m_articles.count(query);
+	}
+
 	/***************************/
 	/* Articles                */
 	/***************************/
