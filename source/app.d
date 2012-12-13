@@ -1,40 +1,42 @@
 import vibe.d;
 
+import vibenews.nntp.server;
 import vibenews.admin;
 import vibenews.db;
-import vibenews.web;
-import vibenews.nntp.server;
+import vibenews.news;
 import vibenews.vibenews;
+import vibenews.web;
 
 import std.file;
 
-VibeNewsServer s_server;
+NewsInterface s_server;
 AdminInterface s_adminInterface;
 WebInterface s_webInterface;
 
 
 static this()
 {
-	auto settings = new NntpServerSettings;
-	string title = "VibeNews Forum";
+	auto nntpsettings = new NntpServerSettings;
+	auto settings = new VibeNewsSettings;
+	settings.title = "VibeNews Forum";
 
 	if( exists("settings.json") ){
 		auto data = stripUTF8Bom(cast(string)openFile("settings.json").readAll());
 		auto json = parseJson(data);
-		if( "port" in json ) settings.port = cast(short)json.port.get!long;
+		if( "port" in json ) nntpsettings.port = cast(short)json.port.get!long;
 		if( "host" in json ){
-			g_hostname = json.host.get!string;
-			settings.host = json.host.get!string;
+			settings.hostName = json.host.get!string;
+			nntpsettings.host = json.host.get!string;
 		}
-		if( "title" in json ) title = json.title.get!string;
+		if( "title" in json ) settings.title = json.title.get!string;
 	}
 
 	//settings.sslCert = "server.crt";
 	//settings.sslKey = "server.key";
 
 	auto ctrl = new Controller;
-	s_server = new VibeNewsServer(ctrl);
+	s_server = new NewsInterface(ctrl, settings);
 	s_adminInterface = new AdminInterface(ctrl);
-	s_webInterface = new WebInterface(ctrl, title);
-	listenNntp(settings, &s_server.handleCommand);
+	s_webInterface = new WebInterface(ctrl, settings);
+	listenNntp(nntpsettings, &s_server.handleCommand);
 }

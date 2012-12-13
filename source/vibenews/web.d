@@ -1,8 +1,9 @@
 module vibenews.web;
 
 import vibenews.db;
-import vibenews.vibenews : g_hostname;
+import vibenews.vibenews;
 
+import vibe.core.core;
 import vibe.core.log;
 import vibe.crypto.passwordhash;
 import vibe.data.bson;
@@ -29,14 +30,14 @@ import std.utf;
 class WebInterface {
 	private {
 		Controller m_ctrl;
-		string m_title;
+		VibeNewsSettings m_settings;
 		size_t m_postsPerPage = 10;
 	}
 
-	this(Controller ctrl, string title)
+	this(Controller ctrl, VibeNewsSettings vnsettings)
 	{
 		m_ctrl = ctrl;
-		m_title = title;
+		m_settings = vnsettings;
 
 		auto settings = new HttpServerSettings;
 		settings.port = 8009;
@@ -64,7 +65,7 @@ class WebInterface {
 			Category[] categories;
 		}
 		Info1 info;
-		info.title = m_title;
+		info.title = m_settings.title;
 
 		Group[] groups;
 		m_ctrl.enumerateGroups((idx, grp){
@@ -98,7 +99,7 @@ class WebInterface {
 			size_t pageCount;
 		}
 		Info2 info;
-		info.title = m_title;
+		info.title = m_settings.title;
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps)-1;
 
 		info.group = GroupInfo(grp, m_ctrl);
@@ -132,8 +133,8 @@ class WebInterface {
 		}
 		Info3 info;
 
-		info.title = m_title;
-		info.hostName = g_hostname;
+		info.title = m_settings.title;
+		info.hostName = m_settings.hostName;
 		info.pageSize = m_postsPerPage;
 		auto threadnum = req.params["thread"].to!long();
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
@@ -175,8 +176,8 @@ class WebInterface {
 
 		auto postnum = req.params["post"].to!long();
 
-		info.title = m_title;
-		info.hostName = g_hostname;
+		info.title = m_settings.title;
+		info.hostName = m_settings.hostName;
 		info.group = GroupInfo(grp, m_ctrl);
 
 		auto art = m_ctrl.getArticle(grp.name, postnum);
@@ -226,7 +227,7 @@ class WebInterface {
 			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(decodeMessage(repart))).join("\r\n");
 			info.message ~= "\r\n\r\n";
 		}
-		info.title = m_title;
+		info.title = m_settings.title;
 		info.group = GroupInfo(grp, m_ctrl);
 
 		res.renderCompat!("vibenews.web.reply.dt",
@@ -254,7 +255,7 @@ class WebInterface {
 
 		Article art;
 		art._id = BsonObjectID.generate();
-		art.id = "<"~art._id.toString()~"@"~g_hostname~">";
+		art.id = "<"~art._id.toString()~"@"~m_settings.hostName~">";
 		art.addHeader("Subject", req.form["subject"]);
 		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
 		art.addHeader("Newsgroups", grp.name);
@@ -278,6 +279,9 @@ class WebInterface {
 		else art.peerAddress = [req.peer];
 		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
 
+		foreach( flt; m_settings.immediateSpamFilters )
+			enforce(flt(art), "Article was detected as spam. Rejected.");
+
 		m_ctrl.postArticle(art);
 
 		Session session = req.session;
@@ -286,6 +290,14 @@ class WebInterface {
 		session["email"] = req.form["email"].idup;
 
 		redirectToThreadPost(res, grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
+
+		runTask({
+			foreach( flt; m_settings.lazySpamFilters )
+				if( !flt(art) ){
+					m_ctrl.deactivateArticle(art._id);
+					return;
+				}
+		});
 	}
 
 	void redirectToThreadPost(HttpServerResponse res, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HttpStatus redirect_status_code = HttpStatus.Found)
