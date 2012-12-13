@@ -447,7 +447,7 @@ class Controller {
 
 	void deactivateArticle(BsonObjectID artid)
 	{
-		auto oldart = m_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": false]]);
+		auto oldart = m_articles.findAndModify(["_id": artid], ["$set": ["active": false]]);
 		if( !oldart.active.get!bool ) return; // was already deactivated
 
 		// update the group counters
@@ -483,7 +483,7 @@ class Controller {
 
 	void activateArticle(BsonObjectID artid)
 	{
-		auto oldart = m_articles.findAndModify!(BsonObjectID[string], bool[string][string], typeof(null))(["_id": artid], ["$set": ["active": true]]);
+		auto oldart = m_articles.findAndModify(["_id": artid], ["$set": ["active": true]]);
 		if( oldart.active.get!bool ) return; // was already activated by someone else
 
 		// update the group counters
