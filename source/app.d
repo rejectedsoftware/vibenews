@@ -1,13 +1,12 @@
 import vibe.d;
 
 import vibenews.nntp.server;
+import vibenews.spamfilters.blacklist;
 import vibenews.admin;
 import vibenews.db;
 import vibenews.news;
 import vibenews.vibenews;
 import vibenews.web;
-
-import std.file;
 
 NewsInterface s_server;
 AdminInterface s_adminInterface;
@@ -19,8 +18,9 @@ static this()
 	auto nntpsettings = new NntpServerSettings;
 	auto settings = new VibeNewsSettings;
 	settings.title = "VibeNews Forum";
+	settings.spamFilters ~= new BlackListSpamFilter;
 
-	if( exists("settings.json") ){
+	if( existsFile("settings.json") ){
 		auto data = stripUTF8Bom(cast(string)openFile("settings.json").readAll());
 		auto json = parseJson(data);
 		if( "port" in json ) nntpsettings.port = cast(short)json.port.get!long;
@@ -29,6 +29,7 @@ static this()
 			nntpsettings.host = json.host.get!string;
 		}
 		if( "title" in json ) settings.title = json.title.get!string;
+		if( auto spam = "spamfilters" in json ) settings.setSpamSettings(*spam);
 	}
 
 	//settings.sslCert = "server.crt";

@@ -279,8 +279,8 @@ class WebInterface {
 		else art.peerAddress = [req.peer];
 		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
 
-		foreach( flt; m_settings.immediateSpamFilters )
-			enforce(flt(art), "Article was detected as spam. Rejected.");
+		foreach( flt; m_settings.spamFilters )
+			enforce(!flt.checkForBlock(art), "Article was detected as spam. Rejected.");
 
 		m_ctrl.postArticle(art);
 
@@ -292,8 +292,8 @@ class WebInterface {
 		redirectToThreadPost(res, grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
 
 		runTask({
-			foreach( flt; m_settings.lazySpamFilters )
-				if( !flt(art) ){
+			foreach( flt; m_settings.spamFilters )
+				if( flt.checkForRevoke(art) ){
 					m_ctrl.deactivateArticle(art._id);
 					return;
 				}
