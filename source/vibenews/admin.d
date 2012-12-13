@@ -1,6 +1,7 @@
 module vibenews.admin;
 
 import vibenews.db;
+import vibenews.vibenews;
 
 import vibe.core.log;
 import vibe.crypto.passwordhash;
@@ -22,12 +23,12 @@ class AdminInterface {
 		Controller m_ctrl;
 	}
 
-	this(Controller ctrl)
+	this(Controller ctrl, VibeNewsSettings vnsettings)
 	{
 		m_ctrl = ctrl;
 
 		auto settings = new HttpServerSettings;
-		settings.port = 9009;
+		settings.port = vnsettings.adminPort;
 		settings.bindAddresses = ["127.0.0.1"];
 
 		auto router = new UrlRouter;

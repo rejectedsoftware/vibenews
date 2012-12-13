@@ -16,18 +16,29 @@ interface SpamFilter {
 }
 
 class VibeNewsSettings {
-	string hostName;
-	string title;
+	string hostName = "localhost";
+	string title = "VibeNews Forum";
+
+	ushort nntpPort = 119;
+	ushort webPort = 8009;
+	ushort adminPort = 9009;
 
 	SpamFilter[] spamFilters;
 
-	void setSpamSettings(Json json)
+	void parseSettings(Json json)
 	{
-		foreach( string key, value; json )
-		{
-			foreach( flt; spamFilters )
-				if( flt.id == key )
-					flt.setSettings(value);
+		if( "nntpPort" in json ) nntpPort = cast(short)json.port.get!long;
+		if( "webPort" in json ) webPort = cast(short)json.port.get!long;
+		if( "adminPort" in json ) adminPort = cast(short)json.port.get!long;
+		if( "host" in json ) hostName = json.host.get!string;
+		if( "title" in json ) title = json.title.get!string;
+		if( auto psf = "spamfilters" in json ){
+			foreach( string key, value; *psf )
+			{
+				foreach( flt; spamFilters )
+					if( flt.id == key )
+						flt.setSettings(value);
+			}
 		}
 	}
 }

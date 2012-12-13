@@ -33,6 +33,12 @@ class NewsInterface {
 	{
 		m_ctrl = controller;
 		m_settings = settings;
+
+		auto nntpsettings = new NntpServerSettings;
+		nntpsettings.host = settings.hostName;
+		nntpsettings.port = settings.nntpPort;
+
+		listenNntp(nntpsettings, &handleCommand);
 	}
 
 	void handleCommand(NntpServerRequest req, NntpServerResponse res)

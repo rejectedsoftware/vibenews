@@ -40,7 +40,7 @@ class WebInterface {
 		m_settings = vnsettings;
 
 		auto settings = new HttpServerSettings;
-		settings.port = 8009;
+		settings.port = vnsettings.webPort;
 		settings.bindAddresses = ["127.0.0.1"];
 		settings.sessionStore = new MemorySessionStore;
 
