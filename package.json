@@ -3,5 +3,7 @@
 	"description": "Combined web forum and NNTP server implementation for stand-alone newsgroups",
 	"homepage": "https://github.com/rejectedsoftware/vibenews",
     "authors": ["Sönke Ludwig"],
-    "version": "0.5.6"
+	"copyright": "Copyright (c) 2012 Sönke Ludwig",
+	"license": "GPL 3",
+	"version": "0.5.6"
 }

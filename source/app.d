@@ -1,3 +1,10 @@
+/**
+	Application entry point for the vibenews forum server.
+
+	Copyright: © 2012 RejectedSoftware e.K.
+	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
+	Authors: Sönke Ludwig
+*/
 import vibe.d;
 
 import vibenews.nntp.server;
