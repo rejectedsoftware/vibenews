@@ -1,0 +1,21 @@
+extends layout
+
+block body
+	.skeleton
+		h1= title
+
+		.loginArea
+			- if( req.session && req.session.isKeySet("userEmail") )
+				div
+					Logged in as #{req.session["userFullName"]}
+				div
+					a(href="#{req.rootDir}logout") Log out
+			- else
+				form(action="#{req.rootDir}login", method="POST")
+					input(name="redirect", type="hidden", value="#{req.url}")
+					input(name="name", type="email", placeholder="email")
+					input(name="password", type="password", placeholder="password")
+					a(hreF="#{req.rootDir}register") Sign up
+					button(type="submit") Log in
+	
+	block vibenews.body

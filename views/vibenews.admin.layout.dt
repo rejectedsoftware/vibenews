@@ -1,0 +1,10 @@
+extends layout
+
+block title
+	block title
+
+block body
+	.skeleton
+		h1= title
+
+	block vibenews.body
