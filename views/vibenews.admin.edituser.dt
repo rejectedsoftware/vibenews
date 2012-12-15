@@ -1,0 +1,51 @@
+extends layout
+
+block title
+	- auto title = "VibeNews - Edit user " ~ info.user.email;
+	
+block body
+	p
+		a(href="#{req.rootDir}") Back to overview
+
+	form(method="POST", action="/users/#{info.user._id}/update")
+		table 
+			col.caption
+			tr
+				td
+					label(for="email") Email
+				td
+					input#email(type="email", name="email", value="#{info.user.email}")
+			tr
+				td
+					label(for="fullName") Display name
+				td
+					input#fullName(type="text", name="fullName", value="#{info.user.fullName}")
+			tr
+				td
+					label(for="active") Active
+				td
+					- if( info.user.active )
+						input#active.checkbox(type="checkbox", name="active", value="yes", checked)
+					- else
+						input#active.checkbox(type="checkbox", name="active", value="yes")
+			tr
+				td
+					label(for="banned") Banned
+				td
+					- if( info.user.banned )
+						input#banned.checkbox(type="checkbox", name="banned", value="yes", checked)
+					- else
+						input#banned.checkbox(type="checkbox", name="banned", value="yes")
+			tr
+				td
+					label(for="groups") Groups (auth tags)
+				td
+					input#groups(type="text", name="groups", value='#{join(info.user.groups, ", ")}')
+			tr
+				td
+				td
+					input(type="submit", value="Apply changes")
+		p Note: Auth tags are separated by commas
+
+	form(method="POST", action="/users/#{info.user._id}/delete")
+		input(type="submit", value="Delete account")

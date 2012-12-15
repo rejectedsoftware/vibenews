@@ -1,0 +1,47 @@
+extends layout
+
+block title
+	- auto title = "VibeNews - All users";
+	
+block body
+	- import std.algorithm;
+	- import vibe.data.bson;
+	
+	p
+		a(href="../") Back to overview
+	
+	- void pageLinks()
+		- if( info.pageCount > 1 )
+			p.pages Pages: 
+				- bool last = true;
+				- foreach( i; 0 .. info.pageCount )
+					- if( i > 9 && i+10 < info.pageCount && (i+10 < info.page || i > info.page+10) )
+						- last = false;
+						- continue;
+					- if( !last )
+						| …
+						- last = true;
+					- if( info.page == i )
+						|= i+1
+					- else
+						a(href="#{req.rootDir}users/?page=#{i+1}")= i+1
+
+	- pageLinks();
+
+	table
+		tr
+			th Email
+			th Display name
+			th Auth tags
+			th Action
+		
+		- foreach( usr; info.users )
+			tr(class='#{usr.banned ? "inactive" : "active"}')
+				td= usr.email
+				td= usr.fullName
+				td= join(usr.groups, ", ")
+				td
+					form(action='#{req.rootDir}users/#{usr._id}/', method="GET")
+						input(type="submit", value='Edit')
+
+	- pageLinks();
