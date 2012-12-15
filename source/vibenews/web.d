@@ -291,9 +291,9 @@ class WebInterface {
 			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
 
 		bool loggedin = req.session && req.session.isKeySet("userEmail");
-		string email = loggedin ? req.session["userEmail"] : req.form["email"];
-		string name = loggedin ? req.session["userFullName"] : req.form["userEmail"];
-		string subject = req.form["subject"];
+		string email = loggedin ? req.session["userEmail"] : req.form["email"].strip();
+		string name = loggedin ? req.session["userFullName"] : req.form["userEmail"].strip();
+		string subject = req.form["subject"].strip();
 		string message = req.form["message"];
 
 		validateEmail(email);

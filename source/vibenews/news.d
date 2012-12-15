@@ -233,7 +233,7 @@ class NewsInterface {
 				auto password = req.parameters[1];
 				try {
 					auto usr = m_ctrl.getUserByEmail(getTaskLocal!string("authUser"));
-					enforce(testSimplePasswordHash(usr.passwordHash, password));
+					enforce(testSimplePasswordHash(usr.auth.passwordHash, password));
 					setTaskLocal("authUserId", usr._id.toString());
 					res.status = NntpStatus.AuthAccepted;
 					res.statusText = "authentication successful";
