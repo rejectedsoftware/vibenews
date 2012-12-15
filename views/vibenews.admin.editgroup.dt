@@ -1,9 +1,9 @@
-extends layout
+extends vibenews.admin.layout
 
 block title
 	- auto title = "VibeNews - Edit group " ~ group.name;
 	
-block body
+block vibenews.body
 	p
 		a(href="#{req.rootDir}") Back to overview
 

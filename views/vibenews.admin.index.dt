@@ -1,9 +1,9 @@
-extends layout
+extends vibenews.admin.layout
 
 block title
 	- auto title = "VibeNews - Admin panel";
 	
-block body
+block vibenews.body
 	h2 Groups
 	form(method="POST", action="/groups/create")
 		table

@@ -1,9 +1,9 @@
-extends layout
+extends vibenews.admin.layout
 
 block title
 	- auto title = "VibeNews - View articles of " ~ info.groupname;
 	
-block body
+block vibenews.body
 	- import std.algorithm;
 	
 	p

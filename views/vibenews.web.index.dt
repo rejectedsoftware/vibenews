@@ -1,11 +1,11 @@
-extends layout
+extends vibenews.web.layout
 
 block title
 	- import vibe.textfilter.urlencode;
 
 	- auto title = info.title;
 
-block body
+block vibenews.body
 
 	- foreach( cat; info.categories )
 		- if( cat.groups.length == 0 ) continue;

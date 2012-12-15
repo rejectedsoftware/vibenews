@@ -1,4 +1,4 @@
-extends layout
+extends vibenews.web.layout
 
 block title
 	- import vibe.crypto.md5;
@@ -7,7 +7,7 @@ block title
 
 	- auto title = info.title ~ ": " ~ info.thread.subject;
 
-block body
+block vibenews.body
 
 	nav
 		ul

@@ -9,21 +9,4 @@ html
 		script(type="text/javascript", src="#{req.rootDir}prettify/prettify.js")
 		
 	body(onload="prettyPrint()")
-		.skeleton
-			h1= title
-
-			.loginArea
-				- if( req.session && req.session.isKeySet("userEmail") )
-					div
-						Logged in as #{req.session["userFullName"]}
-					div
-						a(href="#{req.rootDir}logout") Log out
-				- else
-					form(action="#{req.rootDir}login", method="POST")
-						input(name="redirect", type="hidden", value="#{req.url}")
-						input(name="name", type="email", placeholder="email")
-						input(name="password", type="password", placeholder="password")
-						a(hreF="#{req.rootDir}register") Sign up
-						button(type="submit") Log in
-		
 		block body

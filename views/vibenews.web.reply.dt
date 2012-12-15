@@ -1,4 +1,4 @@
-extends layout
+extends vibenews.web.layout
 
 block title
 	- auto title = info.title ~ ("post" in req.query ? ": Reply" : ": Post new topic");
@@ -6,7 +6,7 @@ block title
 	script(type="text/javascript", src="#{req.rootDir}scripts/jquery.js")
 	script(type="text/javascript", src="#{req.rootDir}scripts/vibenews-reply.js")
 
-block body
+block vibenews.body
 
 	nav
 		ul

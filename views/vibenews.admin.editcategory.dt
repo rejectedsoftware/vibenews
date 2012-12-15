@@ -1,4 +1,4 @@
-extends layout
+extends vibenews.admin.layout
 
 block title
 	- import std.algorithm;

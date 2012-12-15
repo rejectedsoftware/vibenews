@@ -1,9 +1,9 @@
-extends layout
+extends vibenews.admin.layout
 
 block title
 	- auto title = "VibeNews - All users";
 	
-block body
+block vibenews.body
 	- import std.algorithm;
 	- import vibe.data.bson;
 	

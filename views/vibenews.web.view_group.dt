@@ -1,11 +1,11 @@
-extends layout
+extends vibenews.web.layout
 
 block title
 	- import vibe.textfilter.urlencode;
 
 	- auto title = info.title ~ ": " ~ info.group.caption;
 
-block body
+block vibenews.body
 
 	nav
 		ul
