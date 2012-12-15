@@ -5,7 +5,7 @@ block title
 	
 	- auto title = "VibeNews - Edit category " ~ category.caption;
 	
-block body
+block vibenews.body
 	p
 		a(href="#{req.rootDir}") Back to overview
 
