@@ -7,18 +7,29 @@ body {
 	margin: 15pt;
 }
 
-h1.skeleton {
+div.skeleton {
 	background-color: #E0D8D0;
 	background-image: -webkit-linear-gradient(top, #fff, #B0A8A0);
 	background-image:    -moz-linear-gradient(top, #fff, #E0D8D0);
 	background-image:     -ms-linear-gradient(top, #fff, #B0A8A0);
 	background-image:      -o-linear-gradient(top, #fff, #B0A8A0);
 	color: black;
-	font-weight: normal;
 	margin: -15pt;
 	margin-bottom: 15pt;
-	padding: 3.75pt 15pt;
 	box-shadow: 0px 0px 20px #000;
+}
+
+.skeleton h1 {
+	font-weight: normal;
+	padding: 3.75pt 15pt;
+}
+
+.skeleton .loginArea {
+	position: absolute;
+	width: 150pt;
+	top: 0;
+	right: 0;
+	text-align: right;
 }
 
 nav ul {

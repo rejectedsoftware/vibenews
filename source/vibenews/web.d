@@ -1,7 +1,16 @@
+/**
+	(module summary)
+
+	Copyright: © 2012 RejectedSoftware e.K.
+	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
+	Authors: Sönke Ludwig
+*/
 module vibenews.web;
 
 import vibenews.db;
 import vibenews.vibenews;
+
+import userman.web : UserManController, UserManWebInterface;
 
 import vibe.core.core;
 import vibe.core.log;
@@ -31,6 +40,7 @@ class WebInterface {
 	private {
 		Controller m_ctrl;
 		VibeNewsSettings m_settings;
+		UserManWebInterface m_userMan;
 		size_t m_postsPerPage = 10;
 	}
 
@@ -45,7 +55,13 @@ class WebInterface {
 		settings.sessionStore = new MemorySessionStore;
 
 		auto router = new UrlRouter;
+
+		m_userMan = new UserManWebInterface(ctrl.userManController);
+		m_userMan.register(router);
+
 		router.get("/", &showIndex);
+		/*router.post("/login", &login);
+		router.get("/logout", &logout);*/
 		router.post("/markup", &markupArticle);
 		router.get("/groups/:group/", &showGroup);
 		router.get("/groups/post", &showPostArticle);
@@ -82,6 +98,25 @@ class WebInterface {
 		res.renderCompat!("vibenews.web.index.dt",
 			HttpServerRequest, "req",
 			Info1*, "info")(Variant(req), Variant(&info));
+	}
+
+	void login(HttpServerRequest req, HttpServerResponse res)
+	{
+		auto email = req.form["email"];
+		auto password = req.form["password"];
+
+		auto session = res.startSession();
+		session["loginEmail"] = email;
+		session["loginDisplayEmail"] = email;
+		session["loginDisplayName"] = email;
+
+		res.redirect(req.form["redirect"]);
+	}
+
+	void logout(HttpServerRequest req, HttpServerResponse res)
+	{
+		if( req.session ) res.terminateSession();
+		res.redirect("/");
 	}
 
 	void showGroup(HttpServerRequest req, HttpServerResponse res)
@@ -206,6 +241,7 @@ class WebInterface {
 		static struct Info5 {
 			string title;
 			GroupInfo group;
+			bool loggedIn = false;
 			string name;
 			string email;
 			string subject;
@@ -214,8 +250,14 @@ class WebInterface {
 		Info5 info;
 
 		if( req.session ){
-			info.name = req.session["name"];
-			info.email = req.session["email"];
+			if( req.session.isKeySet("userEmail") ){
+				info.loggedIn = true;
+				info.name = req.session["userFullName"];
+				info.email = req.session["userEmail"];
+			} else {
+				info.name = req.session["lastUsedName"];
+				info.email = req.session["lastUsedEmail"];
+			}
 		}
 
 		if( "reply-to" in req.query ){
@@ -248,16 +290,22 @@ class WebInterface {
 		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
 			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
 
-		validateEmail(req.form["email"]);
-		validateString(req.form["name"], 3, 64, "The poster name");
-		validateString(req.form["subject"], 1, 128, "The message subject");
-		validateString(req.form["message"], 0, 128*1024, "The message body");
+		bool loggedin = req.session && req.session.isKeySet("userEmail");
+		string email = loggedin ? req.session["userEmail"] : req.form["email"];
+		string name = loggedin ? req.session["userFullName"] : req.form["userEmail"];
+		string subject = req.form["subject"];
+		string message = req.form["message"];
+
+		validateEmail(email);
+		validateString(name, 3, 64, "The poster name");
+		validateString(subject, 1, 128, "The message subject");
+		validateString(message, 0, 128*1024, "The message body");
 
 		Article art;
 		art._id = BsonObjectID.generate();
 		art.id = "<"~art._id.toString()~"@"~m_settings.hostName~">";
-		art.addHeader("Subject", req.form["subject"]);
-		art.addHeader("From", "\""~req.form["name"]~"\" <"~req.form["email"]~">");
+		art.addHeader("Subject", subject);
+		art.addHeader("From", "\""~name~"\" <"~email~">");
 		art.addHeader("Newsgroups", grp.name);
 		art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
@@ -277,17 +325,16 @@ class WebInterface {
 		if( auto pp = "X-Forwarded-For" in req.headers )
 			art.peerAddress = split(*pp, ",").map!strip().array() ~ req.peer;
 		else art.peerAddress = [req.peer];
-		art.message = cast(ubyte[])(req.form["message"] ~ "\r\n");
+		art.message = cast(ubyte[])(message ~ "\r\n");
 
 		foreach( flt; m_settings.spamFilters )
 			enforce(!flt.checkForBlock(art), "Article was detected as spam. Rejected.");
 
 		m_ctrl.postArticle(art);
 
-		Session session = req.session;
-		if( !session ) session = res.startSession();
-		session["name"] = req.form["name"].idup;
-		session["email"] = req.form["email"].idup;
+		if( !req.session ) req.session = res.startSession();
+		req.session["lastUsedName"] = name.idup;
+		req.session["lastUsedEmail"] = email.idup;
 
 		redirectToThreadPost(res, grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
 

@@ -9,6 +9,8 @@ module vibenews.db;
 
 import vibe.vibe;
 
+import userman.controller;
+
 import std.algorithm;
 import std.array;
 import std.base64;
@@ -23,10 +25,17 @@ class Controller {
 		MongoCollection m_articles;
 		MongoCollection m_threads;
 		MongoCollection m_users;
+		UserManController m_userdb;
 	}
 
 	this()
 	{
+		auto settings = new UserManSettings;
+		settings.useUserNames = false;
+		settings.databaseName = "vibenews";
+settings.requireAccountValidation = false;
+		m_userdb = new UserManController(settings);
+
 		m_db = connectMongoDB("127.0.0.1");
 		m_groups = m_db["vibenews.groups"];
 		m_groupCategories = m_db["vibenews.groupCategories"];
@@ -79,6 +88,9 @@ class Controller {
 		foreach( grp; m_groups.find(Bson.EmptyObject, ["name": 1]) )
 			createGroupIndexes(grp.name.get!string());
 	}
+
+
+	@property UserManController userManController() { return m_userdb; }
 
 
 	/***************************/

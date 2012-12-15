@@ -29,16 +29,17 @@ block body
 			input(type="hidden", name="reply-to", value='#{req.query["reply-to"]}')
 		table
 			col.caption
-			tr
-				td
-					label(for="name") Name
-				td
-					input#name(type="text", name="name", value="#{info.name}")
-			tr
-				td
-					label(for="email") Email
-				td
-					input#email(type="email", name="email", value="#{info.email}")
+			- if( !info.loggedIn )
+				tr
+					td
+						label(for="name") Name
+					td
+						input#name(type="text", name="name", value="#{info.name}")
+				tr
+					td
+						label(for="email") Email
+					td
+						input#email(type="email", name="email", value="#{info.email}")
 			tr
 				td
 					label(for="subject") Subject
