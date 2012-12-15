@@ -7,6 +7,8 @@
 */
 module vibenews.controller;
 
+import vibenews.nntp.status;
+
 import vibe.vibe;
 
 import userman.controller;
@@ -94,7 +96,18 @@ settings.requireAccountValidation = false;
 
 	bool isEmailRegistered(string email) { return m_userdb.isEmailRegistered(email); }
 
+	User getUser(BsonObjectID user_id) { return m_userdb.getUser(user_id); }
 	User getUserByEmail(string email) { return m_userdb.getUserByEmail(email); }
+
+	void enumerateUsers(int first_user, int max_count, void delegate(ref User usr) del)
+	{
+		m_userdb.enumerateUsers(first_user, max_count, del);
+	}
+
+	long getUserCount() { return m_userdb.getUserCount(); }
+
+	void updateUser(User user) { m_userdb.updateUser(user); }
+	void deleteUser(BsonObjectID user_id) { m_userdb.deleteUser(user_id); }
 
 	/***************************/
 	/* Group categories        */
@@ -405,7 +418,7 @@ settings.requireAccountValidation = false;
 		return m_articles.count(["groups."~escapeGroup(groupname)~".articleNumber": ["$exists": true]]);
 	}
 
-	void postArticle(ref Article art)
+	void postArticle(ref Article art, BsonObjectID user_id)
 	{
 		string relay_version = art.getHeader("Relay-Version");
 		string posting_version = art.getHeader("Posting-Version");
@@ -428,6 +441,13 @@ settings.requireAccountValidation = false;
 
 		if( messageid.length )
 			art.id = messageid;
+
+		// validate groups
+		foreach( grp; newsgroups ){
+			auto bgpre = m_groups.findOne(["name": grp]);
+			enforce(!bgpre.isNull(), new NntpStatusException(NntpStatus.ArticleRejected, "Invalid groups: "~grp));
+			enforce(isAuthorizedForWritingGroup(user_id, grp), new NntpStatusException(NntpStatus.ArticleRejected, "Not allowed to post in "~grp));
+		}
 
 		foreach( grp; newsgroups ){
 			auto bgpre = m_groups.findAndModify(["name": grp], ["$inc": ["articleNumberCounter": 1]], ["articleNumberCounter": 1]);
@@ -542,12 +562,12 @@ settings.requireAccountValidation = false;
 		if( grp.isNull() ) return false;
 		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
 		foreach( g; grp.readOnlyAuthTags )
-			foreach( tag; usr.properties["authTags"] )
-				if( tag.get!string == g.get!string )
+			foreach( tag; usr.groups )
+				if( tag == g.get!string )
 					return true;
 		foreach( g; grp.readWriteAuthTags )
-			foreach( tag; usr.properties["authTags"] )
-				if( tag.get!string == g.get!string )
+			foreach( tag; usr.groups )
+				if( tag == g.get!string )
 					return true;
 		return false;
 	}
@@ -559,8 +579,8 @@ settings.requireAccountValidation = false;
 		if( grp.isNull() ) return false;
 		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
 		foreach( g; grp.readWriteAuthTags )
-			foreach( tag; usr.properties["authTags"] )
-				if( tag.get!string == g.get!string )
+			foreach( tag; usr.groups )
+				if( tag == g.get!string )
 					return true;
 		return false;
 	}

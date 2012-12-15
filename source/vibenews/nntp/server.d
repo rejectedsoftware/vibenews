@@ -67,6 +67,10 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			req.peerAddress = conn.peerAddress;
 			try {
 				command_handler(req, res);
+			} catch( NntpStatusException e ){
+				res.status = e.status;
+				res.statusText = e.statusText;
+				res.writeVoidBody();
 			} catch( Exception e ){
 				logWarn("NNTP request exception: %s", e.toString());
 				if( !res.m_headerWritten ){

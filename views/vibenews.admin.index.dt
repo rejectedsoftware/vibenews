@@ -47,6 +47,11 @@ block body
 					input#name(type="text", name="index")
 				td
 					input(type="submit", value="Create")
+
+	h2 Users
+
+	form(method="GET", action="/users/")
+		input(type="submit", value="Manage users")
 	
 	h2 Maintainance
 	form(method="POST", action="/groups/repair-numbers")

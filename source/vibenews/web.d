@@ -25,7 +25,7 @@ import vibe.textfilter.urlencode;
 import vibe.utils.string;
 import vibe.utils.validation;
 
-import std.algorithm : filter, map, sort;
+import std.algorithm : canFind, filter, map, sort;
 import std.array;
 import std.base64;
 import std.conv;
@@ -83,10 +83,24 @@ class WebInterface {
 		Info1 info;
 		info.title = m_settings.title;
 
+		string[] authTags;
+		if( req.session && req.session.isKeySet("userEmail") ){
+			auto usr = m_ctrl.getUserByEmail(req.session["userEmail"]);
+			authTags = usr.groups;
+		}
+
 		Group[] groups;
 		m_ctrl.enumerateGroups((idx, grp){
-			if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
-				return;
+			auto alltags = grp.readOnlyAuthTags ~ grp.readWriteAuthTags;
+			if( alltags.length > 0 ){
+				bool found = false;
+				foreach( t; alltags )
+					if( authTags.canFind(t) ){
+						found = true;
+						break;
+					}
+				if( !found ) return;
+			}
 			groups ~= grp;
 		});
 		m_ctrl.enumerateGroupCategories((idx, cat){ info.categories ~= Category(cat, groups, m_ctrl); });
@@ -122,8 +136,8 @@ class WebInterface {
 	void showGroup(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
-		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
-			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
+		enforceAuth(req, grp, false);
 
 		static struct Info2 {
 			string title;
@@ -152,8 +166,8 @@ class WebInterface {
 	void showThread(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
-		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
-			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
+		enforceAuth(req, grp, false);
 
 		static struct Info3 {
 			string title;
@@ -197,8 +211,8 @@ class WebInterface {
 	void showPost(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
-		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
-			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
+		enforceAuth(req, grp, false);
 
 		static struct Info4 {
 			string title;
@@ -235,8 +249,8 @@ class WebInterface {
 	void showPostArticle(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.query["group"]);
-		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
-			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
+		enforceAuth(req, grp, true);
 
 		static struct Info5 {
 			string title;
@@ -287,8 +301,8 @@ class WebInterface {
 	void postArticle(HttpServerRequest req, HttpServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.form["group"]);
-		if( grp.readOnlyAuthTags.length || grp.readWriteAuthTags.length )
-			throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+
+		auto user_id = enforceAuth(req, grp, true);
 
 		bool loggedin = req.session && req.session.isKeySet("userEmail");
 		string email = loggedin ? req.session["userEmail"] : req.form["email"].strip();
@@ -300,6 +314,10 @@ class WebInterface {
 		validateString(name, 3, 64, "The poster name");
 		validateString(subject, 1, 128, "The message subject");
 		validateString(message, 0, 128*1024, "The message body");
+
+		if( !loggedin ){
+			enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
+		}
 
 		Article art;
 		art._id = BsonObjectID.generate();
@@ -330,7 +348,7 @@ class WebInterface {
 		foreach( flt; m_settings.spamFilters )
 			enforce(!flt.checkForBlock(art), "Article was detected as spam. Rejected.");
 
-		m_ctrl.postArticle(art);
+		m_ctrl.postArticle(art, user_id);
 
 		if( !req.session ) req.session = res.startSession();
 		req.session["lastUsedName"] = name.idup;
@@ -364,6 +382,32 @@ class WebInterface {
 			url ~= "#post-"~to!string(article_number);
 		}
 		res.redirect(url, redirect_status_code);
+	}
+
+	BsonObjectID enforceAuth(HttpServerRequest req, ref Group grp, bool read_write)
+	{
+		BsonObjectID uid;
+		string[] authTags;
+		if( req.session && req.session.isKeySet("userEmail") ){
+			auto usr = m_ctrl.getUserByEmail(req.session["userEmail"]);
+			authTags = usr.groups;
+			uid = usr._id;
+		}
+
+		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
+			return uid;
+
+		auto alltags = grp.readWriteAuthTags;
+		if( !read_write ) alltags ~= grp.readOnlyAuthTags;
+
+		bool found = false;
+		foreach( t; alltags )
+			if( authTags.canFind(t) ){
+				found = true;
+				break;
+			}
+		enforce(found, new HttpStatusException(HttpStatus.Forbidden, "Group is protected."));
+		return uid;
 	}
 }
 

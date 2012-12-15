@@ -10,6 +10,8 @@ module vibenews.admin;
 import vibenews.controller;
 import vibenews.vibenews;
 
+import userman.controller : User;
+
 import vibe.core.log;
 import vibe.crypto.passwordhash;
 import vibe.data.bson;
@@ -17,6 +19,7 @@ import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
 import vibe.textfilter.urlencode;
+import vibe.utils.validation;
 
 import std.algorithm : map;
 import std.array;
@@ -53,6 +56,10 @@ class AdminInterface {
 		router.get("/groups/:groupname/articles", &showArticles);
 		router.post("/articles/:articleid/activate", &activateArticle);
 		router.post("/articles/:articleid/deactivate", &deactivateArticle);
+		router.get("/users/", &showListUsers);
+		router.get("/users/:user/", &showUser);
+		router.post("/users/:user/update", &updateUser);
+		router.post("/users/:user/delete", &deleteUser);
 		router.get("*", serveStaticFiles("public"));
 
 		listenHttp(settings, router);
@@ -194,4 +201,59 @@ class AdminInterface {
 		m_ctrl.deactivateArticle(artid);
 		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
 	}
+
+	void showListUsers(HttpServerRequest req, HttpServerResponse res)
+	{
+		struct Info {
+			enum itemsPerPage = 20;
+			User[] users;
+			int page;
+			int itemCount;
+			int pageCount;
+		}
+
+		Info info;
+		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
+		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){ info.users ~= user; });
+		info.itemCount = cast(int)m_ctrl.getUserCount();
+		info.pageCount = (info.itemCount-1)/info.itemsPerPage + 1;
+
+		res.renderCompat!("vibenews.admin.listusers.dt",
+			HttpServerRequest, "req",
+			Info*, "info")(Variant(req), Variant(&info));
+	}
+
+	void showUser(HttpServerRequest req, HttpServerResponse res)
+	{
+		struct Info {
+			User user;
+		}
+		Info info;
+		info.user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
+		res.renderCompat!("vibenews.admin.edituser.dt",
+				HttpServerRequest, "req",
+				Info*, "info"
+			)(req, &info);
+	}
+
+	void updateUser(HttpServerRequest req, HttpServerResponse res)
+	{
+		auto user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
+		validateEmail(req.form["email"]);
+		user.email = user.name = req.form["email"];
+		user.fullName = req.form["fullName"];
+		user.active = ("active" in req.form) !is null;
+		user.banned = ("banned" in req.form) !is null;
+		user.groups = req.form["groups"].split(",").map!(g => g.strip())().array();
+		m_ctrl.updateUser(user);
+
+		res.redirect("/users/"~user._id.toString()~"/");
+	}
+
+	void deleteUser(HttpServerRequest req, HttpServerResponse res)
+	{
+		m_ctrl.deleteUser(BsonObjectID.fromString(req.form["user"]));
+		res.redirect("/users/");
+	}
+
 }

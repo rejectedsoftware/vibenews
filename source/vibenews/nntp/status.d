@@ -48,3 +48,20 @@ enum NntpStatus {
 	AccessFailure = 502,
 	InternalError = 503,
 }
+
+class NntpStatusException : Exception {
+	private {
+		NntpStatus m_status;
+		string m_statusText;
+	}
+
+	this(NntpStatus status, string text, Throwable next = null, string file = __FILE__, int line = __LINE__)
+	{
+		super(text, file, line, next);
+		m_status = status;
+		m_statusText = text;
+	}
+
+	@property NntpStatus status() const { return m_status; }
+	@property string statusText() const { return m_statusText; }
+}

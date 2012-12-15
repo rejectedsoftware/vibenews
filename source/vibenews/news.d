@@ -123,7 +123,7 @@ class NewsInterface {
 
 			bool auth = false;
 			foreach( g; art.groups.byKey() ){
-				if( testAuth(unescapeGroup(g)) ){
+				if( testAuth(unescapeGroup(g), false) ){
 					auth = true;
 					break;
 				}
@@ -148,7 +148,7 @@ class NewsInterface {
 
 			auto groupname = getTaskLocal!string("group");
 
-			if( !testAuth(groupname, res) )
+			if( !testAuth(groupname, false, res) )
 				return;
 
 			try art = m_ctrl.getArticle(groupname, anum);
@@ -273,7 +273,7 @@ class NewsInterface {
 			return;
 		}
 
-		if( !testAuth(groupname, res) )
+		if( !testAuth(groupname, false, res) )
 			return;
 
 		setTaskLocal("group", groupname);
@@ -363,7 +363,7 @@ class NewsInterface {
 
 		auto grp = m_ctrl.getGroupByName(grpname);
 		
-		if( !testAuth(grp, res) )
+		if( !testAuth(grp, false, res) )
 			return;
 
 		long fromnum = to!long(fromstr);
@@ -425,21 +425,22 @@ class NewsInterface {
 			res.writeVoidBody();
 			return;
 		}
+		res.restart();
 		art.peerAddress = [req.peerAddress];
 
 		// check for spam
 		foreach( flt; m_settings.spamFilters )
 			if( flt.checkForBlock(art) ){
-				res.restart();
 				res.status = NntpStatus.ArticleRejected;
 				res.statusText = "Spam detected";
 				res.writeVoidBody();
 				return;
 			}
 
-		m_ctrl.postArticle(art);
+		BsonObjectID uid;
+		if( isTaskLocalSet("authUserId") ) uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
+		m_ctrl.postArticle(art, uid);
 
-		res.restart();
 		res.status = NntpStatus.ArticlePostedOK;
 		res.statusText = "Article posted";
 		res.writeVoidBody();
@@ -467,7 +468,7 @@ class NewsInterface {
 
 			bool first = true;
 			m_ctrl.enumerateGroups((gi, group){
-				if( !testAuth(group.name, res) )
+				if( !testAuth(group.name, false, res) )
 					return;
 					
 				m_ctrl.enumerateNewArticles(group.name, SysTime(date, UTC()), (i, id, msgid, msgnum){
@@ -477,7 +478,7 @@ class NewsInterface {
 					});
 			});
 		} else {
-			if( !testAuth(grp, res) )
+			if( !testAuth(grp, false, res) )
 				return;
 
 			res.status = NntpStatus.NewArticles;
@@ -523,17 +524,17 @@ class NewsInterface {
 	}
 
 
-	bool testAuth(string grpname, NntpServerResponse res = null)
+	bool testAuth(string grpname, bool require_write, NntpServerResponse res = null)
 	{
 		try {
 			auto grp = m_ctrl.getGroupByName(grpname);
-			return testAuth(grp, res);
+			return testAuth(grp,require_write, res);
 		} catch( Exception e ){
 			return false;
 		}
 	}
 
-	bool testAuth(vibenews.controller.Group grp, NntpServerResponse res = null)
+	bool testAuth(vibenews.controller.Group grp, bool require_write, NntpServerResponse res)
 	{
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
 			return true;
@@ -541,19 +542,25 @@ class NewsInterface {
 		BsonObjectID uid;
 		try uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
 		catch(Exception){
-			res.status = NntpStatus.AuthRequired;
-			res.statusText = "auth info required";
-			res.writeVoidBody();
+			if( res ){
+				res.status = NntpStatus.AuthRequired;
+				res.statusText = "auth info required";
+				res.writeVoidBody();
+			}
 			return false;
 		}
 
 		try {
-			enforce(m_ctrl.isAuthorizedForWritingGroup(uid, grp.name));
+			if( require_write )
+				enforce(m_ctrl.isAuthorizedForWritingGroup(uid, grp.name));
+			else enforce(m_ctrl.isAuthorizedForReadingGroup(uid, grp.name));
 			return true;
 		} catch(Exception){
-			res.status = NntpStatus.AccessFailure;
-			res.statusText = "auth info not valid for group";
-			res.writeVoidBody();
+			if( res ){
+				res.status = NntpStatus.AccessFailure;
+				res.statusText = "auth info not valid for group";
+				res.writeVoidBody();
+			}
 			return false;
 		}
 	}
