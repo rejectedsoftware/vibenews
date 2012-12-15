@@ -7,7 +7,7 @@
 */
 module vibenews.vibenews;
 
-public import vibenews.db : Article;
+public import vibenews.controller : Article;
 
 public import vibe.data.json;
 

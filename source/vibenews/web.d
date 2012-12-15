@@ -7,7 +7,7 @@
 */
 module vibenews.web;
 
-import vibenews.db;
+import vibenews.controller;
 import vibenews.vibenews;
 
 import userman.web : UserManController, UserManWebInterface;

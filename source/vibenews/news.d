@@ -9,7 +9,7 @@ module vibenews.news;
 
 import vibenews.nntp.server;
 import vibenews.nntp.status;
-import vibenews.db;
+import vibenews.controller;
 import vibenews.vibenews;
 
 import vibe.core.core;
@@ -262,7 +262,7 @@ class NewsInterface {
 	{
 		req.enforceNParams(1, "<groupname>");
 		auto groupname = req.parameters[0];
-		vibenews.db.Group grp;
+		vibenews.controller.Group grp;
 		try {
 			grp = m_ctrl.getGroupByName(groupname);
 			enforce(grp.active);
@@ -533,7 +533,7 @@ class NewsInterface {
 		}
 	}
 
-	bool testAuth(vibenews.db.Group grp, NntpServerResponse res = null)
+	bool testAuth(vibenews.controller.Group grp, NntpServerResponse res = null)
 	{
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
 			return true;

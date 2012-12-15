@@ -10,7 +10,7 @@ import vibe.d;
 import vibenews.nntp.server;
 import vibenews.spamfilters.blacklist;
 import vibenews.admin;
-import vibenews.db;
+import vibenews.controller;
 import vibenews.news;
 import vibenews.vibenews;
 import vibenews.web;

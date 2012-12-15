@@ -7,7 +7,7 @@
 */
 module vibenews.admin;
 
-import vibenews.db;
+import vibenews.controller;
 import vibenews.vibenews;
 
 import vibe.core.log;
