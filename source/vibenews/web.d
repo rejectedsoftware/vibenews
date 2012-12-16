@@ -77,11 +77,11 @@ class WebInterface {
 	void showIndex(HttpServerRequest req, HttpServerResponse res)
 	{
 		static struct Info1 {
-			string title;
+			VibeNewsSettings settings;
 			Category[] categories;
 		}
 		Info1 info;
-		info.title = m_settings.title;
+		info.settings = m_settings;
 
 		string[] authTags;
 		if( req.session && req.session.isKeySet("userEmail") ){
@@ -140,7 +140,7 @@ class WebInterface {
 		enforceAuth(req, grp, false);
 
 		static struct Info2 {
-			string title;
+			VibeNewsSettings settings;
 			GroupInfo group;
 			ThreadInfo[] threads;
 			size_t page = 0;
@@ -148,7 +148,7 @@ class WebInterface {
 			size_t pageCount;
 		}
 		Info2 info;
-		info.title = m_settings.title;
+		info.settings = m_settings;
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps)-1;
 
 		info.group = GroupInfo(grp, m_ctrl);
@@ -170,8 +170,7 @@ class WebInterface {
 		enforceAuth(req, grp, false);
 
 		static struct Info3 {
-			string title;
-			string hostName;
+			VibeNewsSettings settings;
 			GroupInfo group;
 			PostInfo[] posts;
 			ThreadInfo thread;
@@ -180,10 +179,9 @@ class WebInterface {
 			size_t pageSize = 10;
 			size_t pageCount;
 		}
-		Info3 info;
 
-		info.title = m_settings.title;
-		info.hostName = m_settings.hostName;
+		Info3 info;
+		info.settings = m_settings;
 		info.pageSize = m_postsPerPage;
 		auto threadnum = req.params["thread"].to!long();
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
@@ -215,18 +213,16 @@ class WebInterface {
 		enforceAuth(req, grp, false);
 
 		static struct Info4 {
-			string title;
-			string hostName;
+			VibeNewsSettings settings;
 			GroupInfo group;
 			PostInfo post;
 			ThreadInfo thread;
 		}
-		Info4 info;
 
 		auto postnum = req.params["post"].to!long();
 
-		info.title = m_settings.title;
-		info.hostName = m_settings.hostName;
+		Info4 info;
+		info.settings = m_settings;
 		info.group = GroupInfo(grp, m_ctrl);
 
 		auto art = m_ctrl.getArticle(grp.name, postnum);
@@ -253,7 +249,7 @@ class WebInterface {
 		enforceAuth(req, grp, true);
 
 		static struct Info5 {
-			string title;
+			VibeNewsSettings settings;
 			GroupInfo group;
 			bool loggedIn = false;
 			string name;
@@ -261,7 +257,9 @@ class WebInterface {
 			string subject;
 			string message;
 		}
+
 		Info5 info;
+		info.settings = m_settings;
 
 		if( req.session ){
 			if( req.session.isKeySet("userEmail") ){
@@ -283,7 +281,6 @@ class WebInterface {
 			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(decodeMessage(repart))).join("\r\n");
 			info.message ~= "\r\n\r\n";
 		}
-		info.title = m_settings.title;
 		info.group = GroupInfo(grp, m_ctrl);
 
 		res.renderCompat!("vibenews.web.reply.dt",

@@ -5,7 +5,7 @@ block title
 	- import vibe.textfilter.markdown;
 	- import vibe.textfilter.html;
 
-	- auto title = info.title ~ ": " ~ info.post.subject;
+	- auto title = info.settings.title ~ ": " ~ info.post.subject;
 
 block vibenews.body
 
@@ -23,7 +23,7 @@ block vibenews.body
 			h2.skeleton= info.post.subject
 			.permalink Permalink: 
 				a(href="#{info.post.number}") HTTP
-				a(href="nntp://#{info.hostName}/#{info.group.name}/#{info.post.number}") NNTP
+				a(href="nntp://#{info.settings.hostName}/#{info.group.name}/#{info.post.number}") NNTP
 		.post-body
 			.post-info
 				.avatar

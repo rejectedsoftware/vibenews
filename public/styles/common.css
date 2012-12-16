@@ -41,6 +41,8 @@ header table { width: 100%; }
 
 header td { padding-left: 5pt; }
 
+footer { text-align: center; margin-top: 30pt; color: #ddd; }
+
 nav ul {
 	margin: 0;
 	padding: 0;

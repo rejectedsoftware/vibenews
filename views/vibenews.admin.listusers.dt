@@ -33,15 +33,12 @@ block vibenews.body
 			th Email
 			th Display name
 			th Auth tags
-			th Action
 		
 		- foreach( usr; info.users )
 			tr(class='#{usr.banned ? "inactive" : "active"}')
-				td= usr.email
+				td
+					a(href="#{req.rootDir}users/#{usr._id}/")= usr.email
 				td= usr.fullName
 				td= join(usr.groups, ", ")
-				td
-					form(action='#{req.rootDir}users/#{usr._id}/', method="GET")
-						input(type="submit", value='Edit')
 
 	- pageLinks();

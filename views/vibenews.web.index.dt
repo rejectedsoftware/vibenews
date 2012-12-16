@@ -3,7 +3,7 @@ extends vibenews.web.layout
 block title
 	- import vibe.textfilter.urlencode;
 
-	- auto title = info.title;
+	- auto title = info.settings.title;
 
 block vibenews.body
 

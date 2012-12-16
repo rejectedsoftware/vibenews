@@ -5,7 +5,7 @@ block title
 	
 block vibenews.body
 	p
-		a(href="#{req.rootDir}") Back to overview
+		a(href="#{req.rootDir}users/") Back to user list
 
 	form(method="POST", action="/users/#{info.user._id}/update")
 		table 

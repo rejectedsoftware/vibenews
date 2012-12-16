@@ -4,4 +4,5 @@ block title
 	block title
 
 block body
-	block vibenews.body
+	#content
+		block vibenews.body
