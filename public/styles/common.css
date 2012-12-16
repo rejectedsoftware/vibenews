@@ -7,6 +7,15 @@ body {
 	margin: 15pt;
 }
 
+a { color: white; }
+
+.error { color: #f42; }
+
+
+/******************************************************************************/
+/* HEADER                                                                     */
+/******************************************************************************/
+
 header {
 	background-color: #E0D8D0;
 	background-image: -webkit-linear-gradient(top, #fff, #B0A8A0);
@@ -41,7 +50,15 @@ header table { width: 100%; }
 
 header td { padding-left: 5pt; }
 
+/******************************************************************************/
+/* FOOTER                                                                     */
+/******************************************************************************/
+
 footer { text-align: center; margin-top: 30pt; color: #ddd; }
+
+/******************************************************************************/
+/* NAVIGATION                                                                 */
+/******************************************************************************/
 
 nav ul {
 	margin: 0;
@@ -60,15 +77,24 @@ nav li {
 	box-shadow: 0px 0px 20px #222;
 }
 
-a { color: white; }
-
-.error { color: #f42; }
-
 nav a { text-decoration: none; }
 nav a:hover { text-decoration: underline; }
 nav a:before { content: "◀ ";}
 nav { margin-bottom: 15pt; }
 
+#searchbox {
+	position: absolute;
+	width: 250pt;
+	right: 15pt;
+	top: 63pt;
+}
+
+#searchbox input { width: auto; }
+#searchbox button { width: auto; }
+
+/******************************************************************************/
+/* CONTENTS                                                                   */
+/******************************************************************************/
 
 .skeleton h1 {
 	font-weight: normal;

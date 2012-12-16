@@ -30,6 +30,8 @@ class VibeNewsSettings {
 	ushort webPort = 8009;
 	ushort adminPort = 9009;
 
+	bool googleSearch = false;
+
 	SpamFilter[] spamFilters;
 
 	void parseSettings(Json json)
@@ -39,6 +41,7 @@ class VibeNewsSettings {
 		if( "adminPort" in json ) adminPort = cast(short)json.port.get!long;
 		if( "host" in json ) hostName = json.host.get!string;
 		if( "title" in json ) title = json.title.get!string;
+		if( auto pv = "googleSearch" in json ) googleSearch = pv.get!bool;
 		if( auto psf = "spamfilters" in json ){
 			foreach( string key, value; *psf )
 			{
