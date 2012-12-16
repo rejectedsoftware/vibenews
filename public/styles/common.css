@@ -309,6 +309,8 @@ input, textarea {
 }
 
 @media (max-width: 400pt) {
+	#searchbox { display: none; }
+
 	.post-info .avatar img {
 		max-width: 64px;
 	}
