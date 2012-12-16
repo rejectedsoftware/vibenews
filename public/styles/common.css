@@ -7,7 +7,7 @@ body {
 	margin: 15pt;
 }
 
-div.skeleton {
+header {
 	background-color: #E0D8D0;
 	background-image: -webkit-linear-gradient(top, #fff, #B0A8A0);
 	background-image:    -moz-linear-gradient(top, #fff, #E0D8D0);
@@ -16,21 +16,30 @@ div.skeleton {
 	color: black;
 	margin: -15pt;
 	margin-bottom: 15pt;
+	height: 48pt;
 	box-shadow: 0px 0px 20px #000;
 }
 
-.skeleton h1 {
+header h1 {
 	font-weight: normal;
-	padding: 3.75pt 15pt;
+	padding: 7.5pt 15pt;
 }
 
-.skeleton .loginArea {
+header .loginArea {
 	position: absolute;
-	width: 150pt;
+	width: 200pt;
 	top: 0;
-	right: 0;
+	right: 15pt;
 	text-align: right;
 }
+
+header .loginArea input { width: 100%; }
+
+header a { color: #000; }
+
+header table { width: 100%; }
+
+header td { padding-left: 5pt; }
 
 nav ul {
 	margin: 0;
@@ -58,6 +67,12 @@ nav a:hover { text-decoration: underline; }
 nav a:before { content: "◀ ";}
 nav { margin-bottom: 15pt; }
 
+
+.skeleton h1 {
+	font-weight: normal;
+	padding: 3.75pt 15pt;
+}
+
 a.title {
 	font-size: 12pt;
 }
@@ -66,18 +81,18 @@ a.title {
 	color: #eaa;
 }
 
-table {
+#content table {
 	width: 100%;
 	border-spacing: 0;
 	border-collapse: collapse;
 	box-shadow: 0px 0px 20px #000;
 }
 
-col.caption {
+#content col.caption {
 	width: 150pt;
 }
 
-th {
+#content th {
 	text-align: left;
 	background-color: #666;
 	background-image: -webkit-linear-gradient(top, #666, #333);
@@ -87,22 +102,22 @@ th {
 	border-bottom: 1px solid #222;
 }
 
-td {
+#content td {
 	padding: 7.5pt;
 	background-color: #eae8dd;
 	border-bottom: 1px solid gray;
 	color: black;
 }
 
-td a {
+#content td a {
 	color: black;
 }
 
-td.odd {
+#content td.odd {
 	background-color: #eee;
 }
 
-td.even {
+#content td.even {
 	background-color: #ddd;
 }
 

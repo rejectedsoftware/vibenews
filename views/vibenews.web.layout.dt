@@ -1,21 +1,29 @@
 extends layout
 
 block body
-	.skeleton
+	header
 		h1= title
 
 		.loginArea
 			- if( req.session && req.session.isKeySet("userEmail") )
 				div
-					Logged in as #{req.session["userFullName"]}
+					|Logged in as #{req.session["userFullName"]}
 				div
 					a(href="#{req.rootDir}logout") Log out
 			- else
 				form(action="#{req.rootDir}login", method="POST")
 					input(name="redirect", type="hidden", value="#{req.url}")
-					input(name="name", type="email", placeholder="email")
-					input(name="password", type="password", placeholder="password")
-					a(hreF="#{req.rootDir}register") Sign up
-					button(type="submit") Log in
+					table
+						tr
+							td
+								input(name="name", type="email", placeholder="email")
+							td
+								button(type="submit") Log in
+						tr
+							td
+								input(name="password", type="password", placeholder="password")
+							td
+								a(hreF="#{req.rootDir}register") Sign up
 	
-	block vibenews.body
+	#content
+		block vibenews.body
