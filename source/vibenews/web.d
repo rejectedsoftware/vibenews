@@ -323,14 +323,14 @@ class WebInterface {
 			validateString(name, 3, 64, "The poster name");
 			validateString(subject, 1, 128, "The message subject");
 			validateString(message, 0, 128*1024, "The message body");
+
+			if( !loggedin ){
+				enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
+			}
 		} catch(Exception e){
 			req.params["error"] = e.msg;
 			showPostArticle(req, res);
 			return;
-		}
-
-		if( !loggedin ){
-			enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
 		}
 
 		Article art;
