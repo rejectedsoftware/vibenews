@@ -17,7 +17,10 @@ block vibenews.body
 			- if( auto prp = "thread" in req.query )
 				li
 					a(href="#{info.group.name}/thread/#{*prp}/") Back to thread
-		
+	
+	- if( info.error.length )
+		p.error= info.error
+
 	form(action='post', method="POST")
 		input(type="hidden", name="group", value="#{info.group.name}")
 		- if( "reply-to" in req.query )

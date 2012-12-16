@@ -244,7 +244,10 @@ class WebInterface {
 
 	void showPostArticle(HttpServerRequest req, HttpServerResponse res)
 	{
-		auto grp = m_ctrl.getGroupByName(req.query["group"]);
+		string groupname;
+		if( auto pg = "group" in req.query ) groupname = *pg;
+		else groupname = req.form["group"];
+		auto grp = m_ctrl.getGroupByName(groupname);
 
 		enforceAuth(req, grp, true);
 
@@ -252,6 +255,7 @@ class WebInterface {
 			VibeNewsSettings settings;
 			GroupInfo group;
 			bool loggedIn = false;
+			string error;
 			string name;
 			string email;
 			string subject;
@@ -283,6 +287,13 @@ class WebInterface {
 		}
 		info.group = GroupInfo(grp, m_ctrl);
 
+		// recover old values if showPostArticle was called because of an error
+		if( auto per = "error" in req.params ) info.error = *per;
+		if( auto pnm = "name" in req.form ) info.name = *pnm;
+		if( auto pem = "email" in req.form ) info.email = *pem;
+		if( auto psj = "subject" in req.form ) info.subject = *psj;
+		if( auto pmg = "message" in req.form ) info.message = *pmg;
+
 		res.renderCompat!("vibenews.web.reply.dt",
 			HttpServerRequest, "req",
 			Info5*, "info")(Variant(req), Variant(&info));
@@ -303,14 +314,20 @@ class WebInterface {
 
 		bool loggedin = req.session && req.session.isKeySet("userEmail");
 		string email = loggedin ? req.session["userEmail"] : req.form["email"].strip();
-		string name = loggedin ? req.session["userFullName"] : req.form["userEmail"].strip();
+		string name = loggedin ? req.session["userFullName"] : req.form["name"].strip();
 		string subject = req.form["subject"].strip();
 		string message = req.form["message"];
 
-		validateEmail(email);
-		validateString(name, 3, 64, "The poster name");
-		validateString(subject, 1, 128, "The message subject");
-		validateString(message, 0, 128*1024, "The message body");
+		try {
+			validateEmail(email);
+			validateString(name, 3, 64, "The poster name");
+			validateString(subject, 1, 128, "The message subject");
+			validateString(message, 0, 128*1024, "The message body");
+		} catch(Exception e){
+			req.params["error"] = e.msg;
+			showPostArticle(req, res);
+			return;
+		}
 
 		if( !loggedin ){
 			enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
@@ -345,7 +362,12 @@ class WebInterface {
 		foreach( flt; m_settings.spamFilters )
 			enforce(!flt.checkForBlock(art), "Article was detected as spam. Rejected.");
 
-		m_ctrl.postArticle(art, user_id);
+		try m_ctrl.postArticle(art, user_id);
+		catch( Exception e ){
+			req.params["error"] = e.msg;
+			showPostArticle(req, res);
+			return;
+		}
 
 		if( !req.session ) req.session = res.startSession();
 		req.session["lastUsedName"] = name.idup;
