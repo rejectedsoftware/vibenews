@@ -34,8 +34,8 @@ static this()
 	//settings.sslCert = "server.crt";
 	//settings.sslKey = "server.key";
 
-	auto ctrl = new Controller;
-	s_server = new NewsInterface(ctrl, settings);
-	s_adminInterface = new AdminInterface(ctrl, settings);
-	s_webInterface = new WebInterface(ctrl, settings);
+	auto ctrl = new Controller(settings);
+	s_server = new NewsInterface(ctrl);
+	s_adminInterface = new AdminInterface(ctrl);
+	s_webInterface = new WebInterface(ctrl);
 }

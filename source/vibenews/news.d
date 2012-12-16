@@ -36,14 +36,14 @@ class NewsInterface {
 		VibeNewsSettings m_settings;
 	}
 
-	this(Controller controller, VibeNewsSettings settings)
+	this(Controller controller)
 	{
 		m_ctrl = controller;
-		m_settings = settings;
+		m_settings = controller.settings;
 
 		auto nntpsettings = new NntpServerSettings;
-		nntpsettings.host = settings.hostName;
-		nntpsettings.port = settings.nntpPort;
+		nntpsettings.host = m_settings.hostName;
+		nntpsettings.port = m_settings.nntpPort;
 
 		listenNntp(nntpsettings, &handleCommand);
 	}

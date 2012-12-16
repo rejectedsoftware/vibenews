@@ -8,6 +8,7 @@
 module vibenews.controller;
 
 import vibenews.nntp.status;
+import vibenews.vibenews;
 
 import vibe.vibe;
 
@@ -21,6 +22,7 @@ import std.string;
 
 class Controller {
 	private {
+		VibeNewsSettings m_settings;
 		MongoDB m_db;
 		MongoCollection m_groups;
 		MongoCollection m_groupCategories;
@@ -30,11 +32,17 @@ class Controller {
 		UserManController m_userdb;
 	}
 
-	this()
+	this(VibeNewsSettings vnsettings)
 	{
+		m_settings = vnsettings;
+
 		auto settings = new UserManSettings;
 		settings.useUserNames = false;
 		settings.databaseName = "vibenews";
+		settings.serviceName = m_settings.title;
+		settings.serviceUrl = "http://"~m_settings.hostName~"/";
+		settings.serviceEmail = "info@"~m_settings.hostName;
+		//settings.mailSettings = ...;
 settings.requireAccountValidation = false;
 		m_userdb = new UserManController(settings);
 
@@ -91,6 +99,7 @@ settings.requireAccountValidation = false;
 			createGroupIndexes(grp.name.get!string());
 	}
 
+	@property VibeNewsSettings settings() { return m_settings; }
 
 	@property UserManController userManController() { return m_userdb; }
 

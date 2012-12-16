@@ -44,13 +44,13 @@ class WebInterface {
 		size_t m_postsPerPage = 10;
 	}
 
-	this(Controller ctrl, VibeNewsSettings vnsettings)
+	this(Controller ctrl)
 	{
 		m_ctrl = ctrl;
-		m_settings = vnsettings;
+		m_settings = ctrl.settings;
 
 		auto settings = new HttpServerSettings;
-		settings.port = vnsettings.webPort;
+		settings.port = m_settings.webPort;
 		settings.bindAddresses = ["127.0.0.1"];
 		settings.sessionStore = new MemorySessionStore;
 

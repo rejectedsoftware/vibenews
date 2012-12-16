@@ -33,9 +33,10 @@ class AdminInterface {
 		Controller m_ctrl;
 	}
 
-	this(Controller ctrl, VibeNewsSettings vnsettings)
+	this(Controller ctrl)
 	{
 		m_ctrl = ctrl;
+		auto vnsettings = ctrl.settings;
 
 		auto settings = new HttpServerSettings;
 		settings.port = vnsettings.adminPort;
