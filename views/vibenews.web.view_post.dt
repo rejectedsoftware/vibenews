@@ -38,6 +38,6 @@ block vibenews.body
 					- if( info.post.repliedToPoster.email.length )
 						| in reply to
 						a(href="#{info.post.repliedToPostNumber}")= info.post.repliedToPoster.name
-				a.reply-link.link-button(href="../../post?group=#{info.group.name}&amp;reply-to=#{info.post.number}") Reply
+				a.reply-link.link-button(href="../../post?group=#{info.group.name}&amp;thread=#{info.thread.firstPost.number}&amp;reply-to=#{info.post.number}") Reply
 			.post-content
 				!= filterMarkdown(info.post.message, MarkdownFlags.forumDefault)

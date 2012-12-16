@@ -10,18 +10,13 @@ block vibenews.body
 
 	nav
 		ul
-			- if( "post" in req.query )
+			li
+				a(href="../") Forum index
+			li
+				a(href="#{info.group.name}/")= info.group.caption
+			- if( auto prp = "thread" in req.query )
 				li
-					a(href="../../../../") Forum index
-				li
-					a(href="../../")= info.group.caption
-				li
-					a(href="./") Back to thread
-			- else
-				li
-					a(href="../../") Forum index
-				li
-					a(href="./")= info.group.caption
+					a(href="#{info.group.name}/thread/#{*prp}/") Back to thread
 		
 	form(action='post', method="POST")
 		input(type="hidden", name="group", value="#{info.group.name}")
