@@ -37,7 +37,25 @@ The following ports are now available:
  - 127.0.0.1:8009 provides the HTTP web interface
  - 127.0.0.1:9009 provides the admin interface
 
-You probably want to put the web forum behind a reverse proxy to make it available to the public. Alternatively, you can also change the address in source/vibenews/web.d to 0.0.0.0:80 and make it directly available.
+You probably want to put the web forum behind a reverse proxy to make it available to the public. Alternatively, you can also create a `settings.json` file and change the web interface port among other things.
+
+Example `settings.json`:
+
+```
+{
+	"title": "Example Forum",
+	"hostName": "forum.example.org",
+	"nntpPort": 119,
+	"webPort": 8009,
+	"adminPort": 9009,
+	"googleSearch": true,
+	"spamfilters": {
+		"blacklist": {
+			"ips": ["123.123.123.123"]
+		}
+	}
+}
+```
 
 
 Setup
