@@ -515,61 +515,9 @@ struct PostInfo {
 struct PosterInfo {
 	this(string str)
 	{
-		scope(failure) logDebug("emailbase %s", str);
-		Appender!string text;
-		while(!str.empty){
-			auto idx = str.indexOf("=?");
-			if( idx >= 0 ){
-				auto end = str.indexOf("?=");
-				enforce(end > idx);
-				text.put(str[0 .. idx]);
-				auto code = str[idx+2 .. end];
-				str = str[end+2 .. $];
-
-				idx = code.indexOf('?');
-				auto cs = code[0 .. idx];
-				auto enc = code[idx+1];
-				auto data = code[idx+3 .. $];
-				ubyte[] textenc;
-				switch(enc){
-					default: textenc = cast(ubyte[])data; break;
-					case 'B': textenc = Base64.decode(data); break;
-					case 'Q': textenc = QuotedPrintable.decode(data, true); break;
-				}
-
-				switch(cs){
-					default: text.put(sanitizeUTF8(textenc)); break;
-					case "UTF-8": text.put(cast(string)textenc); break;
-					case "ISO-8859-15": // hack...
-					case "ISO-8859-1": string tmp; transcode(cast(Latin1String)textenc, tmp); text.put(tmp); break;
-				}
-			} else {
-				text.put(str);
-				break;
-			}
-		}
-
-		str = text.data().strip();
-
-		scope(failure) logDebug("emaildec %s", str);
 		if( str.length ){
-			if( str[$-1] == '>' ){
-				auto sidx = str.lastIndexOf('<');
-				enforce(sidx >= 0);
-				email = str[sidx+1 .. $-1];
-				str = str[0 .. sidx].strip();
-
-				if( str[0] == '"' ){
-					name = str[1 .. $-1];
-				} else {
-					name = str.strip();
-				}
-			} else {
-				name = str;
-				email = str;
-			}
+			decodeEmailAddressHeader(str, name, email);
 		}
-		validate(name);
 	}
 
 	string name;
@@ -596,23 +544,6 @@ struct Category {
 		this.title = title;
 		foreach( grp; groups )
 			this.groups ~= GroupInfo(grp, ctrl);
-	}
-}
-
-struct QuotedPrintable {
-	static ubyte[] decode(in char[] input, bool in_header = false)
-	{
-		auto ret = appender!(ubyte[])();
-		for( size_t i = 0; i < input.length; i++ ){
-			if( input[i] == '=' ){
-				auto code = input[i+1 .. i+3];
-				i += 2;
-				if( code != cast(ubyte[])"\r\n" )
-					ret.put(code.parse!ubyte(16));
-			} else if( in_header && input[i] == '_') ret.put(' ');
-			else ret.put(input[i]);
-		}
-		return ret.data();
 	}
 }
 

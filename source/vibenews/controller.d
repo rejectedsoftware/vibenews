@@ -432,6 +432,8 @@ settings.requireAccountValidation = false;
 		string relay_version = art.getHeader("Relay-Version");
 		string posting_version = art.getHeader("Posting-Version");
 		string from = art.getHeader("From");
+		string from_name, from_email;
+		decodeEmailAddressHeader(from, from_name, from_email);
 		string date = art.getHeader("Date");
 		string[] newsgroups = commaSplit(art.getHeader("Newsgroups"));
 		string subject = art.getHeader("Subject");
@@ -451,10 +453,21 @@ settings.requireAccountValidation = false;
 		if( messageid.length )
 			art.id = messageid;
 
+		// validate sender
+		if( user_id == BsonObjectID() ){
+			enforce(!isEmailRegistered(from_email), new NntpStatusException(NntpStatus.ArticleRejected, "Need to log in to send from a registered email address."));
+		} else {
+			User usr;
+			User lusr = m_userdb.getUser(user_id);
+			try usr = m_userdb.getUserByEmail(from_email);
+			catch( Exception ){}
+			enforce(usr._id == user_id, new NntpStatusException(NntpStatus.ArticleRejected, "Not allowed to post with a foreign email address, please use "~lusr.email~"."));
+		}
+
 		// validate groups
 		foreach( grp; newsgroups ){
 			auto bgpre = m_groups.findOne(["name": grp]);
-			enforce(!bgpre.isNull(), new NntpStatusException(NntpStatus.ArticleRejected, "Invalid groups: "~grp));
+			enforce(!bgpre.isNull(), new NntpStatusException(NntpStatus.ArticleRejected, "Invalid group: "~grp));
 			enforce(isAuthorizedForWritingGroup(user_id, grp), new NntpStatusException(NntpStatus.ArticleRejected, "Not allowed to post in "~grp));
 		}
 
@@ -566,10 +579,11 @@ settings.requireAccountValidation = false;
 
 	bool isAuthorizedForReadingGroup(BsonObjectID user, string groupname)
 	{
-		auto usr = m_userdb.getUser(user);
 		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
 		if( grp.isNull() ) return false;
 		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
+		enforce(user != BsonObjectID(), "Group does not allow public access.");
+		auto usr = m_userdb.getUser(user);
 		foreach( g; grp.readOnlyAuthTags )
 			foreach( tag; usr.groups )
 				if( tag == g.get!string )
@@ -583,10 +597,11 @@ settings.requireAccountValidation = false;
 
 	bool isAuthorizedForWritingGroup(BsonObjectID user, string groupname)
 	{
-		auto usr = m_userdb.getUser(user);
 		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
 		if( grp.isNull() ) return false;
 		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
+		enforce(user != BsonObjectID(), "Group does not allow public access.");
+		auto usr = m_userdb.getUser(user);
 		foreach( g; grp.readWriteAuthTags )
 			foreach( tag; usr.groups )
 				if( tag == g.get!string )

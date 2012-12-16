@@ -75,6 +75,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 				logWarn("NNTP request exception: %s", e.toString());
 				if( !res.m_headerWritten ){
 					res.status = NntpStatus.InternalError;
+					res.statusText = "Internal error: " ~ e.msg;
 					res.writeVoidBody();
 				}
 			}
