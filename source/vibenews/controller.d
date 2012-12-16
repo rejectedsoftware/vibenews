@@ -241,7 +241,7 @@ settings.requireAccountValidation = false;
 
 	long getThreadCount(BsonObjectID group)
 	{
-		return m_threads.count(["groupId": group]);
+		return m_threads.count(["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])]);
 	}
 
 	Thread getThread(BsonObjectID id)
@@ -268,7 +268,7 @@ settings.requireAccountValidation = false;
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
-		foreach( bthr; m_threads.find(["query": ["groupId": Bson(group)], "orderby": ["lastArticleId": Bson(-1)]], null, QueryFlags.None, cast(int)skip) ){
+		foreach( bthr; m_threads.find(["query": ["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])], "orderby": ["lastArticleId": Bson(-1)]], null, QueryFlags.None, cast(int)skip) ){
 			Thread thr;
 			deserializeBson(thr, bthr);
 			del(idx, thr);
