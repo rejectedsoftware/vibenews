@@ -1,29 +1,27 @@
 extends layout
 
-block body
-	header
-		h1= title
-
-		.loginArea
-			- if( req.session && req.session.isKeySet("userEmail") )
-				div
-					|Logged in as #{req.session["userFullName"]}
-				div
-					a(href="#{req.rootDir}logout") Log out
-			- else
-				form(action="#{req.rootDir}login", method="POST")
-					input(name="redirect", type="hidden", value="#{req.url}")
-					table
-						tr
-							td
-								input(name="name", type="email", placeholder="email")
-							td
-								button(type="submit") Log in
-						tr
-							td
-								input(name="password", type="password", placeholder="password")
-							td
-								a(hreF="#{req.rootDir}register") Sign up
+block header
+	.loginArea
+		- if( req.session && req.session.isKeySet("userEmail") )
+			div
+				|Logged in as #{req.session["userFullName"]}
+			div
+				a(href="#{req.rootDir}logout") Log out
+		- else
+			form(action="#{req.rootDir}login", method="POST")
+				input(name="redirect", type="hidden", value="#{req.url}")
+				table
+					tr
+						td
+							input(name="name", type="email", placeholder="email")
+						td
+							button(type="submit") Log in
+					tr
+						td
+							input(name="password", type="password", placeholder="password")
+						td
+							a(hreF="#{req.rootDir}register") Sign up
 	
+block body
 	#content
 		block vibenews.body
