@@ -5,6 +5,6 @@
     "authors": ["Sönke Ludwig"],
 	"copyright": "Copyright (c) 2012 Sönke Ludwig",
 	"license": "GPL 3",
-	"version": "0.5.6",
+	"version": "0.5.7",
 	"dependencies": {"userman": "~master"}
 }
