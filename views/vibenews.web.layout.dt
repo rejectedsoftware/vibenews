@@ -23,6 +23,9 @@ block header
 							a(hreF="#{req.rootDir}register") Sign up
 	
 block body
+	nav
+		block vibenews.navigation
+
 	#content
 		block vibenews.body
 

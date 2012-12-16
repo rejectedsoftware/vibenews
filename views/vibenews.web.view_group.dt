@@ -5,13 +5,12 @@ block title
 
 	- auto title = info.settings.title ~ ": " ~ info.group.caption;
 
-block vibenews.body
+block vibenews.navigation
+	ul
+		li
+			a(href="../../") Forum index
 
-	nav
-		ul
-			li
-				a(href="../../") Forum index
-		
+block vibenews.body
 	p
 		a.link-button(href="../post?group=#{info.group.name}") Post new topic
 

@@ -6,18 +6,17 @@ block title
 	script(type="text/javascript", src="#{req.rootDir}scripts/jquery.js")
 	script(type="text/javascript", src="#{req.rootDir}scripts/vibenews-reply.js")
 
-block vibenews.body
+block vibenews.navigation
+	ul
+		li
+			a(href="../") Forum index
+		li
+			a(href="#{info.group.name}/")= info.group.caption
+		- if( auto prp = "thread" in req.query )
+			li
+				a(href="#{info.group.name}/thread/#{*prp}/") Back to thread
 
-	nav
-		ul
-			li
-				a(href="../") Forum index
-			li
-				a(href="#{info.group.name}/")= info.group.caption
-			- if( auto prp = "thread" in req.query )
-				li
-					a(href="#{info.group.name}/thread/#{*prp}/") Back to thread
-	
+block vibenews.body
 	- if( info.error.length )
 		p.error= info.error
 

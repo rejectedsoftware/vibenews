@@ -7,17 +7,16 @@ block title
 
 	- auto title = info.settings.title ~ ": " ~ info.post.subject;
 
+block vibenews.navigation
+	ul
+		li
+			a(href="../../../") Forum index
+		li
+			a(href="../")= info.group.caption
+		li
+			a(href="../thread/#{info.thread.firstPost.number}/") Back to thread
+
 block vibenews.body
-
-	nav
-		ul
-			li
-				a(href="../../../") Forum index
-			li
-				a(href="../")= info.group.caption
-			li
-				a(href="../thread/#{info.thread.firstPost.number}/") Back to thread
-
 	.post.first
 		.post-header
 			h2.skeleton= info.post.subject
