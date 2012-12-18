@@ -54,7 +54,14 @@ header td { padding-left: 5pt; }
 /* FOOTER                                                                     */
 /******************************************************************************/
 
-footer { text-align: center; margin-top: 30pt; color: #ddd; }
+footer {
+	text-align: center;
+	margin-top: 15pt;
+	color: #ddd;
+}
+
+footer a { color: #eee; }
+footer a:hover { color: #fff; }
 
 /******************************************************************************/
 /* NAVIGATION                                                                 */
