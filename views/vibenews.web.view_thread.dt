@@ -5,7 +5,7 @@ block title
 	- import vibe.textfilter.markdown;
 	- import vibe.textfilter.html;
 
-	- auto title = info.settings.title ~ ": " ~ info.thread.subject;
+	- auto title = info.thread.subject ~ " - " ~ info.settings.title;
 
 block vibenews.navigation
 	ul

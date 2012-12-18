@@ -1,7 +1,7 @@
 extends vibenews.web.layout
 
 block title
-	- auto title = info.settings.title ~ ("post" in req.query ? ": Reply" : ": Post new topic");
+	- auto title = ("post" in req.query ? "Reply - " : "Post new topic - ") ~ info.settings.title;
 
 	script(type="text/javascript", src="#{req.rootDir}scripts/jquery.js")
 	script(type="text/javascript", src="#{req.rootDir}scripts/vibenews-reply.js")
