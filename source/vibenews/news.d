@@ -18,6 +18,7 @@ import vibe.crypto.passwordhash;
 import vibe.data.bson;
 import vibe.inet.message;
 import vibe.stream.counting;
+import vibe.stream.operations;
 
 import std.algorithm;
 import std.array;

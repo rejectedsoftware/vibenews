@@ -8,7 +8,7 @@
 module vibenews.nntp.common;
 
 import vibe.core.log;
-import vibe.stream.stream;
+import vibe.stream.operations;
 
 import std.algorithm;
 import std.exception;

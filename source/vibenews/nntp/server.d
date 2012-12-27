@@ -13,6 +13,7 @@ import vibenews.nntp.status;
 import vibe.core.log;
 import vibe.core.net;
 import vibe.stream.counting;
+import vibe.stream.operations;
 import vibe.stream.ssl;
 
 import std.algorithm;
