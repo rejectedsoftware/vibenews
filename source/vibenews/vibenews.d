@@ -23,28 +23,35 @@ interface SpamFilter {
 }
 
 class VibeNewsSettings {
+	// host name used for self-referencing links
 	string hostName = "localhost";
+
+	// title of the web forum
 	string title = "VibeNews Forum";
+
+	// search engine description of the forum
+	string description = "VibeNews based discussion forum with news reader support";
 
 	ushort nntpPort = 119;
 	ushort webPort = 8009;
 	ushort adminPort = 9009;
 
+	// enables a google site-search box in the top-right corner of the web forum
 	bool googleSearch = false;
 
 	SpamFilter[] spamFilters;
 
 	void parseSettings(Json json)
 	{
-		if( "nntpPort" in json ) nntpPort = cast(short)json.port.get!long;
-		if( "webPort" in json ) webPort = cast(short)json.port.get!long;
-		if( "adminPort" in json ) adminPort = cast(short)json.port.get!long;
-		if( "host" in json ) hostName = json.host.get!string;
-		if( "title" in json ) title = json.title.get!string;
+		if( auto pv = "nntpPort" in json ) nntpPort = cast(short)pv.get!long;
+		if( auto pv = "webPort" in json ) webPort = cast(short)pv.get!long;
+		if( auto pv = "adminPort" in json ) adminPort = cast(short)pv.get!long;
+		if( auto pv = "host" in json ) hostName = pv.get!string;
+		if( auto pv = "title" in json ) title = pv.get!string;
+		if( auto pv = "description" in json ) description = pv.get!string;
 		if( auto pv = "googleSearch" in json ) googleSearch = pv.get!bool;
 		if( auto psf = "spamfilters" in json ){
-			foreach( string key, value; *psf )
-			{
+			foreach( string key, value; *psf ){
 				foreach( flt; spamFilters )
 					if( flt.id == key )
 						flt.setSettings(value);
