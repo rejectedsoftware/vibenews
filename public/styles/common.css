@@ -112,7 +112,7 @@ a.title {
 	font-size: 12pt;
 }
 
-.inactive td {
+#content .inactive td {
 	color: #eaa;
 }
 
