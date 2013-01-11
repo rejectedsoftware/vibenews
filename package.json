@@ -6,5 +6,8 @@
 	"copyright": "Copyright (c) 2012 Sönke Ludwig",
 	"license": "GPL 3",
 	"version": "0.5.8",
-	"dependencies": {"userman": "~master"}
+	"dependencies": {
+		"userman": "~master",
+		"vibe.d": "~master"
+	}
 }
