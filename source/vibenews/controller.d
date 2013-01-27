@@ -23,7 +23,6 @@ import std.string;
 class Controller {
 	private {
 		VibeNewsSettings m_settings;
-		MongoDB m_db;
 		MongoCollection m_groups;
 		MongoCollection m_groupCategories;
 		MongoCollection m_articles;
@@ -46,11 +45,11 @@ class Controller {
 settings.requireAccountValidation = false;
 		m_userdb = new UserManController(settings);
 
-		m_db = connectMongoDB("127.0.0.1");
-		m_groups = m_db["vibenews.groups"];
-		m_groupCategories = m_db["vibenews.groupCategories"];
-		m_articles = m_db["vibenews.articles"];
-		m_threads = m_db["vibenews.threads"];
+		auto db = connectMongoDB("127.0.0.1").getDatabase("vibenews");
+		m_groups = db["groups"];
+		m_groupCategories = db["groupCategories"];
+		m_articles = db["articles"];
+		m_threads = db["threads"];
 		//m_users = m_db["vibenews.users"];
 
 		// fixup old article format
