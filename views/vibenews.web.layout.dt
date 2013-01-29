@@ -6,6 +6,7 @@ block header
 			div
 				|Logged in as #{req.session["userFullName"]}
 			div
+				a(href="#{req.rootDir}profile") Edit profile
 				a(href="#{req.rootDir}logout") Log out
 		- else
 			form(action="#{req.rootDir}login", method="POST")

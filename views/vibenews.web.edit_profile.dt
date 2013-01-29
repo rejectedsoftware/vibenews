@@ -1,0 +1,124 @@
+extends vibenews.web.layout
+
+block title
+	- import vibe.textfilter.urlencode;
+
+	- auto title = "Edit profile - " ~ info.settings.title;
+
+
+block vibenews.navigation
+	ul
+		li
+			a(href="./") Forum index
+
+
+block vibenews.body
+	h2 Personal information
+
+	form(action="profile", method="POST")
+		table
+			col.caption
+			tr
+				td Display name
+				td
+					input(type="text", name="full_name", value=req.form["full_name"])
+			tr
+				td E-mail address
+				td
+					input(type="email", name="email", value=req.form["email"])
+			tr
+				td
+				td
+					button(type="submit") Apply
+
+	h2 Change password
+
+	form(action="profile", method="POST")
+		table
+			col.caption
+			tr
+				td New password
+				td
+					input(type="password", name="password", value="")
+			tr
+				td Confirm password
+				td
+					input(type="password", name="password_confirmation", value="")
+			tr
+				td
+				td
+					button(type="submit") Apply
+
+	//-
+		h2 E-mail notifications
+
+		form(action="profile", method="POST")
+			table
+				col.caption
+				col.radio
+				col.radio
+				col.radio
+				col.radio
+				tr
+					th Event
+					th Immediately
+					th Daily
+					th Weekly
+					th None
+				tr
+					- int level = 1;
+
+					td New messages in own topics
+					td.radio
+						input(type="radio", name="own_topic_notify", value="0", checked=(level==0))
+					td.radio
+						input(type="radio", name="own_topic_notify", value="1", checked=(level==1))
+					td.radio
+						input(type="radio", name="own_topic_notify", value="2", checked=(level==2))
+					td.radio
+						input(type="radio", name="own_topic_notify", value="3", checked=(level==3))
+
+				tr
+					td New topics
+					td.radio
+						input(type="radio", name="new_topic_notify", value="0", checked=(level==0))
+					td.radio
+						input(type="radio", name="new_topic_notify", value="1", checked=(level==1))
+					td.radio
+						input(type="radio", name="new_topic_notify", value="2", checked=(level==2))
+					td.radio
+						input(type="radio", name="new_topic_notify", value="3", checked=(level==3))
+
+				tr
+					td New messages
+					td.radio
+						input(type="radio", name="new_message_notify", value="0", checked=(level==0))
+					td.radio
+						input(type="radio", name="new_message_notify", value="1", checked=(level==1))
+					td.radio
+						input(type="radio", name="new_message_notify", value="2", checked=(level==2))
+					td.radio
+						input(type="radio", name="new_message_notify", value="3", checked=(level==3))
+				tr
+					td(colspan="4")
+					td
+						button(type="submit") Apply		
+
+
+		form(action="profile", method="POST")
+			table
+				tr
+					th Forum
+					th(colspan="4") Enable notifications
+				
+				- foreach( grp; info.groups )
+					tr
+						td
+							label(for="#{grp.name}_notify")= grp.caption
+						td	
+							input(id="#{grp.name}_notify", type="checkbox", name="#{grp.name}_notify")
+
+				tr
+					td
+					td
+						button(type="submit") Apply

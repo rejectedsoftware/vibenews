@@ -10,7 +10,7 @@ module vibenews.web;
 import vibenews.controller;
 import vibenews.vibenews;
 
-import userman.web : UserManController, UserManWebInterface;
+import userman.web : UserManController, UserManWebInterface, User;
 
 import vibe.core.core;
 import vibe.core.log;
@@ -57,11 +57,10 @@ class WebInterface {
 		auto router = new UrlRouter;
 
 		m_userMan = new UserManWebInterface(ctrl.userManController);
-		m_userMan.register(router);
 
 		router.get("/", &showIndex);
-		/*router.post("/login", &login);
-		router.get("/logout", &logout);*/
+		router.get("/profile", m_userMan.auth(&showEditProfile));
+		router.post("/profile", m_userMan.auth(&updateProfile));
 		router.post("/markup", &markupArticle);
 		router.get("/groups/:group/", &showGroup);
 		router.get("/groups/post", &showPostArticle);
@@ -70,6 +69,8 @@ class WebInterface {
 		router.get("/groups/:group/post/:post", &showPost);
 		router.get("/groups/:group/thread/:thread/:post", &redirectShowPost); // deprecated
 		router.get("*", serveStaticFiles("public"));
+
+		m_userMan.register(router);
 
 		listenHttp(settings, router);
 	}
@@ -114,23 +115,40 @@ class WebInterface {
 			Info1*, "info")(Variant(req), Variant(&info));
 	}
 
-	void login(HttpServerRequest req, HttpServerResponse res)
+	void showEditProfile(HttpServerRequest req, HttpServerResponse res, User user)
 	{
-		auto email = req.form["email"];
-		auto password = req.form["password"];
+		struct Info {
+			VibeNewsSettings settings;
+			Group[] groups;
+		}
 
-		auto session = res.startSession();
-		session["loginEmail"] = email;
-		session["loginDisplayEmail"] = email;
-		session["loginDisplayName"] = email;
+		enforceHttp(req.session && req.session.isKeySet("userEmail"), HttpStatus.Forbidden, "Please log in to change your profile information.");
 
-		res.redirect(req.form["redirect"]);
+		Info info;
+		info.settings = m_settings;
+		req.form["email"] = user.email;
+		req.form["full_name"] = user.fullName;
+
+		m_ctrl.enumerateGroups((idx, grp){ info.groups ~= grp; });
+
+		res.renderCompat!("vibenews.web.edit_profile.dt",
+			HttpServerRequest, "req",
+			Info*, "info")(req, &info);
 	}
 
-	void logout(HttpServerRequest req, HttpServerResponse res)
+	void updateProfile(HttpServerRequest req, HttpServerResponse res, User user)
 	{
-		if( req.session ) res.terminateSession();
-		res.redirect("/");
+		try {
+			m_userMan.updateProfile(user, req);
+
+			// TODO: notifications
+		} catch(Exception e){
+			req.params["error"] = e.msg;
+			showEditProfile(req, res, user);
+			return;
+		}
+
+		res.redirect("/profile");
 	}
 
 	void showGroup(HttpServerRequest req, HttpServerResponse res)
