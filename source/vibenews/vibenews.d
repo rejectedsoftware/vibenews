@@ -8,8 +8,8 @@
 module vibenews.vibenews;
 
 public import vibenews.controller : Article;
-
 public import vibe.data.json;
+public import vibe.mail.smtp : SmtpClientSettings;
 
 
 interface SpamFilter {
@@ -35,6 +35,10 @@ class VibeNewsSettings {
 	ushort nntpPort = 119;
 	ushort webPort = 8009;
 	ushort adminPort = 9009;
+	string databaseName = "vibenews";
+	SmtpClientSettings mailSettings;
+
+	bool requireAccountValidation = false;
 
 	// enables a google site-search box in the top-right corner of the web forum
 	bool googleSearch = false;
