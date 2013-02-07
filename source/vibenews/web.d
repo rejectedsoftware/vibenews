@@ -137,7 +137,8 @@ class WebInterface {
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
-		enforceAuth(req, grp, false);
+		if( !enforceAuth(req, res, grp, false) )
+			return;
 
 		static struct Info2 {
 			VibeNewsSettings settings;
@@ -167,7 +168,8 @@ class WebInterface {
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
-		enforceAuth(req, grp, false);
+		if( !enforceAuth(req, res, grp, false) )
+			return;
 
 		static struct Info3 {
 			VibeNewsSettings settings;
@@ -210,7 +212,8 @@ class WebInterface {
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
-		enforceAuth(req, grp, false);
+		if( !enforceAuth(req, res, grp, false) )
+			return;
 
 		static struct Info4 {
 			VibeNewsSettings settings;
@@ -249,7 +252,8 @@ class WebInterface {
 		else groupname = req.form["group"];
 		auto grp = m_ctrl.getGroupByName(groupname);
 
-		enforceAuth(req, grp, true);
+		if( !enforceAuth(req, res, grp, true) )
+			return;
 
 		static struct Info5 {
 			VibeNewsSettings settings;
@@ -310,7 +314,9 @@ class WebInterface {
 	{
 		auto grp = m_ctrl.getGroupByName(req.form["group"]);
 
-		auto user_id = enforceAuth(req, grp, true);
+		BsonObjectID user_id;
+		if( !enforceAuth(req, res, grp, true, &user_id) )
+			return;
 
 		bool loggedin = req.session && req.session.isKeySet("userEmail");
 		string email = loggedin ? req.session["userEmail"] : req.form["email"].strip();
@@ -403,18 +409,20 @@ class WebInterface {
 		res.redirect(url, redirect_status_code);
 	}
 
-	BsonObjectID enforceAuth(HttpServerRequest req, ref Group grp, bool read_write)
+	bool enforceAuth(HttpServerRequest req, HttpServerResponse res, ref Group grp, bool read_write, BsonObjectID* user_id = null)
 	{
+		if( user_id ) *user_id = BsonObjectID();
 		BsonObjectID uid;
 		string[] authTags;
 		if( req.session && req.session.isKeySet("userEmail") ){
 			auto usr = m_ctrl.getUserByEmail(req.session["userEmail"]);
 			authTags = usr.groups;
+			if( user_id ) *user_id = usr._id;
 			uid = usr._id;
 		}
 
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
-			return uid;
+			return true;
 
 		auto alltags = grp.readWriteAuthTags;
 		if( !read_write ) alltags ~= grp.readOnlyAuthTags;
@@ -425,8 +433,15 @@ class WebInterface {
 				found = true;
 				break;
 			}
-		enforce(found, new HttpStatusException(HttpStatus.Forbidden, "Group is protected."));
-		return uid;
+		if( !found ){
+			if( uid == BsonObjectID() ){
+				res.redirect("/login?redirect="~urlEncode(req.requestUrl));
+				return false;
+			} else {
+				throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+			}
+		}
+		return true;
 	}
 }
 
