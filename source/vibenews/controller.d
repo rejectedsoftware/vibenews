@@ -27,7 +27,6 @@ class Controller {
 		MongoCollection m_groupCategories;
 		MongoCollection m_articles;
 		MongoCollection m_threads;
-		//MongoCollection m_users;
 		UserManController m_userdb;
 	}
 
@@ -37,15 +36,15 @@ class Controller {
 
 		auto settings = new UserManSettings;
 		settings.useUserNames = false;
-		settings.databaseName = "vibenews";
+		settings.databaseName = m_settings.databaseName;
 		settings.serviceName = m_settings.title;
 		settings.serviceUrl = "http://"~m_settings.hostName~"/";
 		settings.serviceEmail = "info@"~m_settings.hostName;
-		//settings.mailSettings = ...;
-settings.requireAccountValidation = false;
+		settings.mailSettings = m_settings.mailSettings;
+		settings.requireAccountValidation = m_settings.requireAccountValidation;
 		m_userdb = new UserManController(settings);
 
-		auto db = connectMongoDB("127.0.0.1").getDatabase("vibenews");
+		auto db = connectMongoDB("127.0.0.1").getDatabase(m_settings.databaseName);
 		m_groups = db["groups"];
 		m_groupCategories = db["groupCategories"];
 		m_articles = db["articles"];
