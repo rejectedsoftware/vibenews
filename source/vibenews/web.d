@@ -467,6 +467,7 @@ struct GroupInfo {
 	this(Group grp, Controller ctrl)
 	{
 		try {
+			lastPostNumber = grp.maxArticleNumber;
 			auto lastpost = ctrl.getArticle(grp.name, grp.maxArticleNumber);
 			lastPoster = PosterInfo(lastpost.getHeader("From"));
 			lastPostDate = lastpost.getHeader("Date");//.parseRFC822DateTimeString();
@@ -487,6 +488,7 @@ struct GroupInfo {
 	PosterInfo lastPoster;
 	//SysTime lastPostDate;
 	string lastPostDate;
+	long lastPostNumber;
 }
 
 struct ThreadInfo {

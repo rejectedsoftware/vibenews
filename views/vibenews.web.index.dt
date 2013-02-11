@@ -34,7 +34,7 @@ block vibenews.body
 						td.last-post
 							- if( grp.lastPostDate.length )
 								.primary
-									| by 
-									a(href="#{req.rootDir}users/!{htmlAllEscape(grp.lastPoster.email)}/")= grp.lastPoster.name
+									a(href="#{req.rootDir}groups/#{grp.name}/post/#{grp.lastPostNumber}")
+										| by #{grp.lastPoster.name}
 								.secondary
 									|= grp.lastPostDate

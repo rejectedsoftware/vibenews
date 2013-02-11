@@ -7,6 +7,11 @@ block title
 
 	- auto title = info.post.subject ~ " - " ~ info.settings.title;
 
+	- string obfuscateEmail(string email)
+		- auto idx = email.indexOf('@');
+		- if( idx < 0 ) return email;
+		- return email[0 .. idx] ~ " /at/ " ~ email[idx+1 .. $];
+
 block vibenews.navigation
 	ul
 		li
@@ -31,7 +36,7 @@ block vibenews.body
 						img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&amp;s=120", alt="avatar")
 
 				.poster-name
-					a(href="#{req.rootDir}users/!{htmlAllEscape(info.post.poster.email)}/")= info.post.poster.name
+					a(href="mailto:#{obfuscateEmail(info.post.poster.email)}")= info.post.poster.name
 
 				.posting-info Posted #{info.post.date}
 					- if( info.post.repliedToPoster.email.length )

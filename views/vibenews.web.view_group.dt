@@ -62,9 +62,8 @@ block vibenews.body
 								a.page(href="#{req.rootDir}groups/#{info.group.name}/thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
 				td.num-answers= thr.postCount-1
 				td.last-post
-					| by 
-					a(href="#{req.rootDir}users/!{htmlAllEscape(thr.lastPost.poster.email)}/")= thr.lastPost.poster.name
-					| on 
-					|= thr.lastPost.date
+					a(href="#{req.rootDir}groups/#{info.group.name}/post/#{info.group.lastPostNumber}")
+						| by #{thr.lastPost.poster.name}
+					| on #{thr.lastPost.date}
 					
 	- pageLinks();
