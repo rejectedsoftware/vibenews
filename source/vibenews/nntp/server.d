@@ -46,7 +46,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 
 		while(!stream.empty){
 			auto res = new NntpServerResponse(stream);
-			logDebug("waiting for request");
+			logTrace("waiting for request");
 			auto ln = cast(string)stream.readLine();
 			if( !ln.startsWith("AUTHINFO") )
 				logDebug("REQUEST: %s", ln);
