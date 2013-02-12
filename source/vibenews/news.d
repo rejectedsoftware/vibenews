@@ -43,10 +43,20 @@ class NewsInterface {
 		m_settings = controller.settings;
 
 		auto nntpsettings = new NntpServerSettings;
+		nntpsettings.requireSsl = m_settings.requireSsl;
 		nntpsettings.host = m_settings.hostName;
 		nntpsettings.port = m_settings.nntpPort;
-
 		listenNntp(nntpsettings, &handleCommand);
+
+		if( m_settings.sslCertFile.length || m_settings.sslKeyFile.length ){
+			auto nntpsettingsssl = new NntpServerSettings;
+			nntpsettingsssl.host = m_settings.hostName;
+			nntpsettingsssl.port = m_settings.nntpSslPort;
+			nntpsettingsssl.enableSsl = true;
+			nntpsettingsssl.sslCertFile = m_settings.sslCertFile;
+			nntpsettingsssl.sslKeyFile = m_settings.sslKeyFile;
+			listenNntp(nntpsettingsssl, &handleCommand);
+		}
 	}
 
 	void handleCommand(NntpServerRequest req, NntpServerResponse res)
@@ -75,7 +85,6 @@ class NewsInterface {
 			// next
 			case "over": over(req, res); break;
 			case "post": post(req, res); break;
-			case "starttls": starttls(req, res); break;
 			case "xover": over(req, res); break;
 		}
 	}
@@ -515,15 +524,6 @@ class NewsInterface {
 			});
 
 	}
-
-	void starttls(NntpServerRequest req, NntpServerResponse res)
-	{
-		res.status = NntpStatus.ContinueWithTLS;
-		res.statusText = "Continue with TLS negotiation";
-		res.writeVoidBody();
-		res.acceptTLS();
-	}
-
 
 	bool testAuth(string grpname, bool require_write, NntpServerResponse res = null)
 	{

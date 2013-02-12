@@ -26,24 +26,30 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 {
 	void handleNntpConnection(TcpConnection conn)
 	{
+		Stream stream = conn;
+
 		bool tls_active = false;
-		if( settings.sslCert.length || settings.sslKey.length ){
-			auto ctx = new SslContext(settings.sslCert, settings.sslKey, SSLVersion.TLSv1);
-			assert(false);
-			/*logInfo("accepting");
-			conn.acceptSSL(ctx);
-			logInfo("accepted");
-			tls_active = true;*/
+
+		void acceptSsl()
+		{
+			auto ctx = new SslContext(settings.sslCertFile, settings.sslKeyFile);
+			logTrace("accepting SSL");
+			stream = new SslStream(stream, ctx, SslStreamState.Accepting);
+			logTrace("accepted SSL");
+			tls_active = true;
 		}
 
-		conn.write("200 Welcome on VibeNews!\r\n");
+		if( settings.enableSsl ) acceptSsl();
+
+		stream.write("200 Welcome on VibeNews!\r\n");
 		logDebug("welcomed");
 
-		while(conn.connected){
-			auto res = new NntpServerResponse(conn, tls_active, settings.sslCert, settings.sslKey);
+		while(!stream.empty){
+			auto res = new NntpServerResponse(stream);
 			logDebug("waiting for request");
-			auto ln = cast(string)conn.readLine();
-			logDebug("REQUEST: %s", ln);
+			auto ln = cast(string)stream.readLine();
+			if( !ln.startsWith("AUTHINFO") )
+				logDebug("REQUEST: %s", ln);
 			auto params = ln.spaceSplit();
 			if( params.length < 1 ){
 				res.status = NntpStatus.BadCommand;
@@ -54,15 +60,29 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			}
 			auto cmd = params[0].toLower();
 			params = params[1 .. $];
+
 			if( cmd == "quit" ){
 				res.status = NntpStatus.ClosingConnection;
 				res.statusText = "Bye bye!";
 				res.writeVoidBody();
 				res.finalize();
+				stream.finalize();
 				conn.close();
 				return;
 			}
-			auto req = new NntpServerRequest(conn);
+
+			if( cmd == "starttls" ){
+				enforce(!tls_active, "TLS already active");
+
+				res.status = NntpStatus.ContinueWithTLS;
+				res.statusText = "Continue with TLS negotiation";
+				res.writeVoidBody();
+				res.finalize();
+
+				acceptSsl();
+			}
+
+			auto req = new NntpServerRequest(stream);
 			req.command = cmd;
 			req.parameters = params;
 			req.peerAddress = conn.peerAddress;
@@ -86,16 +106,22 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 	}
 
 
-	foreach( addr; settings.bindAddresses )
-		listenTcp(settings.port, &handleNntpConnection, addr);
+	foreach( addr; settings.bindAddresses ){
+		try {
+			listenTcp(settings.port, &handleNntpConnection, addr);
+			logInfo("Listening for NNTP%s requests on %s:%s", settings.enableSsl ? "S" : "", addr, settings.port);
+		} catch( Exception e ) logWarn("Failed to listen on %s:%s", addr, settings.port);
+	}
 }
 
 class NntpServerSettings {
 	ushort port = 119; // SSL port is 563
 	string[] bindAddresses = ["0.0.0.0"];
 	string host = "localhost"; // host name
-	string sslCert;
-	string sslKey;
+	bool enableSsl = false;
+	bool requireSsl = false;
+	string sslCertFile;
+	string sslKeyFile;
 }
 
 class NntpServerRequest {
@@ -136,23 +162,17 @@ class NntpServerRequest {
 
 class NntpServerResponse {
 	private {
-		TcpConnection m_stream;
+		OutputStream m_stream;
 		NntpBodyWriter m_bodyWriter;
-		string m_certFile;
-		string m_keyFile;
 		bool m_headerWritten = false;
 		bool m_bodyWritten = false;
-		bool m_tlsActive = false;
 	}
 
 	int status;
 	string statusText;
 
-	this(TcpConnection stream, bool tlsactive, string ssl_cert_file, string ssl_key_file)
+	this(OutputStream stream)
 	{
-		m_tlsActive = tlsactive;
-		m_certFile = ssl_cert_file;
-		m_keyFile = ssl_key_file;
 		m_stream = stream;
 	}
 
@@ -174,15 +194,6 @@ class NntpServerResponse {
 		if( !m_headerWritten ) writeHeader();
 		if( !m_bodyWriter ) m_bodyWriter = new NntpBodyWriter(m_stream);
 		return m_bodyWriter;
-	}
-
-	void acceptTLS()
-	{
-		enforce(!m_tlsActive, "TLS already active");
-		m_tlsActive = true;
-		auto ctx = new SslContext(m_certFile, m_keyFile);
-		assert(false);
-		//m_stream.acceptSSL(ctx);
 	}
 
 	private void writeHeader()
