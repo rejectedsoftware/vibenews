@@ -459,7 +459,7 @@ class Controller {
 			User lusr = m_userdb.getUser(user_id);
 			try usr = m_userdb.getUserByEmail(from_email);
 			catch( Exception ){}
-			enforce(usr._id == user_id, new NntpStatusException(NntpStatus.ArticleRejected, "Not allowed to post with a foreign email address, please use "~lusr.email~"."));
+			enforce(usr && usr._id == user_id, new NntpStatusException(NntpStatus.ArticleRejected, "Not allowed to post with a foreign email address, please use "~lusr.email~"."));
 		}
 
 		// validate groups
