@@ -20,7 +20,7 @@ Features
 Installation
 ------------
 
-1. Install [vibe.d](http://vibed.org/) and [MongoDB](http://www.mongodb.org/).
+1. Install [dub](https://github.com/rejectedsoftware/dub/) and [MongoDB](http://www.mongodb.org/).
 
 2. Clone the project
 
@@ -29,7 +29,7 @@ Installation
 3. Compile and run
 
         cd vibenews
-        vibe
+        dub run
 
 The following ports are now available:
 
