@@ -1,7 +1,7 @@
 extends vibenews.web.layout
 
 block title
-	- import vibe.crypto.md5;
+	- import std.digest.md;
 	- import vibe.textfilter.markdown;
 	- import vibe.textfilter.html;
 
@@ -49,7 +49,7 @@ block vibenews.body
 			.post-body
 				.post-info
 					.avatar
-						- auto hash = toLower(md5(toLower(post.poster.email)));
+						- auto hash = toLower(hexDigest!MD5(toLower(post.poster.email)).idup);
 						a(href="http://www.gravatar.com/#{hash}")
 							img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&amp;s=120", alt="avatar")
 					
