@@ -9,6 +9,8 @@ module vibenews.spamfilters.blacklist;
 
 import vibenews.vibenews;
 
+import std.string;
+
 
 class BlackListSpamFilter : SpamFilter {
 	private {
@@ -26,8 +28,9 @@ class BlackListSpamFilter : SpamFilter {
 	bool checkForBlock(ref const Article art)
 	{
 		foreach( ip; art.peerAddress )
-			if( ip in m_blockedIPs )
-				return true;
+			foreach( prefix; m_blockedIPs)
+				if( ip.startsWith(prefix) )
+					return true;
 		return false;
 	}
 
