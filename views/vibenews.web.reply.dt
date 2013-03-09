@@ -22,8 +22,10 @@ block vibenews.body
 
 	form(action='post', method="POST")
 		input(type="hidden", name="group", value="#{info.group.name}")
-		- if( "reply-to" in req.query )
-			input(type="hidden", name="reply-to", value='#{req.query["reply-to"]}')
+		- if( auto prt = "reply-to" in req.query )
+			input(type="hidden", name="reply-to", value=*prt)
+		- else if( auto prt = "reply-to" in req.form )
+			input(type="hidden", name="reply-to", value=*prt)
 		table
 			col.caption
 			- if( !info.loggedIn )
