@@ -31,6 +31,8 @@ static this()
 		settings.parseSettings(json);
 	}
 
+	settings.mailSettings = new SmtpClientSettings;
+
 	//settings.sslCert = "server.crt";
 	//settings.sslKey = "server.key";
 

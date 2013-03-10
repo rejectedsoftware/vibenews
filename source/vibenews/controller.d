@@ -38,7 +38,7 @@ class Controller {
 		settings.useUserNames = false;
 		settings.databaseName = m_settings.databaseName;
 		settings.serviceName = m_settings.title;
-		settings.serviceUrl = "http://"~m_settings.hostName~"/";
+		settings.serviceUrl = Url("http://"~m_settings.hostName~"/");
 		settings.serviceEmail = "info@"~m_settings.hostName;
 		settings.mailSettings = m_settings.mailSettings;
 		settings.requireAccountValidation = m_settings.requireAccountValidation;
