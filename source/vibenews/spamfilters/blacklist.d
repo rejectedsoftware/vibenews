@@ -14,7 +14,7 @@ import std.string;
 
 class BlackListSpamFilter : SpamFilter {
 	private {
-		bool[string] m_blockedIPs;
+		string[] m_blockedIPs;
 	}
 
 	@property string id() { return "blacklist"; }
@@ -22,13 +22,13 @@ class BlackListSpamFilter : SpamFilter {
 	void setSettings(Json settings)
 	{
 		foreach( ip; settings.ips.opt!(Json[]) )
-			m_blockedIPs[ip.get!string] = true;
+			m_blockedIPs ~= ip.get!string;
 	}
 
 	bool checkForBlock(ref const Article art)
 	{
 		foreach( ip; art.peerAddress )
-			foreach( prefix; m_blockedIPs)
+			foreach( prefix; m_blockedIPs )
 				if( ip.startsWith(prefix) )
 					return true;
 		return false;
