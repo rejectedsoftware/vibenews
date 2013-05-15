@@ -10,7 +10,7 @@ block header
 				a(href="#{req.rootDir}logout") Log out
 		- else
 			form(action="#{req.rootDir}login", method="POST")
-				input(name="redirect", type="hidden", value="#{req.url}")
+				input(name="redirect", type="hidden", value="#{req.requestURL}")
 				table
 					tr
 						td
