@@ -71,5 +71,5 @@ private bool containsWords(string str, in bool[string] words)
 		str.popFront();
 	}
 
-	return true;
+	return false;
 }
