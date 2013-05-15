@@ -385,8 +385,14 @@ class WebInterface {
 		else art.peerAddress = [req.peer];
 		art.message = cast(ubyte[])(message ~ "\r\n");
 
-		foreach( flt; m_settings.spamFilters )
-			enforce(!flt.checkForBlock(art), "Article was detected as abusive. Rejected.");
+		try {
+			foreach( flt; m_settings.spamFilters )
+				enforce(!flt.checkForBlock(art), "Article is deemed to be abusive. Rejected.");
+		} catch (Exception e) {
+			req.params["error"] = e.msg;
+			showPostArticle(req, res);
+			return;
+		}
 
 		try m_ctrl.postArticle(art, user_id);
 		catch( Exception e ){
