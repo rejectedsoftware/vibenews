@@ -8,6 +8,7 @@
 module vibenews.web;
 
 import vibenews.controller;
+import vibenews.message;
 import vibenews.vibenews;
 
 import userman.web : UserManController, UserManWebInterface, User;
@@ -34,6 +35,7 @@ import std.encoding;
 import std.exception;
 import std.string;
 import std.utf;
+import std.variant;
 
 
 class WebInterface {
@@ -384,7 +386,7 @@ class WebInterface {
 		art.message = cast(ubyte[])(message ~ "\r\n");
 
 		foreach( flt; m_settings.spamFilters )
-			enforce(!flt.checkForBlock(art), "Article was detected as spam. Rejected.");
+			enforce(!flt.checkForBlock(art), "Article was detected as abusive. Rejected.");
 
 		try m_ctrl.postArticle(art, user_id);
 		catch( Exception e ){
@@ -580,32 +582,4 @@ struct Category {
 		foreach( grp; groups )
 			this.groups ~= GroupInfo(grp, ctrl);
 	}
-}
-
-string decodeMessage(Article art)
-{
-	auto msg = art.message;
-	switch( art.getHeader("Content-Transfer-Encoding").toLower() ){
-		default: break;
-		case "quoted-printable": msg = QuotedPrintable.decode(cast(string)msg); break;
-		case "base64":
-			try msg = Base64.decode(msg);
-			catch(Exception e){
-				auto dst = appender!(ubyte[])();
-				try {
-					auto dec = Base64.decoder(msg.filter!(ch => ch != '\r' && ch != '\n')());
-					while( !dec.empty ){
-						dst.put(dec.front);
-						dec.popFront();
-					}
-				} catch(Exception e){
-					dst.put(cast(ubyte[])"\r\n-------\r\nDECODING ERROR: ");
-					dst.put(cast(ubyte[])e.toString());
-				}
-				msg = dst.data();
-			}
-			break;
-	}
-	// TODO: do character encoding etc.
-	return sanitizeUTF8(msg);
 }

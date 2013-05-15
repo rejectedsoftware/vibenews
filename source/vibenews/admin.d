@@ -26,6 +26,7 @@ import std.array;
 import std.conv;
 import std.exception;
 import std.string;
+import std.variant;
 
 
 class AdminInterface {
