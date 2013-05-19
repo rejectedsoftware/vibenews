@@ -254,7 +254,7 @@ class AdminInterface {
 
 	void deleteUser(HttpServerRequest req, HttpServerResponse res)
 	{
-		m_ctrl.deleteUser(BsonObjectID.fromString(req.form["user"]));
+		m_ctrl.deleteUser(BsonObjectID.fromString(req.params["user"]));
 		res.redirect("/users/");
 	}
 
