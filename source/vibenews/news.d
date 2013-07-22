@@ -319,7 +319,7 @@ class NewsInterface {
 
 		res.status = NntpStatus.Groups;
 		switch( toLower(req.parameters[0]) ){
-			default: enforce(false, "Invalid list kind."); assert(false);
+			default: enforce(false, "Invalid list kind: "~req.parameters[0]); assert(false);
 			case "newsgroups":
 				res.statusText = "Descriptions in form \"group description\".";
 				res.bodyWriter();
@@ -442,7 +442,7 @@ class NewsInterface {
 		foreach( flt; m_settings.spamFilters )
 			if( flt.checkForBlock(art) ){
 				res.status = NntpStatus.ArticleRejected;
-				res.statusText = "Spam detected";
+				res.statusText = "Message deemed abusive.";
 				res.writeVoidBody();
 				return;
 			}
