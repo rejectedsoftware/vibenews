@@ -86,6 +86,16 @@ class Controller {
 		foreach( art; m_articles.find(["$where" : "!Array.isArray(this.peerAddress)"], ["peerAddress": 1]) )
 			m_articles.update(["_id": art._id], ["$set": ["peerAddress": art.peerAddress.get!string.split(",").map!strip().array()]]);
 
+		// upgrade missing posterEmail field
+		foreach (bart; m_articles.find(["posterEmail": ["$exists": false]])) {
+			Article art;
+			art._id = bart._id.get!BsonObjectID;
+			art.headers = deserializeBson!(ArticleHeader[])(bart.headers);
+			string name, email;
+			decodeEmailAddressHeader(art.getHeader("From"), name, email);
+			m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
+		}
+
 		// create indexes
 		//m_users.ensureIndex(["email": 1], IndexFlags.Unique);
 		m_groups.ensureIndex(["name": 1], IndexFlags.Unique);
@@ -115,6 +125,12 @@ class Controller {
 
 	void updateUser(User user) { m_userdb.updateUser(user); }
 	void deleteUser(BsonObjectID user_id) { m_userdb.deleteUser(user_id); }
+
+	void getUserMessageCount(string email, out ulong active_count, out ulong inactive_count)
+	{
+		active_count = m_articles.count(["posterEmail": Bson(email), "active": Bson(true)]);
+		inactive_count = m_articles.count(["posterEmail": Bson(email), "active": Bson(false)]);
+	}
 
 	/***************************/
 	/* Group categories        */
@@ -727,6 +743,7 @@ struct Article {
 	BsonObjectID _id;
 	string id; // "<asdasdasd@server.com>"
 	bool active = true;
+	string posterEmail;
 	GroupRef[string] groups; // num[groupname]
 	ArticleHeader[] headers;
 	ubyte[] message;

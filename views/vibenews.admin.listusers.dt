@@ -32,6 +32,7 @@ block vibenews.body
 		tr
 			th Email
 			th Display name
+			th # of Messages (# removed)
 			th Auth tags
 		
 		- foreach( usr; info.users )
@@ -39,6 +40,7 @@ block vibenews.body
 				td
 					a(href="#{req.rootDir}users/#{usr._id}/")= usr.email
 				td= usr.fullName
+				td #{usr.messageCount} (#{usr.deletedMessageCount})
 				td= join(usr.groups, ", ")
 
 	- pageLinks();

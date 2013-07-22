@@ -208,7 +208,7 @@ class AdminInterface {
 	{
 		struct Info {
 			enum itemsPerPage = 20;
-			User[] users;
+			UserInfo[] users;
 			int page;
 			int itemCount;
 			int pageCount;
@@ -216,7 +216,12 @@ class AdminInterface {
 
 		Info info;
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
-		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){ info.users ~= user; });
+		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){
+			UserInfo nfo;
+			nfo.user = user;
+			m_ctrl.getUserMessageCount(user.email, nfo.messageCount, nfo.deletedMessageCount);
+			info.users ~= nfo;
+		});
 		info.itemCount = cast(int)m_ctrl.getUserCount();
 		info.pageCount = (info.itemCount-1)/info.itemsPerPage + 1;
 
@@ -257,5 +262,11 @@ class AdminInterface {
 		m_ctrl.deleteUser(BsonObjectID.fromString(req.params["user"]));
 		res.redirect("/users/");
 	}
+}
 
+struct UserInfo {
+	User user;
+	alias user this;
+	ulong messageCount;
+	ulong deletedMessageCount;
 }
