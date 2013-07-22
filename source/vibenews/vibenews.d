@@ -9,7 +9,7 @@ module vibenews.vibenews;
 
 public import vibenews.controller : Article;
 public import vibe.data.json;
-public import vibe.mail.smtp : SmtpClientSettings;
+public import vibe.mail.smtp : SMTPClientSettings;
 
 
 interface SpamFilter {
@@ -40,7 +40,7 @@ class VibeNewsSettings {
 	string sslCertFile;
 	string sslKeyFile;
 
-	SmtpClientSettings mailSettings;
+	SMTPClientSettings mailSettings;
 
 	bool requireSsl = false;
 	bool requireAccountValidation = false;

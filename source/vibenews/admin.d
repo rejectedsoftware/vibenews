@@ -39,11 +39,11 @@ class AdminInterface {
 		m_ctrl = ctrl;
 		auto vnsettings = ctrl.settings;
 
-		auto settings = new HttpServerSettings;
+		auto settings = new HTTPServerSettings;
 		settings.port = vnsettings.adminPort;
 		settings.bindAddresses = ["127.0.0.1"];
 
-		auto router = new UrlRouter;
+		auto router = new URLRouter;
 		router.get("/", &showAdminPanel);
 		router.post("/categories/create", &createGroupCategory);
 		router.get("/categories/:category/show", &showGroupCategory);
@@ -64,34 +64,34 @@ class AdminInterface {
 		router.post("/users/:user/delete", &deleteUser);
 		router.get("*", serveStaticFiles("public"));
 
-		listenHttp(settings, router);
+		listenHTTP(settings, router);
 	}
 
-	void showAdminPanel(HttpServerRequest req, HttpServerResponse res)
+	void showAdminPanel(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		Group[] groups;
 		GroupCategory[] categories;
 		m_ctrl.enumerateGroups((idx, group){ groups ~= group; }, true);
 		m_ctrl.enumerateGroupCategories((idx, cat){ categories ~= cat; });
 		res.renderCompat!("vibenews.admin.index.dt",
-				HttpServerRequest, "req",
+				HTTPServerRequest, "req",
 				Group[], "groups",
 				GroupCategory[], "categories"
 			)(Variant(req), Variant(groups), Variant(categories));
 	}
 
-	void showGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	void showGroupCategory(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto category = m_ctrl.getGroupCategory(BsonObjectID.fromString(req.params["category"]));
 		Group[] groups;
 		m_ctrl.enumerateGroups((idx, grp){ groups ~= grp; });
 		res.renderCompat!("vibenews.admin.editcategory.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			GroupCategory*, "category",
 			Group[], "groups")(Variant(req), Variant(&category), Variant(groups));
 	}
 
-	void updateGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	void updateGroupCategory(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto id = BsonObjectID.fromString(req.params["category"]);
 		auto caption = req.form["caption"];
@@ -102,29 +102,29 @@ class AdminInterface {
 		res.redirect("/categories/"~id.toString()~"/show");
 	}
 
-	void deleteGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	void deleteGroupCategory(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto id = BsonObjectID.fromString(req.params["category"]);
 		m_ctrl.deleteGroupCategory(id);
 		res.redirect("/");
 	}
 
-	void showGroup(HttpServerRequest req, HttpServerResponse res)
+	void showGroup(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto group = m_ctrl.getGroupByName(req.params["groupname"], true);
 		res.renderCompat!("vibenews.admin.editgroup.dt",
-				HttpServerRequest, "req",
+				HTTPServerRequest, "req",
 				Group*, "group"
 			)(Variant(req), Variant(&group));
 	}
 
-	void createGroupCategory(HttpServerRequest req, HttpServerResponse res)
+	void createGroupCategory(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto id = m_ctrl.createGroupCategory(req.form["caption"], req.form["index"].to!int());
 		res.redirect("/categories/"~id.toString()~"/show");
 	}
 
-	void createGroup(HttpServerRequest req, HttpServerResponse res)
+	void createGroup(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		enforce(!m_ctrl.groupExists(req.form["name"], true), "A group with the specified name already exists");
 	
@@ -138,7 +138,7 @@ class AdminInterface {
 		res.redirect("/groups/"~urlEncode(group.name)~"/show");
 	}
 
-	void updateGroup(HttpServerRequest req, HttpServerResponse res)
+	void updateGroup(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto group = m_ctrl.getGroupByName(req.params["groupname"], true);
 		group.caption = req.form["caption"];
@@ -150,25 +150,25 @@ class AdminInterface {
 		res.redirect("/groups/"~urlEncode(group.name)~"/show");
 	}
 
-	void purgeGroup(HttpServerRequest req, HttpServerResponse res)
+	void purgeGroup(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		m_ctrl.purgeGroup(req.params["groupname"]);
 		res.redirect("/groups/"~req.params["groupname"]~"/show");
 	}
 
-	void repairGroupNumbers(HttpServerRequest req, HttpServerResponse res)
+	void repairGroupNumbers(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		m_ctrl.repairGroupNumbers();
 		res.redirect("/");
 	}
 
-	void repairGroupThreads(HttpServerRequest req, HttpServerResponse res)
+	void repairGroupThreads(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		m_ctrl.repairThreads();
 		res.redirect("/");
 	}
 
-	void showArticles(HttpServerRequest req, HttpServerResponse res)
+	void showArticles(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		struct Info {
 			enum articlesPerPage = 20;
@@ -186,25 +186,25 @@ class AdminInterface {
 		info.pageCount = (info.articleCount-1)/info.articlesPerPage + 1;
 
 		res.renderCompat!("vibenews.admin.listarticles.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info*, "info")(Variant(req), Variant(&info));
 	}
 
-	void activateArticle(HttpServerRequest req, HttpServerResponse res)
+	void activateArticle(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.activateArticle(artid);
 		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
 	}
 
-	void deactivateArticle(HttpServerRequest req, HttpServerResponse res)
+	void deactivateArticle(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.deactivateArticle(artid);
 		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
 	}
 
-	void showListUsers(HttpServerRequest req, HttpServerResponse res)
+	void showListUsers(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		struct Info {
 			enum itemsPerPage = 20;
@@ -221,11 +221,11 @@ class AdminInterface {
 		info.pageCount = (info.itemCount-1)/info.itemsPerPage + 1;
 
 		res.renderCompat!("vibenews.admin.listusers.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info*, "info")(Variant(req), Variant(&info));
 	}
 
-	void showUser(HttpServerRequest req, HttpServerResponse res)
+	void showUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		struct Info {
 			User user;
@@ -233,12 +233,12 @@ class AdminInterface {
 		Info info;
 		info.user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
 		res.renderCompat!("vibenews.admin.edituser.dt",
-				HttpServerRequest, "req",
+				HTTPServerRequest, "req",
 				Info*, "info"
 			)(req, &info);
 	}
 
-	void updateUser(HttpServerRequest req, HttpServerResponse res)
+	void updateUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
 		validateEmail(req.form["email"]);
@@ -252,7 +252,7 @@ class AdminInterface {
 		res.redirect("/users/"~user._id.toString()~"/");
 	}
 
-	void deleteUser(HttpServerRequest req, HttpServerResponse res)
+	void deleteUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		m_ctrl.deleteUser(BsonObjectID.fromString(req.params["user"]));
 		res.redirect("/users/");

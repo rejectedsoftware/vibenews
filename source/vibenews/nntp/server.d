@@ -24,7 +24,7 @@ import std.string;
 
 void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, NntpServerResponse) command_handler)
 {
-	void handleNntpConnection(TcpConnection conn)
+	void handleNntpConnection(TCPConnection conn)
 	{
 		Stream stream = conn;
 
@@ -32,9 +32,9 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 
 		void acceptSsl()
 		{
-			auto ctx = new SslContext(settings.sslCertFile, settings.sslKeyFile);
+			auto ctx = new SSLContext(settings.sslCertFile, settings.sslKeyFile);
 			logTrace("accepting SSL");
-			stream = new SslStream(stream, ctx, SslStreamState.Accepting);
+			stream = new SSLStream(stream, ctx, SSLStreamState.accepting);
 			logTrace("accepted SSL");
 			tls_active = true;
 		}
@@ -108,7 +108,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 
 	foreach( addr; settings.bindAddresses ){
 		try {
-			listenTcp(settings.port, &handleNntpConnection, addr);
+			listenTCP(settings.port, &handleNntpConnection, addr);
 			logInfo("Listening for NNTP%s requests on %s:%s", settings.enableSsl ? "S" : "", addr, settings.port);
 		} catch( Exception e ) logWarn("Failed to listen on %s:%s", addr, settings.port);
 	}

@@ -51,12 +51,12 @@ class WebInterface {
 		m_ctrl = ctrl;
 		m_settings = ctrl.settings;
 
-		auto settings = new HttpServerSettings;
+		auto settings = new HTTPServerSettings;
 		settings.port = m_settings.webPort;
 		settings.bindAddresses = ["127.0.0.1"];
 		settings.sessionStore = new MemorySessionStore;
 
-		auto router = new UrlRouter;
+		auto router = new URLRouter;
 
 		m_userMan = new UserManWebInterface(ctrl.userManController);
 
@@ -74,10 +74,10 @@ class WebInterface {
 
 		m_userMan.register(router);
 
-		listenHttp(settings, router);
+		listenHTTP(settings, router);
 	}
 
-	void showIndex(HttpServerRequest req, HttpServerResponse res)
+	void showIndex(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		static struct Info1 {
 			VibeNewsSettings settings;
@@ -113,18 +113,18 @@ class WebInterface {
 		info.categories.sort!"a.index < b.index"();
 
 		res.renderCompat!("vibenews.web.index.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info1*, "info")(Variant(req), Variant(&info));
 	}
 
-	void showEditProfile(HttpServerRequest req, HttpServerResponse res, User user)
+	void showEditProfile(HTTPServerRequest req, HTTPServerResponse res, User user)
 	{
 		struct Info {
 			VibeNewsSettings settings;
 			Group[] groups;
 		}
 
-		enforceHttp(req.session && req.session.isKeySet("userEmail"), HttpStatus.Forbidden, "Please log in to change your profile information.");
+		enforceHTTP(req.session && req.session.isKeySet("userEmail"), HTTPStatus.forbidden, "Please log in to change your profile information.");
 
 		Info info;
 		info.settings = m_settings;
@@ -134,11 +134,11 @@ class WebInterface {
 		m_ctrl.enumerateGroups((idx, grp){ info.groups ~= grp; });
 
 		res.renderCompat!("vibenews.web.edit_profile.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info*, "info")(req, &info);
 	}
 
-	void updateProfile(HttpServerRequest req, HttpServerResponse res, User user)
+	void updateProfile(HTTPServerRequest req, HTTPServerResponse res, User user)
 	{
 		try {
 			m_userMan.updateProfile(user, req);
@@ -153,7 +153,7 @@ class WebInterface {
 		res.redirect("/profile");
 	}
 
-	void showGroup(HttpServerRequest req, HttpServerResponse res)
+	void showGroup(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
@@ -180,11 +180,11 @@ class WebInterface {
 		info.pageCount = (info.group.numberOfTopics + info.pageSize-1) / info.pageSize;
 
 		res.renderCompat!("vibenews.web.view_group.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info2*, "info")(Variant(req), Variant(&info));
 	}
 
-	void showThread(HttpServerRequest req, HttpServerResponse res)
+	void showThread(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
@@ -224,11 +224,11 @@ class WebInterface {
 		});
 
 		res.renderCompat!("vibenews.web.view_thread.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info3*, "info")(Variant(req), Variant(&info));
 	}
 
-	void showPost(HttpServerRequest req, HttpServerResponse res)
+	void showPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.params["group"]);
 
@@ -256,16 +256,16 @@ class WebInterface {
 		info.thread = ThreadInfo(m_ctrl.getThread(art.groups[escapeGroup(grp.name)].threadId), m_ctrl, 0, grp.name);
 
 		res.renderCompat!("vibenews.web.view_post.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info4*, "info")(Variant(req), Variant(&info));
 	}
 
-	void redirectShowPost(HttpServerRequest req, HttpServerResponse res)
+	void redirectShowPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		res.redirect("/groups/"~req.params["group"]~"/post/"~req.params["post"], HttpStatus.MovedPermanently);
+		res.redirect("/groups/"~req.params["group"]~"/post/"~req.params["post"], HTTPStatus.movedPermanently);
 	}
 
-	void showPostArticle(HttpServerRequest req, HttpServerResponse res)
+	void showPostArticle(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		string groupname;
 		if( auto pg = "group" in req.query ) groupname = *pg;
@@ -319,18 +319,18 @@ class WebInterface {
 		if( auto pmg = "message" in req.form ) info.message = *pmg;
 
 		res.renderCompat!("vibenews.web.reply.dt",
-			HttpServerRequest, "req",
+			HTTPServerRequest, "req",
 			Info5*, "info")(Variant(req), Variant(&info));
 	}
 
-	void markupArticle(HttpServerRequest req, HttpServerResponse res)
+	void markupArticle(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto msg = req.form["message"];
 		validateString(msg, 0, 128*1024, "The message body");
 		res.writeBody(filterMarkdown(msg, MarkdownFlags.forumDefault), "text/html");
 	}
 
-	void postArticle(HttpServerRequest req, HttpServerResponse res)
+	void postArticle(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto grp = m_ctrl.getGroupByName(req.form["group"]);
 
@@ -416,7 +416,7 @@ class WebInterface {
 		});
 	}
 
-	void redirectToThreadPost(HttpServerResponse res, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HttpStatus redirect_status_code = HttpStatus.Found)
+	void redirectToThreadPost(HTTPServerResponse res, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)
 	{
 		if( thread_id == BsonObjectID() ){
 			auto refs = m_ctrl.getArticleGroupRefs(groupname, article_number);
@@ -435,7 +435,7 @@ class WebInterface {
 		res.redirect(url, redirect_status_code);
 	}
 
-	bool enforceAuth(HttpServerRequest req, HttpServerResponse res, ref Group grp, bool read_write, BsonObjectID* user_id = null)
+	bool enforceAuth(HTTPServerRequest req, HTTPServerResponse res, ref Group grp, bool read_write, BsonObjectID* user_id = null)
 	{
 		if( user_id ) *user_id = BsonObjectID();
 		BsonObjectID uid;
@@ -461,10 +461,10 @@ class WebInterface {
 			}
 		if( !found ){
 			if( uid == BsonObjectID() ){
-				res.redirect("/login?redirect="~urlEncode(req.requestUrl));
+				res.redirect("/login?redirect="~urlEncode(req.requestURL));
 				return false;
 			} else {
-				throw new HttpStatusException(HttpStatus.Forbidden, "Group is protected.");
+				throw new HTTPStatusException(HTTPStatus.forbidden, "Group is protected.");
 			}
 		}
 		return true;

@@ -31,10 +31,7 @@ static this()
 		settings.parseSettings(json);
 	}
 
-	settings.mailSettings = new SmtpClientSettings;
-
-	//settings.sslCert = "server.crt";
-	//settings.sslKey = "server.key";
+	settings.mailSettings = new SMTPClientSettings;
 
 	auto ctrl = new Controller(settings);
 	s_server = new NewsInterface(ctrl);

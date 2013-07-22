@@ -419,7 +419,7 @@ class NewsInterface {
 		res.writeVoidBody();
 
 		InetHeaderMap headers;
-		parseRfc5322Header(req.bodyReader, headers);
+		parseRFC5322Header(req.bodyReader, headers);
 		foreach( k, v; headers ) art.addHeader(k, v);
 
 		auto limitedReader = new LimitedInputStream(req.bodyReader, 2048*1024, true);
