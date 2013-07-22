@@ -246,15 +246,17 @@ class AdminInterface {
 	void updateUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
-		validateEmail(req.form["email"]);
-		user.email = user.name = req.form["email"];
-		user.fullName = req.form["fullName"];
+		if (auto pv = "email" in req.form) {
+			validateEmail(*pv);
+			user.email = user.name = *pv;
+		}
+		if (auto pv = "fullName" in req.form) user.fullName = *pv;
+		if (auto pv = "groups" in req.form) user.groups = (*pv).split(",").map!(g => g.strip())().array();
 		user.active = ("active" in req.form) !is null;
 		user.banned = ("banned" in req.form) !is null;
-		user.groups = req.form["groups"].split(",").map!(g => g.strip())().array();
 		m_ctrl.updateUser(user);
 
-		res.redirect("/users/"~user._id.toString()~"/");
+		res.redirect("/users/");
 	}
 
 	void deleteUser(HTTPServerRequest req, HTTPServerResponse res)

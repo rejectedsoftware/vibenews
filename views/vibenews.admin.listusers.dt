@@ -34,7 +34,8 @@ block vibenews.body
 			th Display name
 			th # of Messages (# removed)
 			th Auth tags
-		
+			th Ban
+
 		- foreach( usr; info.users )
 			tr(class='#{usr.banned ? "inactive" : "active"}')
 				td
@@ -42,5 +43,12 @@ block vibenews.body
 				td= usr.fullName
 				td #{usr.messageCount} (#{usr.deletedMessageCount})
 				td= join(usr.groups, ", ")
+				td
+					form(method="POST", action="/users/#{usr._id}/update")
+						- if (usr.active)
+							input(type="hidden", name="active", value=true)
+						- if (!usr.banned)
+							input(type="hidden", name="banned", value=true)
+						button(type="submit")= usr.banned ? "Unban" : "Ban"
 
 	- pageLinks();
