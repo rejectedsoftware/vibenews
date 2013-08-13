@@ -17,6 +17,7 @@ import userman.controller;
 import std.algorithm;
 import std.array;
 import std.base64;
+import std.encoding : sanitize;
 import std.string;
 
 
@@ -450,7 +451,7 @@ class Controller {
 		decodeEmailAddressHeader(from, from_name, from_email);
 		string date = art.getHeader("Date");
 		string[] newsgroups = commaSplit(art.getHeader("Newsgroups"));
-		string subject = art.getHeader("Subject");
+		string subject = art.subject;
 		string messageid = art.getHeader("Message-ID");
 		string path = art.getHeader("Path");
 		string reply_to = art.getHeader("In-Reply-To");
@@ -694,7 +695,7 @@ class Controller {
 
 			// extract reply-to and subject headers
 			string repl = a.getHeader("In-Reply-To");
-			string subject = a.getHeader("Subject");
+			string subject = a.subject;
 			if( repl.length == 0 ){
 				auto refs = a.getHeader("References").split(" ");
 				if( refs.length > 0 ) repl = refs[$-1];
@@ -788,7 +789,7 @@ struct Article {
 	long messageLines;
 	string[] peerAddress; // list of hops starting from the original client
 
-	@property string subject() const { return decodeEncodedWords(getHeader("Subject")); }
+	@property string subject() const { return sanitize(decodeEncodedWords(getHeader("Subject"))); }
 
 	string getHeader(string name)
 	const {
