@@ -67,14 +67,13 @@ class BayesSpamFilter : SpamFilter {
 		double pham = 1.0;
 
 		long count = 0;
-		logDebugV("Determingin spam status");
+		logDebugV("Determining spam status");
 		iterateWords(art, (w) {
 			if (auto pc = w in m_words) {
 				if (pc.spamCount) {
-					auto pword_spam = pc.spamCount / cast(double)m_spamCount;
-					auto pspam = m_spamCount / cast(double)(m_spamCount + m_hamCount);
-					auto pword = (pc.spamCount + pc.hamCount) / cast(double)(m_spamCount + m_hamCount);
-					auto prob = pword_spam * pspam / pword;
+					auto p_w_s = pc.spamCount/cast(double)m_spamCount;
+					auto p_w_h = pc.hamCount/cast(double)m_hamCount;
+					auto prob = p_w_s / (p_w_s + p_w_h);
 					pspam *= prob;
 					pham *= 1 - prob;
 					logDebugV("%s: %s", w, prob);
@@ -83,7 +82,7 @@ class BayesSpamFilter : SpamFilter {
 			} else logDebugV("%s: unknown word", w);
 		});
 		auto prob = pspam / (pspam + pham);
-		logDebugV("---- final probabliity %s", prob);
+		logDebugV("---- final probability %s", prob);
 		return prob > 0.7;
 	}
 
