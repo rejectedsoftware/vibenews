@@ -303,7 +303,7 @@ class WebInterface {
 		if( "reply-to" in req.query ){
 			auto repartnum = req.query["reply-to"].to!long();
 			auto repart = m_ctrl.getArticle(grp.name, repartnum);
-			info.subject = repart.getHeader("Subject");
+			info.subject = repart.subject;
 			if( !info.subject.startsWith("Re:") ) info.subject = "Re: " ~ info.subject;
 			info.message = "On "~repart.getHeader("Date")~", "~PosterInfo(repart.getHeader("From")).name~" wrote:\r\n";
 			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(decodeMessage(repart))).join("\r\n");
