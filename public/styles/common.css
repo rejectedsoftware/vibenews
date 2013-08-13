@@ -270,6 +270,14 @@ input, textarea {
 .post-info, .post-content { display: table-cell; vertical-align: top; }
 .post-content { margin: 0; width: 100%; }
 
+
+td form { display: inline-block; }
+#content th.spam { width: 32pt; }
+#content td.spam { background-color: #e52; }
+#content td.ham { background-color: #8d4; }
+#content td.undecided { background-color: #999; }
+
+
 @media (max-width: 580pt) {
 	.post-body { display: block; }
 	.post-info, .post-content { display: block; }

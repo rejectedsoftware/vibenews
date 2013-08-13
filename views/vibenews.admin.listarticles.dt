@@ -29,7 +29,7 @@ block vibenews.body
 
 	table
 		tr
-			th
+			th.spam SPAM
 			th Date
 			th Origin
 			th Poster
@@ -43,7 +43,7 @@ block vibenews.body
 				- auto from = art.getHeader("From");
 				- auto idx = countUntil(from, '<');
 				- if( idx >= 0 ) from = from[idx .. $];
-				th= is_undecided ? "?" : is_spam ? "-" : "+"
+				td(class=is_undecided ? "undecided" : is_spam ? "spam" : "ham") &nbsp;
 				td= art.getHeader("Date")
 				td= join(art.peerAddress, ", ")
 				td= from
