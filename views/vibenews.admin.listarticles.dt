@@ -29,6 +29,7 @@ block vibenews.body
 
 	table
 		tr
+			th
 			th Date
 			th Origin
 			th Poster
@@ -36,10 +37,13 @@ block vibenews.body
 			th Action
 		
 		- foreach( art; info.articles )
+			- bool is_undecided = !art.hasHeader("X-Spam-Status");
+			- bool is_spam = !is_undecided && art.getHeader("X-Spam-Status").icmp("yes") == 0;
 			tr(class='#{art.active?"active":"inactive"}')
 				- auto from = art.getHeader("From");
 				- auto idx = countUntil(from, '<');
 				- if( idx >= 0 ) from = from[idx .. $];
+				th= is_undecided ? "?" : is_spam ? "-" : "+"
 				td= art.getHeader("Date")
 				td= join(art.peerAddress, ", ")
 				td= from
@@ -48,6 +52,16 @@ block vibenews.body
 					form(action='#{req.rootDir}articles/#{art._id}/#{art.active?"deactivate":"activate"}', method="POST")
 						input(type="hidden", name="groupname", value="#{info.groupname}")
 						input(type="hidden", name="page", value="#{info.page+1}")
-						input(type="submit", value='#{art.active?"Deactivate":"Activate"}')
+						button(type="submit")= art.active ? "Deactivate" : "Activate"
+					- if (is_undecided || is_spam)
+						form(action='#{req.rootDir}articles/#{art._id}/mark_ham', method="POST")
+							input(type="hidden", name="groupname", value="#{info.groupname}")
+							input(type="hidden", name="page", value="#{info.page+1}")
+							button(type="submit") Mark non-spam
+					- if (is_undecided || !is_spam)
+						form(action='#{req.rootDir}articles/#{art._id}/mark_spam', method="POST")
+							input(type="hidden", name="groupname", value="#{info.groupname}")
+							input(type="hidden", name="page", value="#{info.page+1}")
+							button(type="submit") Mark Spam
 
 	- pageLinks();

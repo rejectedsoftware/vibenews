@@ -31,6 +31,7 @@ block vibenews.body
 				td
 					button(type="submit") Apply
 
+
 	h2 Change password
 
 	form(action="profile", method="POST")
@@ -49,76 +50,78 @@ block vibenews.body
 				td
 					button(type="submit") Apply
 
-	//-
-		h2 E-mail notifications
 
-		form(action="profile", method="POST")
-			table
-				col.caption
-				col.radio
-				col.radio
-				col.radio
-				col.radio
-				tr
-					th Event
-					th Immediately
-					th Daily
-					th Weekly
-					th None
-				tr
-					- int level = 1;
+	h2 E-mail notifications
 
-					td New messages in own topics
-					td.radio
-						input(type="radio", name="own_topic_notify", value="0", checked=(level==0))
-					td.radio
-						input(type="radio", name="own_topic_notify", value="1", checked=(level==1))
-					td.radio
-						input(type="radio", name="own_topic_notify", value="2", checked=(level==2))
-					td.radio
-						input(type="radio", name="own_topic_notify", value="3", checked=(level==3))
-
-				tr
-					td New topics
-					td.radio
-						input(type="radio", name="new_topic_notify", value="0", checked=(level==0))
-					td.radio
-						input(type="radio", name="new_topic_notify", value="1", checked=(level==1))
-					td.radio
-						input(type="radio", name="new_topic_notify", value="2", checked=(level==2))
-					td.radio
-						input(type="radio", name="new_topic_notify", value="3", checked=(level==3))
-
-				tr
-					td New messages
-					td.radio
-						input(type="radio", name="new_message_notify", value="0", checked=(level==0))
-					td.radio
-						input(type="radio", name="new_message_notify", value="1", checked=(level==1))
-					td.radio
-						input(type="radio", name="new_message_notify", value="2", checked=(level==2))
-					td.radio
-						input(type="radio", name="new_message_notify", value="3", checked=(level==3))
-				tr
-					td(colspan="4")
-					td
-						button(type="submit") Apply		
-
-
-		form(action="profile", method="POST")
-			table
-				tr
-					th Forum
-					th(colspan="4") Enable notifications
-				
-				- foreach( grp; info.groups )
-					tr
-						td
-							label(for="#{grp.name}_notify")= grp.caption
-						td	
-							input(id="#{grp.name}_notify", type="checkbox", name="#{grp.name}_notify")
-
+	form(action="profile", method="POST")
+		table
+			tr
+				th Enable
+				th Forum
+			
+			- foreach( grp; info.groups )
 				tr
 					td
+						input(id="#{grp.name}_notify", type="checkbox", name="#{grp.name}_notify")
 					td
-						button(type="submit") Apply
+						label(for="#{grp.name}_notify")= grp.caption
+
+			tr
+				td
+				td
+					button(type="submit") Apply
+
+
+	h2 Notification frequency
+
+	form(action="profile", method="POST")
+		table
+			col.caption
+			col.radio
+			col.radio
+			col.radio
+			col.radio
+			tr
+				th Event
+				th Immediately
+				th Daily
+				th Weekly
+				th None
+			tr
+				- int level = 1;
+
+				td New messages in own topics
+				td.radio
+					input(type="radio", name="own_topic_notify", value="0", checked=(level==0))
+				td.radio
+					input(type="radio", name="own_topic_notify", value="1", checked=(level==1))
+				td.radio
+					input(type="radio", name="own_topic_notify", value="2", checked=(level==2))
+				td.radio
+					input(type="radio", name="own_topic_notify", value="3", checked=(level==3))
+
+			tr
+				td New topics
+				td.radio
+					input(type="radio", name="new_topic_notify", value="0", checked=(level==0))
+				td.radio
+					input(type="radio", name="new_topic_notify", value="1", checked=(level==1))
+				td.radio
+					input(type="radio", name="new_topic_notify", value="2", checked=(level==2))
+				td.radio
+					input(type="radio", name="new_topic_notify", value="3", checked=(level==3))
+
+			tr
+				td New messages
+				td.radio
+					input(type="radio", name="new_message_notify", value="0", checked=(level==0))
+				td.radio
+					input(type="radio", name="new_message_notify", value="1", checked=(level==1))
+				td.radio
+					input(type="radio", name="new_message_notify", value="2", checked=(level==2))
+				td.radio
+					input(type="radio", name="new_message_notify", value="3", checked=(level==3))
+			tr
+				td(colspan="4")
+				td
+					button(type="submit") Apply		

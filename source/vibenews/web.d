@@ -410,9 +410,10 @@ class WebInterface {
 		runTask({
 			foreach( flt; m_settings.spamFilters )
 				if( flt.checkForRevoke(art) ){
-					m_ctrl.deactivateArticle(art._id);
+					m_ctrl.markAsSpam(art._id, true);
 					return;
 				}
+			m_ctrl.markAsSpam(art._id, false);
 		});
 	}
 

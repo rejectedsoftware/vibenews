@@ -8,6 +8,7 @@
 import vibe.d;
 
 import vibenews.nntp.server;
+import vibenews.spamfilters.bayes;
 import vibenews.spamfilters.blacklist;
 import vibenews.admin;
 import vibenews.controller;
@@ -24,6 +25,7 @@ static this()
 {
 	auto settings = new VibeNewsSettings;
 	settings.spamFilters ~= new BlackListSpamFilter;
+	settings.spamFilters ~= new BayesSpamFilter;
 
 	if( existsFile("settings.json") ){
 		auto data = stripUTF8Bom(cast(string)openFile("settings.json").readAll());

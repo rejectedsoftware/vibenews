@@ -50,6 +50,14 @@ class BlackListSpamFilter : SpamFilter {
 	{
 		return false;
 	}
+
+	void resetClassification()
+	{
+	}
+	
+	void classify(in ref Article art, bool spam, bool unclassify = false)
+	{
+	}
 }
 
 

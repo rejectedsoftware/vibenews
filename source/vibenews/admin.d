@@ -49,6 +49,7 @@ class AdminInterface {
 		router.get("/categories/:category/show", &showGroupCategory);
 		router.post("/categories/:category/update", &updateGroupCategory);
 		router.post("/categories/:category/delete", &deleteGroupCategory);
+		router.post("/reclassify_spam", &reclassifySpam);
 		router.post("/groups/create", &createGroup);
 		router.post("/groups/repair-numbers", &repairGroupNumbers);
 		router.post("/groups/repair-threads", &repairGroupThreads);
@@ -58,6 +59,8 @@ class AdminInterface {
 		router.get("/groups/:groupname/articles", &showArticles);
 		router.post("/articles/:articleid/activate", &activateArticle);
 		router.post("/articles/:articleid/deactivate", &deactivateArticle);
+		router.post("/articles/:articleid/mark_ham", &markAsHam);
+		router.post("/articles/:articleid/mark_spam", &markAsSpam);
 		router.get("/users/", &showListUsers);
 		router.get("/users/:user/", &showUser);
 		router.post("/users/:user/update", &updateUser);
@@ -122,6 +125,12 @@ class AdminInterface {
 	{
 		auto id = m_ctrl.createGroupCategory(req.form["caption"], req.form["index"].to!int());
 		res.redirect("/categories/"~id.toString()~"/show");
+	}
+
+	void reclassifySpam(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		m_ctrl.reclassifySpam();
+		res.redirect("/");
 	}
 
 	void createGroup(HTTPServerRequest req, HTTPServerResponse res)
@@ -201,6 +210,20 @@ class AdminInterface {
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.deactivateArticle(artid);
+		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+	}
+
+	void markAsSpam(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		auto artid = BsonObjectID.fromString(req.params["articleid"]);
+		m_ctrl.markAsSpam(artid, true);
+		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+	}
+
+	void markAsHam(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		auto artid = BsonObjectID.fromString(req.params["articleid"]);
+		m_ctrl.markAsSpam(artid, false);
 		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
 	}
 

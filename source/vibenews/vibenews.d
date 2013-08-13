@@ -20,6 +20,9 @@ interface SpamFilter {
 	bool checkForBlock(ref const Article);
 
 	bool checkForRevoke(ref const Article);
+
+	void resetClassification();
+	void classify(in ref Article art, bool spam, bool unclassify = false);
 }
 
 class VibeNewsSettings {

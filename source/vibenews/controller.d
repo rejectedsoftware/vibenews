@@ -585,6 +585,43 @@ class Controller {
 		m_articles.remove(["_id": artid]);
 	}
 
+	void reclassifySpam()
+	{
+		foreach (flt; m_settings.spamFilters)
+			flt.resetClassification();
+		
+		foreach (bart; m_articles.find()) {
+			auto art = deserializeBson!Article(bart);
+			foreach (flt; m_settings.spamFilters) {
+				if (art.hasHeader("X-Spam-Status")) {
+					flt.classify(art, art.getHeader("X-Spam-Status").icmp("yes") == 0);
+				} else if (art.active) flt.classify(art, false);
+			}
+		}
+	}
+
+	void markAsSpam(BsonObjectID article, bool is_spam)
+	{
+		if (is_spam) deactivateArticle(article);
+		else activateArticle(article);
+
+		auto art = deserializeBson!Article(m_articles.findOne(["_id": article]));
+
+		bool was_spam = false;
+		if (art.hasHeader("X-Spam-Status")) {
+			was_spam = art.getHeader("X-Spam-Status").icmp("yes") == 0;
+			if (was_spam != is_spam) {
+				foreach (flt; m_settings.spamFilters)
+					flt.classify(art, was_spam, true);
+			}
+		}
+		foreach (flt; m_settings.spamFilters)
+			flt.classify(art, is_spam, false);
+
+		art.setHeader("X-Spam-Status", is_spam ? "Yes" : "No");
+		m_articles.update(["_id": article], ["$set": ["headers": art.headers]]);
+	}
+
 	// deletes all inactive articles from the group
 	void purgeGroup(string name)
 	{
@@ -769,23 +806,34 @@ struct Article {
 
 	void addHeader(string name, string value)
 	{
-		string encode(string str)
-		{
-			size_t first_non_ascii = size_t.max, last_non_ascii = 0;
-			foreach( i; 0 .. str.length )
-				if( (str[i] & 0x80) ){
-					if( first_non_ascii == size_t.max )
-						first_non_ascii = i;
-					last_non_ascii = i;
-				}
-			if( last_non_ascii < first_non_ascii ) return str;
-
-			auto non_ascii = str[first_non_ascii .. last_non_ascii+1];
-			auto encoded = "=?UTF-8?B?"~cast(string)Base64.encode(cast(ubyte[])non_ascii)~"?=";
-			return str[0 .. first_non_ascii] ~ encoded ~ str[last_non_ascii+1 .. $];
-		}
 		assert(!hasHeader(name));
 		headers ~= ArticleHeader(encode(name), encode(value));
+	}
+
+	void setHeader(string name, string value)
+	{
+		foreach (ref h; headers)
+			if (icmp(h.key, name) == 0) {
+				h.value = encode(value);
+				return;
+			}
+		addHeader(name, value);
+	}
+
+	static string encode(string str)
+	{
+		size_t first_non_ascii = size_t.max, last_non_ascii = 0;
+		foreach( i; 0 .. str.length )
+			if( (str[i] & 0x80) ){
+				if( first_non_ascii == size_t.max )
+					first_non_ascii = i;
+				last_non_ascii = i;
+			}
+		if( last_non_ascii < first_non_ascii ) return str;
+
+		auto non_ascii = str[first_non_ascii .. last_non_ascii+1];
+		auto encoded = "=?UTF-8?B?"~cast(string)Base64.encode(cast(ubyte[])non_ascii)~"?=";
+		return str[0 .. first_non_ascii] ~ encoded ~ str[last_non_ascii+1 .. $];
 	}
 }
 

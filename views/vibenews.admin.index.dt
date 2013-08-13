@@ -58,3 +58,5 @@ block vibenews.body
 		input(type="submit", value="Repair group numbers")
 	form(method="POST", action="/groups/repair-threads")
 		input(type="submit", value="Repair threads")
+	form(method="POST", action="/reclassify_spam")
+		input(type="submit", value="Reclassify all messages for spam")		
