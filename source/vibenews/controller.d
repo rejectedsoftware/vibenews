@@ -788,6 +788,8 @@ struct Article {
 	long messageLines;
 	string[] peerAddress; // list of hops starting from the original client
 
+	@property string subject() const { return decodeEncodedWords(getHeader("Subject")); }
+
 	string getHeader(string name)
 	const {
 		foreach( h; headers )

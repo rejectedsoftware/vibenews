@@ -535,7 +535,7 @@ struct PostInfo {
 	this(Article art, Article repl_art, string groupname)
 	{
 		id = art._id;
-		subject = art.getHeader("Subject");
+		subject = art.subject;
 		poster = PosterInfo(art.getHeader("From"));
 		repliedToPoster = PosterInfo(repl_art.getHeader("From"));
 		if( auto pg = escapeGroup(groupname) in repl_art.groups )
