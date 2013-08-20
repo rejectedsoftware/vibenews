@@ -11,6 +11,7 @@ import vibenews.message;
 import vibenews.vibenews;
 
 import std.datetime;
+import std.math;
 import std.range;
 import std.uni;
 import vibe.core.core;
@@ -63,27 +64,26 @@ class BayesSpamFilter : SpamFilter {
 	bool checkForRevoke(ref const Article art)
 	{
 		import vibe.core.log;
-		double pspam = 1.0;
-		double pham = 1.0;
+		double plsum = 0;
 
 		long count = 0;
-		logDebugV("Determining spam status");
+		logDiagnostic("Determining spam status");
 		iterateWords(art, (w) {
 			if (auto pc = w in m_words) {
 				if (pc.spamCount) {
-					auto p_w_s = pc.spamCount/cast(double)m_spamCount;
-					auto p_w_h = pc.hamCount/cast(double)m_hamCount;
+					enum bias = 0.1;
+					auto p_w_s = (pc.spamCount + bias)/cast(double)m_spamCount;
+					auto p_w_h = (pc.hamCount + bias)/cast(double)m_hamCount;
 					auto prob = p_w_s / (p_w_s + p_w_h);
-					pspam *= prob;
-					pham *= 1 - prob;
-					logDebugV("%s: %s", w, prob);
-				} else logDebugV("%s: no spam word", w);
+					plsum += std.math.log(1 - prob) - std.math.log(prob);
+					logDiagnostic("%s: %s", w, prob);
+				} else logDiagnostic("%s: no spam word", w);
 				count++;
-			} else logDebugV("%s: unknown word", w);
+			} else logDiagnostic("%s: unknown word", w);
 		});
-		auto prob = pspam / (pspam + pham);
-		logDebugV("---- final probability %s", prob);
-		return prob > 0.7;
+		auto prob = 1 / (1 + exp(plsum));
+		logDiagnostic("---- final probability %s (%s)", prob, plsum);
+		return prob > 0.75;
 	}
 
 	void resetClassification()
