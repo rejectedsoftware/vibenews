@@ -11,19 +11,8 @@ public import vibenews.controller : Article;
 public import vibe.data.json;
 public import vibe.mail.smtp : SMTPClientSettings;
 
+import antispam.antispam;
 
-interface SpamFilter {
-	@property string id();
-
-	void setSettings(Json settings);
-
-	bool checkForBlock(ref const Article);
-
-	bool checkForRevoke(ref const Article);
-
-	void resetClassification();
-	void classify(in ref Article art, bool spam, bool unclassify = false);
-}
 
 class VibeNewsSettings {
 	// host name used for self-referencing links
@@ -69,7 +58,7 @@ class VibeNewsSettings {
 			foreach( string key, value; *psf ){
 				foreach( flt; spamFilters )
 					if( flt.id == key )
-						flt.setSettings(value);
+						flt.applySettings(value);
 			}
 		}
 	}

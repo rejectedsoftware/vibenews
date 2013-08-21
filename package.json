@@ -6,6 +6,7 @@
 	"copyright": "Copyright (c) 2012 Sönke Ludwig",
 	"license": "GPL 3",
 	"dependencies": {
+		"antispam": "~master",
 		"userman": "~master",
 		"vibe-d": "~master"
 	}

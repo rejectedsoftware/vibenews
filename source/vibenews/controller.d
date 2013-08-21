@@ -12,6 +12,7 @@ import vibenews.vibenews;
 
 import vibe.vibe;
 
+import antispam.antispam;
 import userman.controller;
 
 import std.algorithm;
@@ -594,9 +595,10 @@ class Controller {
 		foreach (bart; m_articles.find()) {
 			auto art = deserializeBson!Article(bart);
 			foreach (flt; m_settings.spamFilters) {
+				auto msg = toAntispamMessage(art);
 				if (art.hasHeader("X-Spam-Status")) {
-					flt.classify(art, art.getHeader("X-Spam-Status").icmp("yes") == 0);
-				} else if (art.active) flt.classify(art, false);
+					flt.classify(msg, art.getHeader("X-Spam-Status").icmp("yes") == 0);
+				} else if (art.active) flt.classify(msg, false);
 			}
 		}
 	}
@@ -608,16 +610,17 @@ class Controller {
 
 		auto art = deserializeBson!Article(m_articles.findOne(["_id": article]));
 
+		auto msg = toAntispamMessage(art);
 		bool was_spam = false;
 		if (art.hasHeader("X-Spam-Status")) {
 			was_spam = art.getHeader("X-Spam-Status").icmp("yes") == 0;
 			if (was_spam != is_spam) {
 				foreach (flt; m_settings.spamFilters)
-					flt.classify(art, was_spam, true);
+					flt.classify(msg, was_spam, true);
 			}
 		}
 		foreach (flt; m_settings.spamFilters)
-			flt.classify(art, is_spam, false);
+			flt.classify(msg, is_spam, false);
 
 		art.setHeader("X-Spam-Status", is_spam ? "Yes" : "No");
 		m_articles.update(["_id": article], ["$set": ["headers": art.headers]]);
@@ -735,6 +738,15 @@ class Controller {
 		}
 	}
 
+}
+
+AntispamMessage toAntispamMessage(in ref Article art)
+{
+	AntispamMessage msg;
+	foreach (hdr; art.headers) msg.headers[hdr.key] = hdr.value;
+	msg.message = art.message;
+	msg.peerAddress = art.peerAddress;
+	return msg;
 }
 
 

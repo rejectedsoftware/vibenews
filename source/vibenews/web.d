@@ -11,6 +11,7 @@ import vibenews.controller;
 import vibenews.message;
 import vibenews.vibenews;
 
+import antispam.antispam;
 import userman.web : UserManController, UserManWebInterface, User;
 
 import vibe.core.core;
@@ -385,9 +386,14 @@ class WebInterface {
 		else art.peerAddress = [req.peer];
 		art.message = cast(ubyte[])(message ~ "\r\n");
 
+		AntispamMessage msg = toAntispamMessage(art);
+		bool reject = false;
 		try {
-			foreach( flt; m_settings.spamFilters )
-				enforce(!flt.checkForBlock(art), "Article is deemed to be abusive. Rejected.");
+			foreach( flt; m_settings.spamFilters ) {
+				auto status = flt.determineImmediateSpamStatus(msg);
+				enforce(status != SpamAction.block, "Article is deemed to be abusive. Rejected.");
+				if (status == SpamAction.revoke) reject = true;
+			}
 		} catch (Exception e) {
 			req.params["error"] = e.msg;
 			showPostArticle(req, res);
@@ -408,8 +414,8 @@ class WebInterface {
 		redirectToThreadPost(res, grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
 
 		runTask({
-			foreach( flt; m_settings.spamFilters )
-				if( flt.checkForRevoke(art) ){
+			foreach (flt; m_settings.spamFilters)
+				if (flt.determineAsyncSpamStatus(msg) != SpamAction.pass) {
 					m_ctrl.markAsSpam(art._id, true);
 					return;
 				}

@@ -8,8 +8,8 @@
 import vibe.d;
 
 import vibenews.nntp.server;
-import vibenews.spamfilters.bayes;
-import vibenews.spamfilters.blacklist;
+import antispam.filters.bayes;
+import antispam.filters.blacklist;
 import vibenews.admin;
 import vibenews.controller;
 import vibenews.news;

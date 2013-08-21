@@ -12,6 +12,7 @@ import vibenews.nntp.status;
 import vibenews.controller;
 import vibenews.vibenews;
 
+import antispam.antispam;
 import vibe.core.core;
 import vibe.core.log;
 import vibe.crypto.passwordhash;
@@ -439,28 +440,41 @@ class NewsInterface {
 		art.peerAddress = [req.peerAddress];
 
 		// check for spam
-		foreach( flt; m_settings.spamFilters )
-			if( flt.checkForBlock(art) ){
+		auto msg = toAntispamMessage(art);
+		bool reject = false;
+		foreach( flt; m_settings.spamFilters ) {
+			auto status = flt.determineImmediateSpamStatus(msg);
+			if (status == SpamAction.block) {
 				res.status = NntpStatus.ArticleRejected;
 				res.statusText = "Message deemed abusive.";
 				res.writeVoidBody();
 				return;
-			}
+			} else if (status == SpamAction.revoke) reject = true;
+		}
 
 		BsonObjectID uid;
 		if( isTaskLocalSet("authUserId") ) uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
 		m_ctrl.postArticle(art, uid);
+
+		if (reject) {
+			m_ctrl.markAsSpam(art._id, true);
+			res.status = NntpStatus.ArticleRejected;
+			res.statusText = "Message deemed abusive.";
+			res.writeVoidBody();
+			return;
+		}
 
 		res.status = NntpStatus.ArticlePostedOK;
 		res.statusText = "Article posted";
 		res.writeVoidBody();
 
 		runTask({
-			foreach( flt; m_settings.spamFilters )
-				if( flt.checkForRevoke(art) ){
-					m_ctrl.deactivateArticle(art._id);
+			foreach (flt; m_settings.spamFilters)
+				if (flt.determineAsyncSpamStatus(msg) != SpamAction.pass) {
+					m_ctrl.markAsSpam(art._id, true);
 					return;
 				}
+			m_ctrl.markAsSpam(art._id, false);
 		});
 	}
 
