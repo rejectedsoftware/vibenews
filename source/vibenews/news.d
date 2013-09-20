@@ -198,9 +198,9 @@ class NewsInterface {
 			foreach( hdr; art.headers ){
 				if( !first ) dst.write("\r\n");
 				else first = false;
-				dst.write(hdr.key, false);
-				dst.write(": ", false);
-				dst.write(hdr.value, false);
+				dst.write(hdr.key);
+				dst.write(": ");
+				dst.write(hdr.value);
 			}
 			
 			// write Xref header
@@ -299,7 +299,7 @@ class NewsInterface {
 			res.bodyWriter();
 			m_ctrl.enumerateArticles(groupname, (i, id, msgid, msgnum){
 					if( i > 0 ) res.bodyWriter.write("\r\n");
-					res.bodyWriter.write(to!string(msgnum), false);
+					res.bodyWriter.write(to!string(msgnum));
 				});
 		}
 	}
@@ -329,7 +329,7 @@ class NewsInterface {
 						if( !grp.active ) return;
 						logDebug("Got group %s", grp.name);
 						if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
-						res.bodyWriter.write(grp.name ~ " " ~ grp.description, false);
+						res.bodyWriter.write(grp.name ~ " " ~ grp.description);
 					});
 				break;
 			case "active":
@@ -341,7 +341,7 @@ class NewsInterface {
 						auto high = to!string(grp.maxArticleNumber);
 						auto low = to!string(grp.minArticleNumber);
 						auto flags = "y";
-						res.bodyWriter.write(grp.name~" "~high~" "~low~" "~flags, false);
+						res.bodyWriter.write(grp.name~" "~high~" "~low~" "~flags);
 					});
 				break;
 		}
@@ -386,8 +386,8 @@ class NewsInterface {
 		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art){
 			if( idx > 0 ) dst.write("\r\n");
 			void writeField(string str){
-				dst.write("\t", false);
-				dst.write(str, false);
+				dst.write("\t");
+				dst.write(str);
 			}
 			dst.write(to!string(art.groups[escapeGroup(grpname)].articleNumber));
 			writeField(art.getHeader("Subject"));
@@ -498,7 +498,7 @@ class NewsInterface {
 				m_ctrl.enumerateNewArticles(group.name, SysTime(date, UTC()), (i, id, msgid, msgnum){
 						if( !first ) writer.write("\r\n");
 						first = false;
-						writer.write(msgid, false);
+						writer.write(msgid);
 					});
 			});
 		} else {
@@ -512,7 +512,7 @@ class NewsInterface {
 
 			m_ctrl.enumerateNewArticles(grp, SysTime(date, UTC()), (i, id, msgid, msgnum){
 					if( i > 0 ) writer.write("\r\n");
-					writer.write(msgid, false);
+					writer.write(msgid);
 				});
 		}
 	}
@@ -534,7 +534,7 @@ class NewsInterface {
 				auto high = to!string(grp.maxArticleNumber);
 				auto low = to!string(grp.minArticleNumber);
 				auto flags = "y";
-				writer.write(grp.name~" "~high~" "~low~" "~flags, false);
+				writer.write(grp.name~" "~high~" "~low~" "~flags);
 			});
 
 	}

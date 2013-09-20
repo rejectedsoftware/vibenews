@@ -78,14 +78,14 @@ class NntpBodyWriter : OutputStream {
 		m_stream = stream;
 	}
 
-	void write(in ubyte[] bytes_, bool do_flush = true)
+	void write(in ubyte[] bytes_)
 	{
 		const(ubyte)[] bytes = bytes_;
 		assert(!m_finalized);
 
 		if( bytes.length ){
 			if( m_empty && bytes[0] == '.' ){
-				m_stream.write("..", false);
+				m_stream.write("..");
 				logDebug("WS <..>", cast(string)bytes[0 .. $-m_lineState]);
 				bytes = bytes[1 .. $];
 			}
@@ -108,7 +108,7 @@ class NntpBodyWriter : OutputStream {
 					m_lineState += bytes.length;
 					bytes = null;
 				} else {
-					m_stream.write("\r\n..", false);
+					m_stream.write("\r\n..");
 					logDebug("WEM <\\r\\n..>");
 					bytes = bytes[m_lineStateString.length-m_lineState .. $];
 					m_lineState = 0;
@@ -120,7 +120,7 @@ class NntpBodyWriter : OutputStream {
 			auto idx = bytes.countUntil(m_lineStateString);
 			if( idx >= 0 ){
 				m_stream.write(bytes[0 .. idx]);
-				m_stream.write("\r\n..", false);
+				m_stream.write("\r\n..");
 				logDebug("WMM <%s\\r\\n..>", cast(string)bytes[0 .. idx]);
 				bytes = bytes[idx+m_lineStateString.length .. $];
 			} else {
@@ -134,8 +134,6 @@ class NntpBodyWriter : OutputStream {
 				bytes = null;
 			}
 		}
-
-		if( do_flush ) flush();
 	}
 
 	void flush()
@@ -145,16 +143,17 @@ class NntpBodyWriter : OutputStream {
 
 	void finalize()
 	{
-		if( m_lineState > 0 ) m_stream.write(m_lineStateString[0 .. m_lineState], false);
+		if( m_lineState > 0 ) m_stream.write(m_lineStateString[0 .. m_lineState]);
 		enforce(!m_finalized);
 		m_finalized = true;
 		if( m_empty ) m_stream.write(".\r\n");
 		else m_stream.write("\r\n.\r\n");
+		m_stream.flush();
 		logDebug("WF <\\r\\n.\\r\\n>");
 	}
 
-	void write(InputStream stream, ulong nbytes = 0, bool do_flush = true)
+	void write(InputStream stream, ulong nbytes = 0)
 	{
-		writeDefault(stream, nbytes, do_flush);
+		writeDefault(stream, nbytes);
 	}
 }
