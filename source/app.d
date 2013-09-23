@@ -20,7 +20,7 @@ NewsInterface s_server;
 AdminInterface s_adminInterface;
 WebInterface s_webInterface;
 
-
+version(unittest) {} else
 static this()
 {
 	auto settings = new VibeNewsSettings;
