@@ -386,20 +386,6 @@ class WebInterface {
 		else art.peerAddress = [req.peer];
 		art.message = cast(ubyte[])(message ~ "\r\n");
 
-		AntispamMessage msg = toAntispamMessage(art);
-		bool reject = false;
-		try {
-			foreach( flt; m_settings.spamFilters ) {
-				auto status = flt.determineImmediateSpamStatus(msg);
-				enforce(status != SpamAction.block, "Article is deemed to be abusive. Rejected.");
-				if (status == SpamAction.revoke) reject = true;
-			}
-		} catch (Exception e) {
-			req.params["error"] = e.msg;
-			showPostArticle(req, res);
-			return;
-		}
-
 		try m_ctrl.postArticle(art, user_id);
 		catch( Exception e ){
 			req.params["error"] = e.msg;
@@ -412,15 +398,6 @@ class WebInterface {
 		req.session["lastUsedEmail"] = email.idup;
 
 		redirectToThreadPost(res, grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
-
-		runTask({
-			foreach (flt; m_settings.spamFilters)
-				if (flt.determineAsyncSpamStatus(msg) != SpamAction.pass) {
-					m_ctrl.markAsSpam(art._id, true);
-					return;
-				}
-			m_ctrl.markAsSpam(art._id, false);
-		});
 	}
 
 	void redirectToThreadPost(HTTPServerResponse res, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)

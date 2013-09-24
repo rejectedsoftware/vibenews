@@ -445,6 +445,20 @@ class Controller {
 
 	void postArticle(ref Article art, BsonObjectID user_id)
 	{
+		AntispamMessage msg = toAntispamMessage(art);
+		bool revoke = false;
+		outer:
+		foreach( flt; m_settings.spamFilters ) {
+			auto status = flt.determineImmediateSpamStatus(msg);
+			final switch (status) {
+				case SpamAction.amnesty: revoke = false; break outer;
+				case SpamAction.pass: break;
+				case SpamAction.revoke: revoke = true; break;
+				case SpamAction.block: throw new Exception("Article is deemed to be abusive. Rejected.");
+			}
+		}
+
+
 		string relay_version = art.getHeader("Relay-Version");
 		string posting_version = art.getHeader("Posting-Version");
 		string from = art.getHeader("From");
@@ -523,6 +537,25 @@ class Controller {
 		}
 
 		m_articles.insert(art);
+
+		markAsSpam(art._id, revoke);
+
+		runTask({
+			foreach (flt; m_settings.spamFilters) {
+				auto status = flt.determineAsyncSpamStatus(msg);
+				final switch (status) {
+					case SpamAction.amnesty: markAsSpam(art._id, false); return;
+					case SpamAction.pass: break;
+					case SpamAction.revoke: revoke = true; break;
+					case SpamAction.block: markAsSpam(art._id, true); return;
+				}
+				if (status == SpamAction.amnesty) break;
+				else if (status != SpamAction.pass) {
+					return;
+				}
+			}
+			markAsSpam(art._id, revoke);
+		});
 	}
 
 	void deactivateArticle(BsonObjectID artid)
@@ -614,10 +647,9 @@ class Controller {
 		bool was_spam = false;
 		if (art.hasHeader("X-Spam-Status")) {
 			was_spam = art.getHeader("X-Spam-Status").icmp("yes") == 0;
-			if (was_spam != is_spam) {
-				foreach (flt; m_settings.spamFilters)
-					flt.classify(msg, was_spam, true);
-			}
+			if (was_spam == is_spam) return;
+			foreach (flt; m_settings.spamFilters)
+				flt.classify(msg, was_spam, true);
 		}
 		foreach (flt; m_settings.spamFilters)
 			flt.classify(msg, is_spam, false);

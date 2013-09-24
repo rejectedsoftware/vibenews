@@ -439,25 +439,11 @@ class NewsInterface {
 		res.restart();
 		art.peerAddress = [req.peerAddress];
 
-		// check for spam
-		auto msg = toAntispamMessage(art);
-		bool reject = false;
-		foreach( flt; m_settings.spamFilters ) {
-			auto status = flt.determineImmediateSpamStatus(msg);
-			if (status == SpamAction.block) {
-				res.status = NntpStatus.ArticleRejected;
-				res.statusText = "Message deemed abusive.";
-				res.writeVoidBody();
-				return;
-			} else if (status == SpamAction.revoke) reject = true;
-		}
-
 		BsonObjectID uid;
 		if( isTaskLocalSet("authUserId") ) uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
-		m_ctrl.postArticle(art, uid);
 
-		if (reject) {
-			m_ctrl.markAsSpam(art._id, true);
+		try m_ctrl.postArticle(art, uid);
+		catch (Exception e) {
 			res.status = NntpStatus.ArticleRejected;
 			res.statusText = "Message deemed abusive.";
 			res.writeVoidBody();
@@ -467,15 +453,6 @@ class NewsInterface {
 		res.status = NntpStatus.ArticlePostedOK;
 		res.statusText = "Article posted";
 		res.writeVoidBody();
-
-		runTask({
-			foreach (flt; m_settings.spamFilters)
-				if (flt.determineAsyncSpamStatus(msg) != SpamAction.pass) {
-					m_ctrl.markAsSpam(art._id, true);
-					return;
-				}
-			m_ctrl.markAsSpam(art._id, false);
-		});
 	}
 
 	void newnews(NntpServerRequest req, NntpServerResponse res)
