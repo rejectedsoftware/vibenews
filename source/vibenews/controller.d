@@ -101,6 +101,7 @@ class Controller {
 		// fix missing Date headers
 		foreach (bart; m_articles.find(["$not": ["headers.key": "Date"]], ["headers": true])) {
 			Article art;
+			art._id = bart._id.get!BsonObjectID;
 			art.headers = deserializeBson!(ArticleHeader[])(bart.headers);
 			assert(!art.hasHeader("Date"));
 			art.addHeader("Date", art._id.timeStamp.toRFC822DateTimeString());
