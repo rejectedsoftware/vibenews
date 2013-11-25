@@ -98,6 +98,17 @@ class Controller {
 			m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
 		}
 
+		// fix missing Date headers
+		foreach (bart; m_articles.find(["$not": ["headers.key": "Date"]], ["headers": true])) {
+			Article art;
+			art.headers = deserializeBson!(ArticleHeader[])(bart.headers);
+			assert(!art.hasHeader("Date"));
+			art.addHeader("Date", art._id.timeStamp.toRFC822DateTimeString());
+			assert(art.hasHeader("Date"));
+			m_articles.update(["_id": art._id], ["$set": ["headers": art.headers]]);
+		}
+
+
 		// create indexes
 		//m_users.ensureIndex(["email": 1], IndexFlags.Unique);
 		m_groups.ensureIndex(["name": 1], IndexFlags.Unique);
@@ -475,13 +486,12 @@ class Controller {
 			if( refs.length > 0 ) reply_to = refs[$-1];
 		}
 
-		if( messageid.length == 0 ) art.addHeader("Message-ID", art.id);
-		if( date.length == 0 ) art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
+		if (messageid.length) art.id = messageid;
+		else art.addHeader("Message-ID", art.id);
+		if (!date.length) art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
+		assert(art.hasHeader("Date"));
 		art.messageLength = art.message.length;
 		art.messageLines = countLines(art.message);
-
-		if( messageid.length )
-			art.id = messageid;
 
 		// validate sender
 		if( user_id == BsonObjectID() ){
