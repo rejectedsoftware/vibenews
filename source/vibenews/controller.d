@@ -99,7 +99,7 @@ class Controller {
 		}
 
 		// fix missing Date headers
-		foreach (bart; m_articles.find(["$not": ["headers.key": "Date"]], ["headers": true])) {
+		foreach (bart; m_articles.find(["headers": ["$not": ["$elemMatch": ["key": "Date"]]]], ["headers": true])) {
 			Article art;
 			art._id = bart._id.get!BsonObjectID;
 			art.headers = deserializeBson!(ArticleHeader[])(bart.headers);
