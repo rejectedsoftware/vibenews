@@ -86,7 +86,7 @@ class NntpBodyWriter : OutputStream {
 		if( bytes.length ){
 			if( m_empty && bytes[0] == '.' ){
 				m_stream.write("..");
-				logDebug("WS <..>", cast(string)bytes[0 .. $-m_lineState]);
+				logDebugV("WS <..>", cast(string)bytes[0 .. $-m_lineState]);
 				bytes = bytes[1 .. $];
 			}
 			m_empty = false;
@@ -98,7 +98,7 @@ class NntpBodyWriter : OutputStream {
 				if( bytes[i-m_lineState] != m_lineStateString[i] ){
 					m_stream.write(m_lineStateString[0 .. i]);
 					bytes = bytes[i-m_lineState .. $];
-					logDebug("WPM <%s>", cast(string)m_lineStateString[0 .. i]);
+					logDebugV("WPM <%s>", cast(string)m_lineStateString[0 .. i]);
 					m_lineState = 0;
 					break;
 				}
@@ -109,7 +109,7 @@ class NntpBodyWriter : OutputStream {
 					bytes = null;
 				} else {
 					m_stream.write("\r\n..");
-					logDebug("WEM <\\r\\n..>");
+					logDebugV("WEM <\\r\\n..>");
 					bytes = bytes[m_lineStateString.length-m_lineState .. $];
 					m_lineState = 0;
 				}
@@ -121,7 +121,7 @@ class NntpBodyWriter : OutputStream {
 			if( idx >= 0 ){
 				m_stream.write(bytes[0 .. idx]);
 				m_stream.write("\r\n..");
-				logDebug("WMM <%s\\r\\n..>", cast(string)bytes[0 .. idx]);
+				logDebugV("WMM <%s\\r\\n..>", cast(string)bytes[0 .. idx]);
 				bytes = bytes[idx+m_lineStateString.length .. $];
 			} else {
 				foreach( i; 1 .. min(m_lineStateString.length, bytes.length) )
@@ -130,7 +130,7 @@ class NntpBodyWriter : OutputStream {
 						break;
 					}
 				m_stream.write(bytes[0 .. $-m_lineState]);
-				logDebug("WP <%s>", cast(string)bytes[0 .. $-m_lineState]);
+				logDebugV("WP <%s>", cast(string)bytes[0 .. $-m_lineState]);
 				bytes = null;
 			}
 		}
@@ -149,7 +149,7 @@ class NntpBodyWriter : OutputStream {
 		if( m_empty ) m_stream.write(".\r\n");
 		else m_stream.write("\r\n.\r\n");
 		m_stream.flush();
-		logDebug("WF <\\r\\n.\\r\\n>");
+		logDebugV("WF <\\r\\n.\\r\\n>");
 	}
 
 	void write(InputStream stream, ulong nbytes = 0)

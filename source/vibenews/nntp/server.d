@@ -48,8 +48,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			auto res = new NntpServerResponse(stream);
 			logTrace("waiting for request");
 			auto ln = cast(string)stream.readLine();
-			if( !ln.startsWith("AUTHINFO") )
-				logDebug("REQUEST: %s", ln);
+			logDebug("REQUEST: %s", !ln.startsWith("AUTHINFO") ? ln : "AUTHINFO (...)");
 			auto params = ln.spaceSplit();
 			if( params.length < 1 ){
 				res.status = NntpStatus.BadCommand;
