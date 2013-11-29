@@ -296,7 +296,7 @@ class Controller {
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
-		foreach( bthr; m_threads.find(["query": ["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])], "orderby": ["lastArticleId": Bson(-1)]], null, QueryFlags.None, cast(int)skip) ){
+		foreach( bthr; m_threads.find(["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])], null, QueryFlags.None, cast(int)skip).sort(["lastArticleId": Bson(-1)]) ){
 			Thread thr;
 			deserializeBson(thr, bthr);
 			del(idx, thr);
@@ -314,7 +314,7 @@ class Controller {
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
-		foreach( bart; m_articles.find(["query": ["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], "orderby": ["_id": Bson(1)]], null, QueryFlags.None, cast(int)skip, cast(int)max_count) ){
+		foreach (bart; m_articles.find(["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], null, QueryFlags.None, cast(int)skip, cast(int)max_count).sort(["_id": Bson(1)])) {
 			Article art;
 			deserializeBson(art, bart);
 			del(idx, art);
@@ -398,10 +398,9 @@ class Controller {
 		auto egrp = escapeGroup(groupname);
 		auto numkey = "groups."~egrp~".articleNumber";
 		auto numquery = serializeToBson(["$exists": true]);
-		auto query = serializeToBson([numkey: numquery, "active": Bson(true)]);
-		auto order = serializeToBson([numkey: 1]);
-		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], ["_id": 1, "id": 1, "groups": 1]) ){
-			del(idx, ba._id.get!BsonObjectID, ba.id.get!string, ba.groups[escapeGroup(groupname)].articleNumber.get!long);
+		size_t idx = 0;
+		foreach (ba; m_articles.find([numkey: numquery, "active": Bson(true)], ["_id": 1, "id": 1, "groups": 1]).sort([numkey: 1])) {
+			del(idx++, ba._id.get!BsonObjectID, ba.id.get!string, ba.groups[escapeGroup(groupname)].articleNumber.get!long);
 		}
 	}
 
@@ -411,14 +410,13 @@ class Controller {
 		string gpne = escapeGroup(groupname);
 		auto numkey = "groups."~gpne~".articleNumber";
 		auto numquery = serializeToBson(["$gte": from, "$lte": to]);
-		auto query = serializeToBson([numkey: numquery, "active": Bson(true)]);
-		auto order = serializeToBson([numkey: 1]);
-		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], ["message": 0]) ){
+		size_t idx = 0;
+		foreach (ba; m_articles.find([numkey: numquery, "active": Bson(true)], ["message": 0]).sort([numkey: 1])) {
 			ba["message"] = Bson(BsonBinData(BsonBinData.Type.Generic, null));
 			if( ba.groups[gpne].articleNumber.get!long > to )
 				break;
 			deserializeBson(art, ba);
-			del(idx, art);
+			del(idx++, art);
 		}
 	}
 
@@ -429,9 +427,9 @@ class Controller {
 		auto egrp = escapeGroup(groupname);
 		auto numkey = "groups."~egrp~".articleNumber";
 		auto query = serializeToBson(["_id" : Bson(["$gte": idmatch]), numkey: Bson(["$exists": groupmatch]), "active": Bson(true)]);
-		auto order = serializeToBson([numkey: 1]);
-		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], ["_id": 1, "id": 1, "groups": 1]) ){
-			del(idx, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba.groups[escapeGroup(groupname)].articleNumber.get!long);
+		size_t idx = 0;
+		foreach (ba; m_articles.find(query, ["_id": 1, "id": 1, "groups": 1]).sort([numkey: 1])) {
+			del(idx++, ba["_id"].get!BsonObjectID, ba["id"].get!string, ba.groups[egrp].articleNumber.get!long);
 		}
 	}
 
@@ -440,13 +438,12 @@ class Controller {
 		auto egrp = escapeGroup(groupname);
 		auto numkey = "groups."~egrp~".articleNumber";
 		logDebug("%s %s", groupname, egrp);
-		auto query = serializeToBson([numkey: ["$exists": true]]);
-		auto order = serializeToBson([numkey: -1]);
-		foreach( idx, ba; m_articles.find(["query": query, "orderby": order], null, QueryFlags.None, first, count) ){
+		size_t idx = 0;
+		foreach (ba; m_articles.find([numkey: ["$exists": true]], null, QueryFlags.None, first, count).sort([numkey: -1])) {
 			Article art;
 			deserializeBson(art, ba);
 			del(art);
-			if( idx == count-1 ) break;
+			if (idx++ == count-1) break;
 		}
 	}
 
@@ -735,7 +732,7 @@ class Controller {
 	{
 		m_threads.remove(Bson.EmptyObject);
 
-		foreach( ba; m_articles.find(["query": ["active": Bson(true)], "orderby": ["_id": Bson(1)]]) ){
+		foreach (ba; m_articles.find(["active": Bson(true)]).sort(["_id": Bson(1)])) {
 			Article a;
 			deserializeBson(a, ba);
 
