@@ -384,18 +384,12 @@ class NewsInterface {
 		res.statusText = "Overview information follows (multi-line)";
 		auto dst = res.bodyWriter;
 		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) {
-			if (idx > 0) dst.write("\r\n");
-			void writeField(string str){
-				dst.write("\t");
-				dst.write(str);
-			}
-			string sanitizeHeader(string hdr){
+			string sanitizeHeader(string hdr) {
 				auto ret = appender!string();
 				size_t sidx = 0;
 				foreach (i, ch; hdr) {
 					switch (ch) {
-						default:
-							break;
+						default: break;
 						case '\t', '\r', '\n':
 							ret.put(hdr[sidx .. i]);
 							ret.put('.');
@@ -404,26 +398,28 @@ class NewsInterface {
 					}
 				}
 				if (sidx == 0) return hdr;
-				else {
-					ret.put(hdr[sidx .. $]);
-					return ret.data;
-				}
+				else { ret.put(hdr[sidx .. $]); return ret.data; }
 			}
-			dst.formattedWrite("%s", art.groups[escapeGroup(grpname)].articleNumber);
-			writeField(sanitizeHeader(art.getHeader("Subject")));
-			writeField(sanitizeHeader(art.getHeader("From")));
-			writeField(sanitizeHeader(art.getHeader("Date")));
-			writeField(sanitizeHeader(art.getHeader("Message-ID")));
-			writeField(sanitizeHeader(art.getHeader("References")));
-			writeField(to!string(art.messageLength));
-			writeField(to!string(art.messageLines));
-			foreach( h; art.headers ){
-				if( icmp(h.key, "Subject") == 0 ) continue;
-				if( icmp(h.key, "From") == 0 ) continue;
-				if( icmp(h.key, "Date") == 0 ) continue;
-				if( icmp(h.key, "Message-ID") == 0 ) continue;
-				if( icmp(h.key, "References") == 0 ) continue;
-				writeField(h.key ~ ": " ~ h.value);
+
+			if (idx > 0) dst.write("\r\n");
+
+			dst.formattedWrite("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d",
+				art.groups[escapeGroup(grpname)].articleNumber,
+				sanitizeHeader(art.getHeader("Subject")),
+				sanitizeHeader(art.getHeader("From")),
+				sanitizeHeader(art.getHeader("Date")),
+				sanitizeHeader(art.getHeader("Message-ID")),
+				sanitizeHeader(art.getHeader("References")),
+				art.messageLength,
+				art.messageLines);
+
+			foreach (h; art.headers) {
+				if (icmp(h.key, "Subject") == 0) continue;
+				if (icmp(h.key, "From") == 0) continue;
+				if (icmp(h.key, "Date") == 0) continue;
+				if (icmp(h.key, "Message-ID") == 0) continue;
+				if (icmp(h.key, "References") == 0) continue;
+				dst.formattedWrite("\t%s: %s", h.key, sanitizeHeader(h.value));
 			}
 		});
 	}
