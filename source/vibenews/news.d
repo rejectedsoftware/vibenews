@@ -383,18 +383,38 @@ class NewsInterface {
 		res.status = NntpStatus.OverviewFollows;
 		res.statusText = "Overview information follows (multi-line)";
 		auto dst = res.bodyWriter;
-		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art){
-			if( idx > 0 ) dst.write("\r\n");
+		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) {
+			if (idx > 0) dst.write("\r\n");
 			void writeField(string str){
 				dst.write("\t");
 				dst.write(str);
 			}
-			dst.write(to!string(art.groups[escapeGroup(grpname)].articleNumber));
-			writeField(art.getHeader("Subject"));
-			writeField(art.getHeader("From"));
-			writeField(art.getHeader("Date"));
-			writeField(art.getHeader("Message-ID"));
-			writeField(art.getHeader("References"));
+			string sanitizeHeader(string hdr){
+				auto ret = appender!string();
+				size_t sidx = 0;
+				foreach (i, ch; hdr) {
+					switch (ch) {
+						default:
+							break;
+						case '\t', '\r', '\n':
+							ret.put(hdr[sidx .. i]);
+							ret.put('.');
+							sidx = i+1;
+							break;
+					}
+				}
+				if (sidx == 0) return hdr;
+				else {
+					ret.put(hdr[sidx .. $]);
+					return ret.data;
+				}
+			}
+			dst.formattedWrite("%s", art.groups[escapeGroup(grpname)].articleNumber);
+			writeField(sanitizeHeader(art.getHeader("Subject")));
+			writeField(sanitizeHeader(art.getHeader("From")));
+			writeField(sanitizeHeader(art.getHeader("Date")));
+			writeField(sanitizeHeader(art.getHeader("Message-ID")));
+			writeField(sanitizeHeader(art.getHeader("References")));
 			writeField(to!string(art.messageLength));
 			writeField(to!string(art.messageLines));
 			foreach( h; art.headers ){
