@@ -9,5 +9,6 @@
 		"antispam": "~master",
 		"userman": "~master",
 		"vibe-d": "~master"
-	}
+	},
+	"versions": ["VibeDefaultMain"]
 }
