@@ -40,13 +40,16 @@ block vibenews.body
 			- bool is_undecided = !art.hasHeader("X-Spam-Status");
 			- bool is_spam = !is_undecided && art.getHeader("X-Spam-Status").icmp("yes") == 0;
 			tr(class='#{art.active?"active":"inactive"}')
-				- auto from = art.getHeader("From");
-				- auto idx = countUntil(from, '<');
-				- if( idx >= 0 ) from = from[idx .. $];
 				td(class=is_undecided ? "undecided" : is_spam ? "spam" : "ham") &nbsp;
 				td= art.getHeader("Date")
 				td= join(art.peerAddress, ", ")
-				td= from
+				td
+					- auto from = art.getHeader("From");
+					- auto idx = countUntil(from, '<');
+					- if (idx >= 0 && idx+1 < from.length)
+						a(href="mailto:#{from[idx+1 .. $-1]}")= from[0 .. idx]
+					- else
+						|= from
 				td= art.subject
 				td
 					form(action='#{req.rootDir}articles/#{art._id}/#{art.active?"deactivate":"activate"}', method="POST")
