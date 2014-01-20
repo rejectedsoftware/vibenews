@@ -1,4 +1,4 @@
-body {
+﻿body {
 	font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
 	font-size: 10pt;
 	color: white;
@@ -212,7 +212,8 @@ input.checkbox { width: auto; }
 	border-bottom: 1px solid #222;
 	color: white;
 	min-height: 20pt;
-	padding: 2pt 15pt;
+	padding: 5pt 15pt;
+	padding-bottom: 0pt;
 }
 
 .post h2.skeleton {
@@ -249,6 +250,10 @@ input.checkbox { width: auto; }
 
 .post-content pre {
 	margin: 7.5;
+}
+
+.post-content div {
+  max-width: 60em;
 }
 
 .secondary, .secondary a {
