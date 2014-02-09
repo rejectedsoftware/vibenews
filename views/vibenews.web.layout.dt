@@ -24,15 +24,15 @@ block header
 							a(hreF="#{req.rootDir}register") Sign up
 	
 block body
-	nav
-		block vibenews.navigation
-
+	nav#mainNav
 		- if( info.settings.googleSearch )
 			#searchbox
 				form(method="GET", action="http://www.google.com/search")
 					input(type="hidden", name="sitesearch", value="#{info.settings.hostName}")
 					input(type="text", name="q", size="31", maxlength="255")
 					button(type="submit") Google Search
+
+		block vibenews.navigation
 
 	#content
 		block vibenews.body

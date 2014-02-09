@@ -9,8 +9,9 @@ html
 		script(type="text/javascript", src="#{req.rootDir}prettify/prettify.js")
 		
 	body(onload="prettyPrint()")
-		header
-			h1= title
-			block header
+		header#mainHeader
+			div
+				h1#mainTitle= title
+				block header
 		
 		block body

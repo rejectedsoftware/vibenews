@@ -4,7 +4,7 @@
 	color: white;
 	background-color: #333;
 	padding: 0;
-	margin: 15pt;
+	margin: 0;
 }
 
 a { color: white; }
@@ -16,39 +16,49 @@ a { color: white; }
 /* HEADER                                                                     */
 /******************************************************************************/
 
-header {
+#mainHeader {
+	display: table;
+	width: 100%;
+	margin-bottom: 15pt;
 	background-color: #E0D8D0;
 	background-image: -webkit-linear-gradient(top, #fff, #B0A8A0);
 	background-image:    -moz-linear-gradient(top, #fff, #E0D8D0);
 	background-image:     -ms-linear-gradient(top, #fff, #B0A8A0);
 	background-image:      -o-linear-gradient(top, #fff, #B0A8A0);
 	color: black;
-	margin: -15pt;
-	margin-bottom: 15pt;
-	height: 48pt;
 	box-shadow: 0px 0px 20px #000;
 }
 
-header h1 {
-	font-weight: normal;
-	padding: 7.5pt 15pt;
+#mainHeader > div {
+	display: table-row;
 }
 
-header .loginArea {
+#mainHeader h1 {
+	display: table-cell;
+	font-weight: normal;
+	padding: 7.5pt 15pt;
+	padding-bottom: 10pt;
+	margin: 0;
+	vertical-align: top;
+}
+
+#mainHeader .loginArea {
+	/*width: 200pt;
 	position: absolute;
 	width: 200pt;
 	top: 0;
-	right: 15pt;
+	right: 15pt;*/
 	text-align: right;
+	display: table-cell;
+	padding: 0 15pt;
+	width: 180pt;
+
 }
 
-header .loginArea input { width: 100%; }
-
-header a { color: #000; }
-
-header table { width: 100%; }
-
-header td { padding-left: 5pt; }
+#mainHeader a { color: #000; }
+#mainHeader table { width: 100%; }
+#mainHeader td { padding-left: 5pt; }
+#mainHeader .loginArea input { width: 100%; }
 
 /******************************************************************************/
 /* FOOTER                                                                     */
@@ -67,13 +77,15 @@ footer a:hover { color: #fff; }
 /* NAVIGATION                                                                 */
 /******************************************************************************/
 
-nav ul {
+#mainNav { margin: 0 15pt; clear: both; }
+
+#mainNav ul {
 	margin: 0;
 	padding: 0;
 	line-height: 22pt;
 }
 
-nav li {
+#mainNav li {
 	line-height: 15pt;
 	margin: 0;
 	padding: 1pt 7pt;
@@ -84,24 +96,20 @@ nav li {
 	box-shadow: 0px 0px 20px #222;
 }
 
-nav a { text-decoration: none; }
-nav a:hover { text-decoration: underline; }
-nav a:before { content: "◀ ";}
-nav { margin-bottom: 15pt; }
+#mainNav a { text-decoration: none; }
+#mainNav a:hover { text-decoration: underline; }
+#mainNav a:before { content: "◀ ";}
+#mainNav { margin-bottom: 15pt; }
 
-#searchbox {
-	position: absolute;
-	width: 250pt;
-	right: 15pt;
-	top: 63pt;
-}
-
-#searchbox input { width: auto; }
+#searchbox { float: right; text-align: right; }
+#searchbox input { width: 120pt; }
 #searchbox button { width: auto; }
 
 /******************************************************************************/
 /* CONTENTS                                                                   */
 /******************************************************************************/
+
+#content { margin: 0 15pt; clear: both; }
 
 .skeleton h1 {
 	font-weight: normal;
@@ -286,10 +294,11 @@ td form { display: inline-block; }
 
 
 @media (max-width: 580pt) {
-	header { height: auto; padding-bottom: 7.5pt; }
-	header h1 { margin-bottom: 0; }
-	header .loginArea { position: relative; left: 0; width: auto; top: 0; text-align: left; margin: 0 15pt;  }
-	header .loginArea div { display: inline-block; }
+	#mainHeader { display: block; padding-bottom: 7.5pt; }
+	#mainHeader > div { display: block; }
+	#mainHeader h1 { display: block; margin-bottom: 0; }
+	#mainHeader .loginArea { display: block; margin: 0 15pt; text-align: left; width: auto; }
+	#mainHeader .loginArea div { display: inline-block; }
 
 	#searchbox { position: relative; top: 0; left: 0; width: auto; }
 
