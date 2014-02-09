@@ -263,6 +263,7 @@ input.checkbox { width: auto; }
 
 input, textarea {
 	width: 100%;
+	font-size: 10pt;
 }
 
 #message-preview {
@@ -334,6 +335,8 @@ td form { display: inline-block; }
 
 	table .num-topics { display: none; }
 	table .num-posts { display: none; }
+
+	#content col.caption { width: 30%; }
 }
 
 @media (max-width: 400pt) {
