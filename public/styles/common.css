@@ -250,10 +250,11 @@ input.checkbox { width: auto; }
 
 .post-content pre {
 	margin: 7.5;
+	overflow: auto;
 }
 
 .post-content div {
-  max-width: 60em;
+ 	max-width: 60em;
 }
 
 .secondary, .secondary a {
@@ -284,6 +285,13 @@ td form { display: inline-block; }
 
 
 @media (max-width: 580pt) {
+	header { height: auto; padding-bottom: 7.5pt; }
+	header h1 { margin-bottom: 0; }
+	header .loginArea { position: relative; left: 0; width: auto; top: 0; text-align: left; margin: 0 15pt;  }
+	header .loginArea div { display: inline-block; }
+
+	#searchbox { position: relative; top: 0; left: 0; width: auto; }
+
 	.post-body { display: block; }
 	.post-info, .post-content { display: block; }
 	.post-content { margin: 0; width: auto; }
@@ -330,6 +338,8 @@ td form { display: inline-block; }
 
 @media (max-width: 400pt) {
 	#searchbox { display: none; }
+
+	header h1 { font-size: 16pt; }
 
 	.post-info .avatar img {
 		max-width: 64px;
