@@ -459,6 +459,7 @@ class NewsInterface {
 		if( isTaskLocalSet("authUserId") ) uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
 
 		try m_ctrl.postArticle(art, uid);
+		catch (NntpStatusException e) throw e;
 		catch (Exception e) {
 			res.status = NntpStatus.ArticleRejected;
 			res.statusText = "Message deemed abusive.";
