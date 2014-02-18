@@ -14,14 +14,14 @@ block header
 				table
 					tr
 						td
-							input(name="name", type="email", placeholder="email")
+							input(name="name", type="email", placeholder="email", tabindex="0")
 						td
 							button(type="submit") Log in
 					tr
 						td
-							input(name="password", type="password", placeholder="password")
+							input(name="password", type="password", placeholder="password", tabindex="1")
 						td
-							a(hreF="#{req.rootDir}register") Sign up
+							a(hreF="#{req.rootDir}register", tabindex="2") Sign up
 	
 block body
 	nav#mainNav
