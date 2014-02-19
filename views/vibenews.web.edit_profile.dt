@@ -21,15 +21,15 @@ block vibenews.body
 			tr
 				td Display name
 				td
-					input(type="text", name="full_name", value=req.form["full_name"])
+					input(type="text", name="full_name", value=req.form["full_name"], tabindex="0")
 			tr
 				td E-mail address
 				td
-					input(type="email", name="email", value=req.form["email"])
+					input(type="email", name="email", value=req.form["email"], tabindex="1")
 			tr
 				td
 				td
-					button(type="submit") Apply
+					button(type="submit", tabindex="2") Apply
 
 
 	h2 Change password
@@ -40,15 +40,15 @@ block vibenews.body
 			tr
 				td New password
 				td
-					input(type="password", name="password", value="")
+					input(type="password", name="password", value="", , tabindex="4")
 			tr
 				td Confirm password
 				td
-					input(type="password", name="password_confirmation", value="")
+					input(type="password", name="password_confirmation", value="", , tabindex="5")
 			tr
 				td
 				td
-					button(type="submit") Apply
+					button(type="submit", , tabindex="6") Apply
 
 
 	h2 E-mail notifications
@@ -62,14 +62,14 @@ block vibenews.body
 			- foreach( grp; info.groups )
 				tr
 					td
-						input(id="#{grp.name}_notify", type="checkbox", name="#{grp.name}_notify")
+						input(id="#{grp.name}_notify", type="checkbox", name="#{grp.name}_notify", , tabindex="7")
 					td
-						label(for="#{grp.name}_notify")= grp.caption
+						label(for="#{grp.name}_notify", , tabindex="8")= grp.caption
 
 			tr
 				td
 				td
-					button(type="submit") Apply
+					button(type="submit", , tabindex="9") Apply
 
 
 	h2 Notification frequency
