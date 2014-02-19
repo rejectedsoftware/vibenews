@@ -23,9 +23,9 @@ block vibenews.body
 	form(action='post', method="POST")
 		input(type="hidden", name="group", value="#{info.group.name}")
 		- if( auto prt = "reply-to" in req.query )
-			input(type="hidden", name="reply-to", value=*prt, tabindex="0")
+			input(type="hidden", name="reply-to", value=*prt)
 		- else if( auto prt = "reply-to" in req.form )
-			input(type="hidden", name="reply-to", value=*prt, tabindex="0")
+			input(type="hidden", name="reply-to", value=*prt)
 		table
 			col.caption
 			- if( !info.loggedIn )
@@ -33,17 +33,17 @@ block vibenews.body
 					td
 						label(for="name") Name
 					td
-						input#name(type="text", name="name", value="#{info.name}", tabindex="1")
+						input#name(type="text", name="name", value="#{info.name}")
 				tr
 					td
 						label(for="email") Email
 					td
-						input#email(type="email", name="email", value="#{info.email}", , tabindex="2")
+						input#email(type="email", name="email", value="#{info.email}")
 			tr
 				td
 					label(for="subject") Subject
 				td
-					input#subject(type="text", name="subject", value="#{info.subject}", , tabindex="3")
+					input#subject(type="text", name="subject", value="#{info.subject}")
 			tr
 				td
 					label(for="message") Message
@@ -53,11 +53,11 @@ block vibenews.body
 					p(style="color: gray;") In addition to vanilla Markdown, line breaks will appear in the output and triple back-ticks (```) can be used to embed a block of code.
 				td
 					#message-area
-						textarea#message(name="message", rows="18", tabindex="4")= info.message
+						textarea#message(name="message", rows="18")= info.message
 						#message-preview(style="display: none;")
-					input#preview-checkbox(type="checkbox", onchange="previewToggle()", style="width: auto;", tabindex="5")
+					input#preview-checkbox(type="checkbox", onchange="previewToggle()", style="width: auto;")
 					label(for="preview-checkbox") Preview
 			tr
 				td
 				td
-					button(type="submit", tabindex="6") Post
+					button(type="submit") Post
