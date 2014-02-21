@@ -1,0 +1,41 @@
+extends layout
+
+block header
+	.loginArea
+		- if( req.session && req.session.isKeySet("userEmail") )
+			div
+				|Logged in as #{req.session["userFullName"]}
+			div
+				a(href="#{req.rootDir}profile") Edit profile
+				a(href="#{req.rootDir}logout") Log out
+		- else
+			form(action="#{req.rootDir}login", method="POST")
+				input(name="redirect", type="hidden", value="#{req.requestURL}")
+				table
+					tr
+						td
+							input(name="name", type="email", placeholder="email", tabindex="1")
+						td
+							button(type="submit", tabindex="3") Log in
+					tr
+						td
+							input(name="password", type="password", placeholder="password", tabindex="2")
+						td
+							a(hreF="#{req.rootDir}register", tabindex="4") Sign up
+	
+block body
+	nav#mainNav
+		- if( info.settings.googleSearch )
+			#searchbox
+				form(method="GET", action="http://www.google.com/search")
+					input(type="hidden", name="sitesearch", value="#{info.settings.hostName}")
+					input(type="text", name="q", size="31", maxlength="255")
+					button(type="submit") Google Search
+
+		block vibenews.navigation
+
+	#content
+		block vibenews.body
+
+	footer
+		p This forum is powered by <a href="https://github.com/rejectedsoftware/vibenews">VibeNews</a> and can also be accessed using a news reader pointed to <a href="nntp://#{info.settings.hostName}/">nntp://#{info.settings.hostName}/</a>.
