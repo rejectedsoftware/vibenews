@@ -44,6 +44,19 @@ pre {
   background-color: #222;
   border: 1px solid black;
   white-space: pre-wrap;
+  tab-size: 4;
+}
+
+code {
+	border: 1px solid #e6e6e6;
+	background-color: #fdfdfd;
+	padding: 0 2pt;
+}
+
+pre code {
+	border: none;
+	background-color: inherit;
+	padding: 0;
 }
 
 /* Specify class=linenums on a pre to get line numbering */
