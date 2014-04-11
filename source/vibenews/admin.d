@@ -1,7 +1,7 @@
 /**
 	(module summary)
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2014 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -37,13 +37,24 @@ class AdminInterface {
 	this(Controller ctrl)
 	{
 		m_ctrl = ctrl;
-		auto vnsettings = ctrl.settings;
+	}
+
+	void listen()
+	{
+		auto vnsettings = m_ctrl.settings;
 
 		auto settings = new HTTPServerSettings;
 		settings.port = vnsettings.adminPort;
 		settings.bindAddresses = ["127.0.0.1"];
 
 		auto router = new URLRouter;
+		register(router);
+
+		listenHTTP(settings, router);
+	}
+
+	void register(URLRouter router)
+	{
 		router.get("/", &showAdminPanel);
 		router.post("/categories/create", &createGroupCategory);
 		router.get("/categories/:category/show", &showGroupCategory);
@@ -66,8 +77,6 @@ class AdminInterface {
 		router.post("/users/:user/update", &updateUser);
 		router.post("/users/:user/delete", &deleteUser);
 		router.get("*", serveStaticFiles("public"));
-
-		listenHTTP(settings, router);
 	}
 
 	void showAdminPanel(HTTPServerRequest req, HTTPServerResponse res)

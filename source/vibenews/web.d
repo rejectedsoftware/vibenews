@@ -1,7 +1,7 @@
 /**
 	(module summary)
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2014 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -51,16 +51,24 @@ class WebInterface {
 	{
 		m_ctrl = ctrl;
 		m_settings = ctrl.settings;
+		m_userMan = new UserManWebInterface(ctrl.userManController);
+	}
 
+	void listen()
+	{
 		auto settings = new HTTPServerSettings;
 		settings.port = m_settings.webPort;
 		settings.bindAddresses = ["127.0.0.1"];
 		settings.sessionStore = new MemorySessionStore;
 
 		auto router = new URLRouter;
+		register(router);
 
-		m_userMan = new UserManWebInterface(ctrl.userManController);
+		listenHTTP(settings, router);
+	}
 
+	void register(URLRouter router)
+	{
 		router.get("/", &showIndex);
 		router.get("/profile", m_userMan.auth(&showEditProfile));
 		router.post("/profile", m_userMan.auth(&updateProfile));
@@ -74,8 +82,6 @@ class WebInterface {
 		router.get("*", serveStaticFiles("public"));
 
 		m_userMan.register(router);
-
-		listenHTTP(settings, router);
 	}
 
 	void showIndex(HTTPServerRequest req, HTTPServerResponse res)
