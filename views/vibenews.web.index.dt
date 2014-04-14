@@ -26,7 +26,7 @@ block vibenews.body
 					tr
 						td.forum
 							.primary
-								a.title(href="#{req.rootDir}groups/#{grp.name}/")= grp.caption
+								a.title(href="groups/#{grp.name}/")= grp.caption
 							.secondary
 								|= grp.description
 						td.num-topics= grp.numberOfTopics
@@ -34,7 +34,7 @@ block vibenews.body
 						td.last-post
 							- if( grp.lastPostDate.length )
 								.primary
-									a(href="#{req.rootDir}groups/#{grp.name}/post/#{grp.lastPostNumber}")
+									a(href="groups/#{grp.name}/post/#{grp.lastPostNumber}")
 										| by #{grp.lastPoster.name}
 								.secondary
 									|= grp.lastPostDate

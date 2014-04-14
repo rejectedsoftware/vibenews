@@ -79,7 +79,10 @@ class WebInterface {
 		router.get("/groups/:group/thread/:thread/", &showThread);
 		router.get("/groups/:group/post/:post", &showPost);
 		router.get("/groups/:group/thread/:thread/:post", &redirectShowPost); // deprecated
-		router.get("*", serveStaticFiles("public"));
+
+		auto settings = new HTTPFileServerSettings;
+		settings.serverPathPrefix = router.prefix;
+		router.get("*", serveStaticFiles("public", settings));
 
 		m_userMan.register(router);
 	}
@@ -157,7 +160,7 @@ class WebInterface {
 			return;
 		}
 
-		res.redirect("/profile");
+		res.redirect(req.path);
 	}
 
 	void showGroup(HTTPServerRequest req, HTTPServerResponse res)
@@ -216,7 +219,7 @@ class WebInterface {
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
 		try info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, threadnum), m_ctrl, info.pageSize, grp.name);
 		catch( Exception e ){
-			redirectToThreadPost(res, grp.name, threadnum);
+			redirectToThreadPost(res, (Path(req.path) ~ "../../../").toString(), grp.name, threadnum);
 			return;
 		}
 		info.group = GroupInfo(grp, m_ctrl);
@@ -269,7 +272,7 @@ class WebInterface {
 
 	void redirectShowPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		res.redirect("/groups/"~req.params["group"]~"/post/"~req.params["post"], HTTPStatus.movedPermanently);
+		res.redirect((Path(req.path)~"../../post/"~req.params["post"]).toString(), HTTPStatus.movedPermanently);
 	}
 
 	void showPostArticle(HTTPServerRequest req, HTTPServerResponse res)
@@ -403,10 +406,10 @@ class WebInterface {
 		req.session["lastUsedName"] = name.idup;
 		req.session["lastUsedEmail"] = email.idup;
 
-		redirectToThreadPost(res, grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
+		redirectToThreadPost(res, Path(req.path).parentPath.toString(), grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
 	}
 
-	void redirectToThreadPost(HTTPServerResponse res, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)
+	void redirectToThreadPost(HTTPServerResponse res, string groups_path, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)
 	{
 		if( thread_id == BsonObjectID() ){
 			auto refs = m_ctrl.getArticleGroupRefs(groupname, article_number);
@@ -415,7 +418,7 @@ class WebInterface {
 		auto thr = m_ctrl.getThread(thread_id);
 		auto first_art_refs = m_ctrl.getArticleGroupRefs(thr.firstArticleId);
 		auto first_art_num = first_art_refs[escapeGroup(groupname)].articleNumber;
-		auto url = "/groups/"~groupname~"/thread/"~first_art_num.to!string()~"/";
+		auto url = groups_path~groupname~"/thread/"~first_art_num.to!string()~"/";
 		if( article_number != first_art_num ){
 			auto index = m_ctrl.getThreadArticleIndex(thr._id, article_number, groupname);
 			auto page = index / m_postsPerPage + 1;
