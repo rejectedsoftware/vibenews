@@ -36,6 +36,10 @@ class NewsInterface {
 	private {
 		Controller m_ctrl;
 		VibeNewsSettings m_settings;
+
+		static TaskLocal!string s_group;
+		static TaskLocal!string s_authUser;
+		static TaskLocal!BsonObjectID s_authUserID;
 	}
 
 	this(Controller controller)
@@ -153,14 +157,14 @@ class NewsInterface {
 		} else {
 			auto anum = to!long(req.parameters[0]);
 
-			if( !isTaskLocalSet("group") ){
+			if (!s_group.length) {
 				res.status = NntpStatus.NoGroupSelected;
 				res.statusText = "Not in a newsgroup";
 				res.writeVoidBody();
 				return;
 			}
 
-			auto groupname = getTaskLocal!string("group");
+			string groupname = s_group;
 
 			if( !testAuth(groupname, false, res) )
 				return;
@@ -237,18 +241,18 @@ class NewsInterface {
 				res.writeVoidBody();
 				break;
 			case "user":
-				setTaskLocal("authUser", req.parameters[1]);
+				s_authUser = req.parameters[1];
 				res.status = NntpStatus.MoreAuthInfoRequired;
 				res.statusText = "specify password";
 				res.writeVoidBody();
 				break;
 			case "pass":
-				req.enforce(isTaskLocalSet("authUser"), NntpStatus.AuthRejected, "specify user first");
+				req.enforce(s_authUser.length > 0, NntpStatus.AuthRejected, "specify user first");
 				auto password = req.parameters[1];
 				try {
-					auto usr = m_ctrl.getUserByEmail(getTaskLocal!string("authUser"));
+					auto usr = m_ctrl.getUserByEmail(s_authUser);
 					enforce(testSimplePasswordHash(usr.auth.passwordHash, password));
-					setTaskLocal("authUserId", usr._id.toString());
+					s_authUserID = usr._id;
 					res.status = NntpStatus.AuthAccepted;
 					res.statusText = "authentication successful";
 					res.writeVoidBody();
@@ -290,7 +294,7 @@ class NewsInterface {
 		if( !testAuth(groupname, false, res) )
 			return;
 
-		setTaskLocal("group", groupname);
+		s_group = groupname;
 
 		res.status = NntpStatus.GroupSelected;
 		res.statusText = to!string(grp.articleCount)~" "~to!string(grp.minArticleNumber)~" "~to!string(grp.maxArticleNumber)~" "~groupname;
@@ -366,8 +370,8 @@ class NewsInterface {
 	void over(NntpServerRequest req, NntpServerResponse res)
 	{
 		req.enforceNParams(1, "(X)OVER [range]");
-		req.enforce(isTaskLocalSet("group"), NntpStatus.NoGroupSelected, "No newsgroup selected");
-		auto grpname = getTaskLocal!string("group");
+		req.enforce(s_group.length > 0, NntpStatus.NoGroupSelected, "No newsgroup selected");
+		string grpname = s_group;
 		auto idx = req.parameters[0].countUntil('-');
 		string fromstr, tostr;
 		if( idx > 0 ){
@@ -458,10 +462,7 @@ class NewsInterface {
 		res.restart();
 		art.peerAddress = [req.peerAddress];
 
-		BsonObjectID uid;
-		if( isTaskLocalSet("authUserId") ) uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
-
-		try m_ctrl.postArticle(art, uid);
+		try m_ctrl.postArticle(art, s_authUserID);
 		catch (NntpStatusException e) throw e;
 		catch (Exception e) {
 			res.status = NntpStatus.ArticleRejected;
@@ -551,10 +552,8 @@ class NewsInterface {
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
 			return true;
 
-		BsonObjectID uid;
-		try uid = BsonObjectID.fromString(getTaskLocal!string("authUserId"));
-		catch(Exception){
-			if( res ){
+		if (s_authUserID == BsonObjectID.init) {
+			if (res) {
 				res.status = NntpStatus.AuthRequired;
 				res.statusText = "auth info required";
 				res.writeVoidBody();
@@ -563,12 +562,12 @@ class NewsInterface {
 		}
 
 		try {
-			if( require_write )
-				enforce(m_ctrl.isAuthorizedForWritingGroup(uid, grp.name));
-			else enforce(m_ctrl.isAuthorizedForReadingGroup(uid, grp.name));
+			if (require_write)
+				enforce(m_ctrl.isAuthorizedForWritingGroup(s_authUserID, grp.name));
+			else enforce(m_ctrl.isAuthorizedForReadingGroup(s_authUserID, grp.name));
 			return true;
-		} catch(Exception){
-			if( res ){
+		} catch (Exception) {
+			if (res) {
 				res.status = NntpStatus.AccessFailure;
 				res.statusText = "auth info not valid for group";
 				res.writeVoidBody();

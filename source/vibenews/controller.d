@@ -117,7 +117,7 @@ class Controller {
 		m_threads.ensureIndex(["firstArticleId": 1]);
 		m_threads.ensureIndex(["lastArticleId": -1]);
 		m_articles.ensureIndex(["id": 1], IndexFlags.Unique);
-		foreach( grp; m_groups.find(Bson.EmptyObject, ["name": 1]) )
+		foreach (grp; m_groups.find(Bson.emptyObject, ["name": 1]))
 			createGroupIndexes(grp.name.get!string());
 	}
 
@@ -710,7 +710,7 @@ class Controller {
 
 	void repairGroupNumbers()
 	{
-		foreach( grp; m_groups.find(Bson.EmptyObject) ){
+		foreach (grp; m_groups.find(Bson.emptyObject)) {
 			auto grpname = escapeGroup(grp.name.get!string);
 			auto numbername = "groups."~grpname~".articleNumber";
 
@@ -730,7 +730,7 @@ class Controller {
 
 	void repairThreads()
 	{
-		m_threads.remove(Bson.EmptyObject);
+		m_threads.remove(Bson.emptyObject);
 
 		foreach (ba; m_articles.find(["active": Bson(true)]).sort(["_id": Bson(1)])) {
 			Article a;

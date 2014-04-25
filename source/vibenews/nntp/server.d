@@ -32,9 +32,11 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 
 		void acceptSsl()
 		{
-			auto ctx = new SSLContext(settings.sslCertFile, settings.sslKeyFile);
+			auto ctx = createSSLContext(SSLContextKind.server);
+			ctx.useCertificateChainFile(settings.sslCertFile);
+			ctx.usePrivateKeyFile(settings.sslKeyFile);
 			logTrace("accepting SSL");
-			stream = new SSLStream(stream, ctx, SSLStreamState.accepting);
+			stream = createSSLStream(stream, ctx, SSLStreamState.accepting);
 			logTrace("accepted SSL");
 			tls_active = true;
 		}
