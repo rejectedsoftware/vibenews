@@ -162,7 +162,15 @@ a.title {
 	background-color: #ddd;
 }
 
-#content table.overview .avatar { float: left; margin-right: 5pt; }
+#content table.overview .avatar {
+	float: left;
+	margin-right: 5pt;
+	opacity: 0.7;
+}
+#content table.overview .avatar img {
+	border: 1px solid #888;
+	vertical-align: middle;
+}
 
 blockquote {
 	display: block;
