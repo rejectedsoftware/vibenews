@@ -1,0 +1,11 @@
+- void mixinAvatarImage(string email, int size = 120)
+	- import std.digest.md;
+	.avatar
+		- auto hash = toLower(hexDigest!MD5(toLower(email)).idup);
+		a(href="http://www.gravatar.com/#{hash}")
+			img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&amp;s=#{size}", width=size, height=size, alt="avatar")
+
+- string profileLink(string email)
+	- import std.digest.md;
+	- auto hash = toLower(hexDigest!MD5(toLower(email)).idup);
+	- return "http://www.gravatar.com/"~hash;
