@@ -1,7 +1,7 @@
 /**
 	(module summary)
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2014 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -22,15 +22,15 @@ import std.exception;
 import std.string;
 
 
-void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, NntpServerResponse) command_handler)
+void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NNTPServerResponse) command_handler)
 {
-	void handleNntpConnection(TCPConnection conn)
+	void handleNNTPConnection(TCPConnection conn)
 	{
 		Stream stream = conn;
 
 		bool tls_active = false;
 
-		assert(!settings.requireSsl, "requreSsl option is not yet supported.");
+		assert(!settings.requireSSL, "requreSsl option is not yet supported.");
 
 		void acceptSsl()
 		{
@@ -53,13 +53,13 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 		logDebug("welcomed");
 
 		while(!stream.empty){
-			auto res = new NntpServerResponse(stream);
+			auto res = new NNTPServerResponse(stream);
 			logTrace("waiting for request");
 			auto ln = cast(string)stream.readLine();
 			logDebug("REQUEST: %s", !ln.startsWith("AUTHINFO") ? ln : "AUTHINFO (...)");
 			auto params = ln.spaceSplit();
 			if( params.length < 1 ){
-				res.status = NntpStatus.BadCommand;
+				res.status = NNTPStatus.badCommand;
 				res.statusText = "Expected command";
 				res.writeVoidBody();
 				res.finalize();
@@ -69,7 +69,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			params = params[1 .. $];
 
 			if( cmd == "quit" ){
-				res.status = NntpStatus.ClosingConnection;
+				res.status = NNTPStatus.closingConnection;
 				res.statusText = "Bye bye!";
 				res.writeVoidBody();
 				res.finalize();
@@ -80,7 +80,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 
 			if( cmd == "starttls" ){
 				if (tls_active) {
-					res.status = NntpStatus.CommandUnavailable;
+					res.status = NNTPStatus.commandUnavailable;
 					res.statusText = "TLS already active.";
 					res.writeVoidBody();
 					res.finalize();
@@ -88,14 +88,14 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 				}
 
 				if (!settings.sslContext && !settings._enableSsl) {
-					res.status = NntpStatus.TLSFailed;
+					res.status = NNTPStatus.tlsFailed;
 					res.statusText = "TLS is not configured for this server.";
 					res.writeVoidBody();
 					res.finalize();
 					continue;
 				}
 
-				res.status = NntpStatus.ContinueWithTLS;
+				res.status = NNTPStatus.continueWithTLS;
 				res.statusText = "Continue with TLS negotiation";
 				res.writeVoidBody();
 				res.finalize();
@@ -103,20 +103,20 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 				acceptSsl();
 			}
 
-			auto req = new NntpServerRequest(stream);
+			auto req = new NNTPServerRequest(stream);
 			req.command = cmd;
 			req.parameters = params;
 			req.peerAddress = conn.peerAddress;
 			try {
 				command_handler(req, res);
-			} catch( NntpStatusException e ){
+			} catch( NNTPStatusException e ){
 				res.status = e.status;
 				res.statusText = e.statusText;
 				res.writeVoidBody();
 			} catch( Exception e ){
 				logWarn("NNTP request exception: %s", e.toString());
 				if( !res.m_headerWritten ){
-					res.status = NntpStatus.InternalError;
+					res.status = NNTPStatus.internalError;
 					res.statusText = "Internal error: " ~ e.msg;
 					res.writeVoidBody();
 				}
@@ -129,32 +129,39 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 
 	foreach( addr; settings.bindAddresses ){
 		try {
-			listenTCP(settings.port, &handleNntpConnection, addr);
+			listenTCP(settings.port, &handleNNTPConnection, addr);
 			logInfo("Listening for NNTP%s requests on %s:%s", settings.sslContext || settings._enableSsl ? "S" : "", addr, settings.port);
 		} catch( Exception e ) logWarn("Failed to listen on %s:%s", addr, settings.port);
 	}
 }
 
-class NntpServerSettings {
+deprecated alias listenNNTP = listenNNTP;
+
+
+class NNTPServerSettings {
 	ushort port = 119; // SSL port is 563
 	string[] bindAddresses = ["0.0.0.0"];
 	string host = "localhost"; // host name
 	SSLContext sslContext;
-	bool requireSsl = false; // require STARTTLS on unencrypted connections
+	bool requireSSL = false; // require STARTTLS on unencrypted connections
 
-	deprecated @property ref bool enableSsl() { return _enableSsl; }
-	deprecated @property ref string sslCertFile() { return _sslCertFile; }
-	deprecated @property ref string sslKeyFile() { return _sslKeyFile; }
+	deprecated @property ref inout(bool) enableSsl() inout { return _enableSsl; }
+	deprecated @property ref inout(string) sslCertFile() inout { return _sslCertFile; }
+	deprecated @property ref inout(string) sslKeyFile() inout { return _sslKeyFile; }
+	deprecated @property ref inout(bool) requireSsl() inout { return requireSSL; }
 
 	private bool _enableSsl = false;
 	private string _sslCertFile;
 	private string _sslKeyFile;
 }
 
-class NntpServerRequest {
+deprecated alias NntpServerSettings = NNTPServerSettings;
+
+
+class NNTPServerRequest {
 	private {
 		InputStream m_stream;
-		NntpBodyReader m_reader;
+		NNTPBodyReader m_reader;
 	}
 
 	string command;
@@ -167,30 +174,33 @@ class NntpServerRequest {
 	}
 
 	void enforceNParams(size_t n, string syntax = null) {
-		enforce(parameters.length == n, NntpStatus.CommandSyntaxError, syntax ? "Expected "~syntax : "Wrong number of arguments.");
+		enforce(parameters.length == n, NNTPStatus.commandSyntaxError, syntax ? "Expected "~syntax : "Wrong number of arguments.");
 	}
 
 	void enforceNParams(size_t nmin, size_t nmax, string syntax = null) {
 		enforce(parameters.length >= nmin && parameters.length <= nmax,
-			NntpStatus.CommandSyntaxError, syntax ? "Expected "~syntax : "Wrong number of arguments.");
+			NNTPStatus.commandSyntaxError, syntax ? "Expected "~syntax : "Wrong number of arguments.");
 	}
 
-	void enforce(bool cond, NntpStatus status, string message)
+	void enforce(bool cond, NNTPStatus status, string message)
 	{
 		.enforce(cond, message);
 	}
 
 	@property InputStream bodyReader()
 	{
-		if( !m_reader ) m_reader = new NntpBodyReader(m_stream);
+		if( !m_reader ) m_reader = new NNTPBodyReader(m_stream);
 		return m_reader;
 	}
 }
 
-class NntpServerResponse {
+deprecated alias NntpServerRequest = NNTPServerRequest;
+
+
+class NNTPServerResponse {
 	private {
 		OutputStream m_stream;
-		NntpBodyWriter m_bodyWriter;
+		NNTPBodyWriter m_bodyWriter;
 		bool m_headerWritten = false;
 		bool m_bodyWritten = false;
 	}
@@ -219,7 +229,7 @@ class NntpServerResponse {
 	@property OutputStream bodyWriter()
 	{
 		if( !m_headerWritten ) writeHeader();
-		if( !m_bodyWriter ) m_bodyWriter = new NntpBodyWriter(m_stream);
+		if( !m_bodyWriter ) m_bodyWriter = new NNTPBodyWriter(m_stream);
 		return m_bodyWriter;
 	}
 
@@ -228,7 +238,7 @@ class NntpServerResponse {
 		assert(!m_bodyWritten);
 		assert(!m_headerWritten);
 		m_headerWritten = true;
-		//if( !statusText.length ) statusText = getNntpStatusString(status);
+		//if( !statusText.length ) statusText = getNNTPStatusString(status);
 		m_stream.write(to!string(status) ~ " " ~ statusText ~ "\r\n");
 		logDebug("%s %s", status, statusText);
 	}
@@ -241,6 +251,8 @@ class NntpServerResponse {
 		}
 	}
 }
+
+deprecated alias NntpServerResponse = NNTPServerResponse;
 
 
 private string[] spaceSplit(string str)

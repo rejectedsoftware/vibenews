@@ -1,7 +1,7 @@
 /**
 	(module summary)
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2014 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -13,8 +13,7 @@ import vibe.stream.operations;
 import std.algorithm;
 import std.exception;
 
-
-class NntpBodyReader : InputStream {
+class NNTPBodyReader : InputStream {
 	private {
 		InputStream m_stream;
 		bool m_eof = false;
@@ -64,7 +63,10 @@ class NntpBodyReader : InputStream {
 	}
 }
 
-class NntpBodyWriter : OutputStream {
+deprecated alias NntpBodyReader = NNTPBodyReader;
+
+
+class NNTPBodyWriter : OutputStream {
 	private {
 		OutputStream m_stream;
 		bool m_finalized = false;
@@ -157,3 +159,5 @@ class NntpBodyWriter : OutputStream {
 		writeDefault(stream, nbytes);
 	}
 }
+
+deprecated alias NntpBodyWriter = NNTPBodyReader;

@@ -51,28 +51,28 @@ class NewsInterface {
 
 	void listen()
 	{
-		auto nntpsettings = new NntpServerSettings;
-		nntpsettings.requireSsl = m_settings.requireSsl;
+		auto nntpsettings = new NNTPServerSettings;
+		nntpsettings.requireSSL = m_settings.requireSSL;
 		nntpsettings.host = m_settings.hostName;
 		nntpsettings.port = m_settings.nntpPort;
-		listenNntp(nntpsettings, &handleCommand);
+		listenNNTP(nntpsettings, &handleCommand);
 
 		if (m_settings.sslCertFile.length || m_settings.sslKeyFile.length) {
-			auto nntpsettingsssl = new NntpServerSettings;
+			auto nntpsettingsssl = new NNTPServerSettings;
 			nntpsettingsssl.host = m_settings.hostName;
-			nntpsettingsssl.port = m_settings.nntpSslPort;
+			nntpsettingsssl.port = m_settings.nntpSSLPort;
 			nntpsettingsssl.sslContext = createSSLContext(SSLContextKind.server);
 			nntpsettingsssl.sslContext.useCertificateChainFile(m_settings.sslCertFile);
 			nntpsettingsssl.sslContext.usePrivateKeyFile(m_settings.sslKeyFile);
-			listenNntp(nntpsettingsssl, &handleCommand);
+			listenNNTP(nntpsettingsssl, &handleCommand);
 		}
 	}
 
-	void handleCommand(NntpServerRequest req, NntpServerResponse res)
+	void handleCommand(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		switch( req.command ){
 			default:
-				res.status = NntpStatus.BadCommand;
+				res.status = NNTPStatus.badCommand;
 				res.statusText = "Unsupported command: "~req.command;
 				res.writeVoidBody();
 				break;
@@ -98,7 +98,7 @@ class NewsInterface {
 		}
 	}
 
-	DateTime parseDateParams(string[] params, NntpServerRequest req)
+	DateTime parseDateParams(string[] params, NNTPServerRequest req)
 	{
 		int extendYear(int two_digit_year)
 		{
@@ -107,13 +107,13 @@ class NewsInterface {
 		}
 
 		req.enforce(params.length == 2 || params[2] == "GMT",
-			NntpStatus.CommandSyntaxError, "Time zone must be GMT");
+			NNTPStatus.commandSyntaxError, "Time zone must be GMT");
 
 		auto dstr = params[0];
 		auto tstr = params[1];
 
 		req.enforce(dstr.length == 6 || dstr.length == 8,
-			NntpStatus.CommandSyntaxError, "YYMMDD or YYYYMMDD");
+			NNTPStatus.commandSyntaxError, "YYMMDD or YYYYMMDD");
 
 		bool fullyear = dstr.length == 8;
 		dstr ~= "11"; // just to avoid array out-of-bounds
@@ -126,7 +126,7 @@ class NewsInterface {
 		return DateTime(year, month, day, hour, minute, second);
 	}
 
-	void article(NntpServerRequest req, NntpServerResponse res)
+	void article(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(1);
 
@@ -134,7 +134,7 @@ class NewsInterface {
 		if( req.parameters[0].startsWith("<") ){
 			try art = m_ctrl.getArticle(req.parameters[0]);
 			catch( Exception e ){
-				res.status = NntpStatus.BadArticleId;
+				res.status = NNTPStatus.badArticleId;
 				res.statusText = "Bad article id";
 				res.writeVoidBody();
 				return;
@@ -148,7 +148,7 @@ class NewsInterface {
 				}
 			}
 			if( !auth ){
-				res.status = NntpStatus.AccessFailure;
+				res.status = NNTPStatus.accessFailure;
 				res.statusText = "Not authorized to access this article";
 				res.writeVoidBody();
 				return;
@@ -159,7 +159,7 @@ class NewsInterface {
 			auto anum = to!long(req.parameters[0]);
 
 			if (!s_group.length) {
-				res.status = NntpStatus.NoGroupSelected;
+				res.status = NNTPStatus.noGroupSelected;
 				res.statusText = "Not in a newsgroup";
 				res.writeVoidBody();
 				return;
@@ -172,7 +172,7 @@ class NewsInterface {
 
 			try art = m_ctrl.getArticle(groupname, anum);
 			catch( Exception e ){
-				res.status = NntpStatus.BadArticleNumber;
+				res.status = NNTPStatus.badArticleNumber;
 				res.statusText = "Bad article number";
 				res.writeVoidBody();
 				return;
@@ -184,15 +184,15 @@ class NewsInterface {
 		switch(req.command){
 			default: assert(false);
 			case "article":
-				res.status = NntpStatus.Article;
+				res.status = NNTPStatus.article;
 				res.statusText ~= "head and body follow";
 				break;
 			case "body":
-				res.status = NntpStatus.Body;
+				res.status = NNTPStatus.body_;
 				res.statusText ~= "body follows";
 				break;
 			case "head":
-				res.status = NntpStatus.Head;
+				res.status = NNTPStatus.head;
 				res.statusText ~= "head follows";
 				break;
 		}
@@ -231,34 +231,34 @@ class NewsInterface {
 		}
 	}
 
-	void authinfo(NntpServerRequest req, NntpServerResponse res)
+	void authinfo(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(2, "USER/PASS <value>");
 		
 		switch(req.parameters[0].toLower()){
 			default:
-				res.status = NntpStatus.CommandSyntaxError;
+				res.status = NNTPStatus.commandSyntaxError;
 				res.statusText = "USER/PASS <value>";
 				res.writeVoidBody();
 				break;
 			case "user":
 				s_authUser = req.parameters[1];
-				res.status = NntpStatus.MoreAuthInfoRequired;
+				res.status = NNTPStatus.moreAuthInfoRequired;
 				res.statusText = "specify password";
 				res.writeVoidBody();
 				break;
 			case "pass":
-				req.enforce(s_authUser.length > 0, NntpStatus.AuthRejected, "specify user first");
+				req.enforce(s_authUser.length > 0, NNTPStatus.authRejected, "specify user first");
 				auto password = req.parameters[1];
 				try {
 					auto usr = m_ctrl.getUserByEmail(s_authUser);
 					enforce(testSimplePasswordHash(usr.auth.passwordHash, password));
 					s_authUserID = usr._id;
-					res.status = NntpStatus.AuthAccepted;
+					res.status = NNTPStatus.authAccepted;
 					res.statusText = "authentication successful";
 					res.writeVoidBody();
 				} catch( Exception e ){
-					res.status = NntpStatus.AuthRejected;
+					res.status = NNTPStatus.authRejected;
 					res.statusText = "authentication failed";
 					res.writeVoidBody();
 				}
@@ -266,9 +266,9 @@ class NewsInterface {
 		}
 	}
 
-	void date(NntpServerRequest req, NntpServerResponse res)
+	void date(NNTPServerRequest req, NNTPServerResponse res)
 	{
-		res.status = NntpStatus.TimeFollows;
+		res.status = NNTPStatus.timeFollows;
 		auto tm = Clock.currTime(UTC());
 		auto tmstr = appender!string();
 		formattedWrite(tmstr, "%04d%02d%02d%02d%02d%02d", tm.year, tm.month, tm.day,
@@ -277,7 +277,7 @@ class NewsInterface {
 		res.writeVoidBody();
 	}
 
-	void group(NntpServerRequest req, NntpServerResponse res)
+	void group(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(1, "<groupname>");
 		auto groupname = req.parameters[0];
@@ -286,7 +286,7 @@ class NewsInterface {
 			grp = m_ctrl.getGroupByName(groupname);
 			enforce(grp.active);
 		} catch( Exception e ){
-			res.status = NntpStatus.NoSuchGruop;
+			res.status = NNTPStatus.noSuchGruop;
 			res.statusText = "No such group "~groupname;
 			res.writeVoidBody();
 			return;
@@ -297,7 +297,7 @@ class NewsInterface {
 
 		s_group = groupname;
 
-		res.status = NntpStatus.GroupSelected;
+		res.status = NNTPStatus.groupSelected;
 		res.statusText = to!string(grp.articleCount)~" "~to!string(grp.minArticleNumber)~" "~to!string(grp.maxArticleNumber)~" "~groupname;
 
 		if( req.command == "group" ){
@@ -312,21 +312,21 @@ class NewsInterface {
 		}
 	}
 
-	void help(NntpServerRequest req, NntpServerResponse res)
+	void help(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(0);
-		res.status = NntpStatus.HelpText;
+		res.status = NNTPStatus.helpText;
 		res.statusText = "Legal commands";
 		res.bodyWriter.write("  help\r\n");
 		res.bodyWriter.write("  list Kind\r\n");
 	}
 
-	void list(NntpServerRequest req, NntpServerResponse res)
+	void list(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		if( req.parameters.length == 0 )
 			req.parameters ~= "active";
 
-		res.status = NntpStatus.Groups;
+		res.status = NNTPStatus.groups;
 		switch( toLower(req.parameters[0]) ){
 			default: enforce(false, "Invalid list kind: "~req.parameters[0]); assert(false);
 			case "newsgroups":
@@ -355,23 +355,23 @@ class NewsInterface {
 		}
 	}
 
-	void mode(NntpServerRequest req, NntpServerResponse res)
+	void mode(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(1, "READER");
 		if( toLower(req.parameters[0]) != "reader" ){
-			res.status = NntpStatus.CommandSyntaxError;
+			res.status = NNTPStatus.commandSyntaxError;
 			res.statusText = "Expected MODE READER";
 		} else {
-			res.status = NntpStatus.ServerReady;
+			res.status = NNTPStatus.serverReady;
 			res.statusText = "Posting allowed";
 		}
 		res.writeVoidBody();
 	}
 
-	void over(NntpServerRequest req, NntpServerResponse res)
+	void over(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(1, "(X)OVER [range]");
-		req.enforce(s_group.length > 0, NntpStatus.NoGroupSelected, "No newsgroup selected");
+		req.enforce(s_group.length > 0, NNTPStatus.noGroupSelected, "No newsgroup selected");
 		string grpname = s_group;
 		auto idx = req.parameters[0].countUntil('-');
 		string fromstr, tostr;
@@ -388,7 +388,7 @@ class NewsInterface {
 		long fromnum = to!long(fromstr);
 		long tonum = tostr.length ? to!long(tostr) : grp.maxArticleNumber;
 		
-		res.status = NntpStatus.OverviewFollows;
+		res.status = NNTPStatus.overviewFollows;
 		res.statusText = "Overview information follows (multi-line)";
 		auto dst = res.bodyWriter;
 		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) {
@@ -432,14 +432,14 @@ class NewsInterface {
 		});
 	}
 
-	void post(NntpServerRequest req, NntpServerResponse res)
+	void post(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(0);
 		Article art;
 		art._id = BsonObjectID.generate();
 		art.id = "<"~art._id.toString()~"@"~m_settings.hostName~">";
 
-		res.status = NntpStatus.PostArticle;
+		res.status = NNTPStatus.postArticle;
 		res.statusText = "Ok, recommended ID "~art.id;
 		res.writeVoidBody();
 
@@ -455,7 +455,7 @@ class NewsInterface {
 			auto sink = new NullOutputStream;
 			sink.write(req.bodyReader);
 			res.restart();
-			res.status = NntpStatus.ArticleRejected;
+			res.status = NNTPStatus.articleRejected;
 			res.statusText = "Message too big, please keep below 2.0 MiB";
 			res.writeVoidBody();
 			return;
@@ -464,27 +464,27 @@ class NewsInterface {
 		art.peerAddress = [req.peerAddress];
 
 		try m_ctrl.postArticle(art, s_authUserID);
-		catch (NntpStatusException e) throw e;
+		catch (NNTPStatusException e) throw e;
 		catch (Exception e) {
-			res.status = NntpStatus.ArticleRejected;
+			res.status = NNTPStatus.articleRejected;
 			res.statusText = "Message deemed abusive.";
 			res.writeVoidBody();
 			return;
 		}
 
-		res.status = NntpStatus.ArticlePostedOK;
+		res.status = NNTPStatus.articlePostedOK;
 		res.statusText = "Article posted";
 		res.writeVoidBody();
 	}
 
-	void newnews(NntpServerRequest req, NntpServerResponse res)
+	void newnews(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(3, 4);
 		auto grp = req.parameters[0];
 		auto date = parseDateParams(req.parameters[1 .. $], req);
 
 		if( grp == "*" ){
-			res.status = NntpStatus.NewArticles;
+			res.status = NNTPStatus.newArticles;
 			res.statusText = "New news follows";
 
 			auto writer = res.bodyWriter();
@@ -504,7 +504,7 @@ class NewsInterface {
 			if( !testAuth(grp, false, res) )
 				return;
 
-			res.status = NntpStatus.NewArticles;
+			res.status = NNTPStatus.newArticles;
 			res.statusText = "New news follows";
 
 			auto writer = res.bodyWriter();
@@ -516,12 +516,12 @@ class NewsInterface {
 		}
 	}
 
-	void newgroups(NntpServerRequest req, NntpServerResponse res)
+	void newgroups(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(2, 3);
 		auto date = parseDateParams(req.parameters[0 .. $], req);
 
-		res.status = NntpStatus.NewGroups;
+		res.status = NNTPStatus.newGroups;
 		res.statusText = "New groups follow";
 
 		auto writer = res.bodyWriter();
@@ -538,7 +538,7 @@ class NewsInterface {
 
 	}
 
-	bool testAuth(string grpname, bool require_write, NntpServerResponse res = null)
+	bool testAuth(string grpname, bool require_write, NNTPServerResponse res = null)
 	{
 		try {
 			auto grp = m_ctrl.getGroupByName(grpname);
@@ -548,14 +548,14 @@ class NewsInterface {
 		}
 	}
 
-	bool testAuth(vibenews.controller.Group grp, bool require_write, NntpServerResponse res)
+	bool testAuth(vibenews.controller.Group grp, bool require_write, NNTPServerResponse res)
 	{
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
 			return true;
 
 		if (s_authUserID == BsonObjectID.init) {
 			if (res) {
-				res.status = NntpStatus.AuthRequired;
+				res.status = NNTPStatus.authRequired;
 				res.statusText = "auth info required";
 				res.writeVoidBody();
 			}
@@ -569,7 +569,7 @@ class NewsInterface {
 			return true;
 		} catch (Exception) {
 			if (res) {
-				res.status = NntpStatus.AccessFailure;
+				res.status = NNTPStatus.accessFailure;
 				res.statusText = "auth info not valid for group";
 				res.writeVoidBody();
 			}

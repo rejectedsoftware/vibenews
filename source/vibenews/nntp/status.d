@@ -1,13 +1,56 @@
 /**
 	(module summary)
 
-	Copyright: © 2012 RejectedSoftware e.K.
+	Copyright: © 2012-2014 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
 module vibenews.nntp.status;
 
-enum NntpStatus {
+enum NNTPStatus {
+	helpText = 100,
+	timeFollows = 111,
+	debugOutput = 199,
+	serverReady = 200,
+	serverReadyNoPosting = 201,
+	slaveStatusNoted = 202,
+	closingConnection = 205,
+	groupSelected = 211,
+	groups = 215,
+	article = 220,
+	head = 221,
+	body_ = 222,
+	overviewFollows = 224,
+	newArticles = 230,
+	newGroups = 231,
+	articleTransferredOK = 235,
+	articlePostedOK = 240,
+	authAccepted = 281,
+	transferArticle = 340,
+	postArticle = 340,
+	moreAuthInfoRequired = 381,
+	continueWithTLS = 382,
+	serviceDiscontinued = 400,
+	noSuchGruop = 411,
+	noGroupSelected = 412,
+	noArticleSelected = 420,
+	badArticleNumber = 423,
+	badArticleId = 430,
+	dontSendArticle = 435,
+	transferFailed = 436,
+	articleRejected = 437,
+	postingNotAllowed = 440,
+	postingFailed = 441,
+	authRequired = 480,
+	authRejected = 482,
+	badCommand = 500,
+	commandSyntaxError = 501,
+	accessFailure = 502,
+	commandUnavailable = 502,
+	internalError = 503,
+	tlsFailed = 580,
+
+	// deprecated
 	HelpText = 100,
 	TimeFollows = 111,
 	DebugOutput = 199,
@@ -51,19 +94,24 @@ enum NntpStatus {
 	TLSFailed = 580
 }
 
-class NntpStatusException : Exception {
+deprecated alias NntpStatus = NNTPStatus;
+
+
+class NNTPStatusException : Exception {
 	private {
-		NntpStatus m_status;
+		NNTPStatus m_status;
 		string m_statusText;
 	}
 
-	this(NntpStatus status, string text, Throwable next = null, string file = __FILE__, int line = __LINE__)
+	this(NNTPStatus status, string text, Throwable next = null, string file = __FILE__, int line = __LINE__)
 	{
 		super(text, file, line, next);
 		m_status = status;
 		m_statusText = text;
 	}
 
-	@property NntpStatus status() const { return m_status; }
+	@property NNTPStatus status() const { return m_status; }
 	@property string statusText() const { return m_statusText; }
 }
+
+deprecated alias NntpStatusException = NNTPStatusException;
