@@ -17,13 +17,13 @@ html
 	body(onload="prettyPrint()")
 		header#mainHeader
 			div
-				- static if (is(typeof(info.settings.title)))
-					- if (title.length)
-						h1#mainTitle #{info.settings.title}: #{title}
-					- else
-						h1#mainTitle= info.settings.title
-				- else
-					h1#mainTitle= title
-				block header
+				div
+					div
+						img.logo(src="#{req.rootDir}images/logo.png")
+						- static if (is(typeof(info.settings.title)))
+							h1#mainTitle= info.settings.title
+						- else
+							h1#mainTitle= title
+					block header
 		
 		block body

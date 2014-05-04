@@ -34,7 +34,7 @@ block vibenews.body
 				a(href="nntp://#{info.settings.hostName}/#{info.group.name}/#{info.post.number}") NNTP
 		.post-body
 			.post-info
-				- mixinAvatarImage(info.post.poster.email, 120);
+				- mixinAvatarImage(info.post.poster.email, 120, false);
 
 				.poster-name
 					a(href="mailto:#{obfuscateEmail(info.post.poster.email)}")= info.post.poster.name

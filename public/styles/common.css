@@ -17,29 +17,43 @@ a { color: white; }
 /******************************************************************************/
 
 #mainHeader {
-	display: table;
-	width: 100%;
-	margin-bottom: 15pt;
 	background-color: #E0D8D0;
-	background-image: -webkit-linear-gradient(top, #fff, #B0A8A0);
-	background-image:    -moz-linear-gradient(top, #fff, #E0D8D0);
-	background-image:     -ms-linear-gradient(top, #fff, #B0A8A0);
-	background-image:      -o-linear-gradient(top, #fff, #B0A8A0);
+	background-image: -webkit-linear-gradient(top, #fff, #D8D0C8);
+	background-image:    -moz-linear-gradient(top, #fff, #D8D0C8);
+	background-image:     -ms-linear-gradient(top, #fff, #D8D0C8);
+	background-image:      -o-linear-gradient(top, #fff, #D8D0C8);
 	color: black;
 	box-shadow: 0px 0px 20px #000;
 }
 
 #mainHeader > div {
+	display: table;
+	width: 100%;
+}
+
+#mainHeader > div > div {
 	display: table-row;
 }
 
-#mainHeader h1 {
+#mainHeader > div > div > div {
 	display: table-cell;
-	font-weight: normal;
-	padding: 7.5pt 15pt;
-	padding-bottom: 10pt;
-	margin: 0;
+	vertical-align: middle;
+}
+
+#mainHeader img.logo {
+	display: block;
+	float: left;
 	vertical-align: top;
+	margin: 2.5pt 7.5pt;
+	margin-left: 10pt;
+}
+
+#mainHeader h1 {
+	font-weight: normal;
+	font-size: 18pt;
+	padding: 2.5pt 15pt;
+	padding-top: 7.5pt;
+	margin: 0;
 }
 
 #mainHeader .loginArea {
@@ -77,7 +91,15 @@ footer a:hover { color: #fff; }
 /* NAVIGATION                                                                 */
 /******************************************************************************/
 
-#mainNav { margin: 0 15pt; clear: both; }
+#mainNav {
+	padding: 0 15pt;
+	clear: both;
+	background-color: #B0A8A0;
+	background-image: -webkit-linear-gradient(top, #C8C0B8, #B0A8A0);
+	background-image:    -moz-linear-gradient(top, #C8C0B8, #B0A8A0);
+	background-image:     -ms-linear-gradient(top, #C8C0B8, #B0A8A0);
+	background-image:      -o-linear-gradient(top, #C8C0B8, #B0A8A0);
+}
 
 #mainNav ul {
 	margin: 0;
@@ -91,7 +113,7 @@ footer a:hover { color: #fff; }
 	display: inline-block;
 }
 
-#mainNav li, #mainNav a { color: #ddd; }
+#mainNav li, #mainNav a { color: #000; }
 
 #mainNav a { text-decoration: none; }
 #mainNav a:hover { color: #fff; }
@@ -135,11 +157,12 @@ a.title {
 
 #content th {
 	text-align: left;
+	padding: 5pt 7.5pt;
 	background-color: #666;
-	background-image: -webkit-linear-gradient(top, #666, #333);
-	background-image:    -moz-linear-gradient(top, #666, #333);
-	background-image:     -ms-linear-gradient(top, #666, #333);
-	background-image:      -o-linear-gradient(top, #666, #333);
+	background-image: -webkit-linear-gradient(top, #666, #444);
+	background-image:    -moz-linear-gradient(top, #666, #444);
+	background-image:     -ms-linear-gradient(top, #666, #444);
+	background-image:      -o-linear-gradient(top, #666, #444);
 	border-bottom: 1px solid #222;
 }
 
@@ -154,12 +177,12 @@ a.title {
 	color: black;
 }
 
-#content td.odd {
-	background-color: #eee;
+#content tr.odd td {
+	background-color: #f8f6ef;
 }
 
-#content td.even {
-	background-color: #ddd;
+#content tr.even td {
+	background-color: #eae8e0;
 }
 
 #content table.overview .avatar {
@@ -220,10 +243,10 @@ input.checkbox { width: auto; }
 
 .post .post-header {
 	background-color: #666;
-	background-image: -webkit-linear-gradient(top, #666, #333);
-	background-image:    -moz-linear-gradient(top, #666, #333);
-	background-image:     -ms-linear-gradient(top, #666, #333);
-	background-image:      -o-linear-gradient(top, #666, #333);
+	background-image: -webkit-linear-gradient(top, #666, #444);
+	background-image:    -moz-linear-gradient(top, #666, #444);
+	background-image:     -ms-linear-gradient(top, #666, #444);
+	background-image:      -o-linear-gradient(top, #666, #444);
 	border-bottom: 1px solid #222;
 	color: white;
 	min-height: 20pt;
@@ -301,8 +324,10 @@ td form { display: inline-block; }
 
 
 @media (max-width: 580pt) {
-	#mainHeader { display: block; padding-bottom: 7.5pt; }
+	#mainHeader .loginArea { padding-bottom: 7.5pt; }
 	#mainHeader > div { display: block; }
+	#mainHeader > div > div { display: block; }
+	#mainHeader > div > div > div { display: block; }
 	#mainHeader h1 { display: block; margin-bottom: 0; }
 	#mainHeader .loginArea { display: block; margin: 0 15pt; text-align: left; width: auto; }
 	#mainHeader .loginArea div { display: inline-block; }

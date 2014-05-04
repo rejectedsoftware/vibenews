@@ -45,8 +45,8 @@ block vibenews.body
 			th.topic Topic
 			th.num-answers Answers
 			th.last-post Last post
-		- foreach( thr; info.threads )
-			tr
+		- foreach (ti, thr; info.threads)
+			tr(class=ti % 2 ? "odd" : "even")
 				td.topic
 					- if (info.settings.showOverviewAvatars)
 						- mixinAvatarImage(thr.firstPost.poster.email, 32);

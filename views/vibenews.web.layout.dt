@@ -22,7 +22,7 @@ block header
 							input(name="password", type="password", placeholder="password", tabindex="2")
 						td
 							a(hreF="#{req.rootDir}register", tabindex="4") Sign up
-	
+
 block body
 	nav#mainNav
 		- if( info.settings.googleSearch )

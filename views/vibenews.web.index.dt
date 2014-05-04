@@ -23,8 +23,8 @@ block vibenews.body
 					th.num-topics Topics
 					th.num-posts Posts
 					th.last-post Last post
-				- foreach( grp; cat.groups )
-					tr
+				- foreach (i, grp; cat.groups)
+					tr(class=i % 2 ? "odd" : "even")
 						td.forum
 							.primary
 								a.title(href="groups/#{grp.name}/")= grp.caption
