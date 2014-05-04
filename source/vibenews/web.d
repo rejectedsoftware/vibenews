@@ -73,6 +73,8 @@ class WebInterface {
 		router.get("/profile", m_userMan.auth(&showEditProfile));
 		router.post("/profile", m_userMan.auth(&updateProfile));
 		router.post("/markup", &markupArticle);
+		router.get("/groups", staticRedirect("/"));
+		router.get("/groups/", staticRedirect("/"));
 		router.get("/groups/:group/", &showGroup);
 		router.get("/groups/post", &showPostArticle);
 		router.post("/groups/post", &postArticle);
