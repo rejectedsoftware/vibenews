@@ -30,18 +30,24 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 
 		bool tls_active = false;
 
+		assert(!settings.requireSsl, "requreSsl option is not yet supported.");
+
 		void acceptSsl()
 		{
-			auto ctx = createSSLContext(SSLContextKind.server);
-			ctx.useCertificateChainFile(settings.sslCertFile);
-			ctx.usePrivateKeyFile(settings.sslKeyFile);
+			SSLContext ctx;
+			if (settings.sslContext) ctx = settings.sslContext;
+			else {
+				ctx = createSSLContext(SSLContextKind.server);
+				ctx.useCertificateChainFile(settings._sslCertFile);
+				ctx.usePrivateKeyFile(settings._sslKeyFile);
+			}
 			logTrace("accepting SSL");
 			stream = createSSLStream(stream, ctx, SSLStreamState.accepting);
 			logTrace("accepted SSL");
 			tls_active = true;
 		}
 
-		if( settings.enableSsl ) acceptSsl();
+		if (settings.sslContext || settings._enableSsl) acceptSsl();
 
 		stream.write("200 Welcome on VibeNews!\r\n");
 		logDebug("welcomed");
@@ -73,7 +79,21 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 			}
 
 			if( cmd == "starttls" ){
-				enforce(!tls_active, "TLS already active");
+				if (tls_active) {
+					res.status = NntpStatus.CommandUnavailable;
+					res.statusText = "TLS already active.";
+					res.writeVoidBody();
+					res.finalize();
+					continue;
+				}
+
+				if (!settings.sslContext && !settings._enableSsl) {
+					res.status = NntpStatus.TLSFailed;
+					res.statusText = "TLS is not configured for this server.";
+					res.writeVoidBody();
+					res.finalize();
+					continue;
+				}
 
 				res.status = NntpStatus.ContinueWithTLS;
 				res.statusText = "Continue with TLS negotiation";
@@ -110,7 +130,7 @@ void listenNntp(NntpServerSettings settings, void delegate(NntpServerRequest, Nn
 	foreach( addr; settings.bindAddresses ){
 		try {
 			listenTCP(settings.port, &handleNntpConnection, addr);
-			logInfo("Listening for NNTP%s requests on %s:%s", settings.enableSsl ? "S" : "", addr, settings.port);
+			logInfo("Listening for NNTP%s requests on %s:%s", settings.sslContext || settings._enableSsl ? "S" : "", addr, settings.port);
 		} catch( Exception e ) logWarn("Failed to listen on %s:%s", addr, settings.port);
 	}
 }
@@ -119,10 +139,16 @@ class NntpServerSettings {
 	ushort port = 119; // SSL port is 563
 	string[] bindAddresses = ["0.0.0.0"];
 	string host = "localhost"; // host name
-	bool enableSsl = false;
-	bool requireSsl = false;
-	string sslCertFile;
-	string sslKeyFile;
+	SSLContext sslContext;
+	bool requireSsl = false; // require STARTTLS on unencrypted connections
+
+	deprecated @property ref bool enableSsl() { return _enableSsl; }
+	deprecated @property ref string sslCertFile() { return _sslCertFile; }
+	deprecated @property ref string sslKeyFile() { return _sslKeyFile; }
+
+	private bool _enableSsl = false;
+	private string _sslCertFile;
+	private string _sslKeyFile;
 }
 
 class NntpServerRequest {

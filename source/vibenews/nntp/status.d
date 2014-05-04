@@ -46,7 +46,9 @@ enum NntpStatus {
 	BadCommand = 500,
 	CommandSyntaxError = 501,
 	AccessFailure = 502,
+	CommandUnavailable = 502,
 	InternalError = 503,
+	TLSFailed = 580
 }
 
 class NntpStatusException : Exception {

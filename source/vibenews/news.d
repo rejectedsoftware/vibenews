@@ -20,6 +20,7 @@ import vibe.data.bson;
 import vibe.inet.message;
 import vibe.stream.counting;
 import vibe.stream.operations;
+import vibe.stream.ssl;
 
 import std.algorithm;
 import std.array;
@@ -56,13 +57,13 @@ class NewsInterface {
 		nntpsettings.port = m_settings.nntpPort;
 		listenNntp(nntpsettings, &handleCommand);
 
-		if( m_settings.sslCertFile.length || m_settings.sslKeyFile.length ){
+		if (m_settings.sslCertFile.length || m_settings.sslKeyFile.length) {
 			auto nntpsettingsssl = new NntpServerSettings;
 			nntpsettingsssl.host = m_settings.hostName;
 			nntpsettingsssl.port = m_settings.nntpSslPort;
-			nntpsettingsssl.enableSsl = true;
-			nntpsettingsssl.sslCertFile = m_settings.sslCertFile;
-			nntpsettingsssl.sslKeyFile = m_settings.sslKeyFile;
+			nntpsettingsssl.sslContext = createSSLContext(SSLContextKind.server);
+			nntpsettingsssl.sslContext.useCertificateChainFile(m_settings.sslCertFile);
+			nntpsettingsssl.sslContext.usePrivateKeyFile(m_settings.sslKeyFile);
 			listenNntp(nntpsettingsssl, &handleCommand);
 		}
 	}
