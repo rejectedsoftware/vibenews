@@ -4,7 +4,7 @@ block title
 	- import vibe.textfilter.markdown;
 	- import vibe.textfilter.html;
 
-	- auto title = info.thread.subject ~ " - " ~ info.settings.title;
+	- auto title = info.thread.subject;
 
 	- string obfuscateEmail(string email)
 		- auto idx = email.indexOf('@');
@@ -18,6 +18,8 @@ block vibenews.navigation
 			a(href="../../../../")= forumIndexNavCaption
 		li
 			a(href="../../")= info.group.caption
+		li
+			a(href="./")= info.thread.subject
 
 block vibenews.body
 	include vibenews.inc.gravatar

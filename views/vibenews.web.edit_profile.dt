@@ -3,13 +3,16 @@ extends vibenews.web.layout
 block title
 	- import vibe.textfilter.urlencode;
 
-	- auto title = "Edit profile - " ~ info.settings.title;
+	- auto title = "Edit profile";
 
 
 block vibenews.navigation
+	- import vibenews.webstrings;
 	ul
 		li
-			a(href="./") Forum index
+			a(href="./")= forumIndexNavCaption
+		li
+			a(href="./profile")= title
 
 
 block vibenews.body

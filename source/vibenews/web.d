@@ -291,6 +291,7 @@ class WebInterface {
 			VibeNewsSettings settings;
 			GroupInfo group;
 			bool loggedIn = false;
+			string threadSubject;
 			string error;
 			string name;
 			string email;
@@ -320,6 +321,9 @@ class WebInterface {
 			info.message = "On "~repart.getHeader("Date")~", "~PosterInfo(repart.getHeader("From")).name~" wrote:\r\n";
 			info.message ~= map!(ln => ln.startsWith(">") ? ">" ~ ln : "> " ~ ln)(splitLines(decodeMessage(repart))).join("\r\n");
 			info.message ~= "\r\n\r\n";
+		}
+		if ("thread" in req.query) {
+			info.threadSubject = m_ctrl.getArticle(grp.name, req.query["thread"].to!long).subject;
 		}
 		info.group = GroupInfo(grp, m_ctrl);
 

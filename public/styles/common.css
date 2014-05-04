@@ -88,17 +88,15 @@ footer a:hover { color: #fff; }
 #mainNav li {
 	line-height: 15pt;
 	margin: 0;
-	padding: 1pt 7pt;
 	display: inline-block;
-
-	background-color: #456;
-	border: 1px solid #567;
-	box-shadow: 0px 0px 20px #222;
 }
 
+#mainNav li, #mainNav a { color: #ddd; }
+
 #mainNav a { text-decoration: none; }
-#mainNav a:hover { text-decoration: underline; }
-#mainNav a:before { content: "◀ ";}
+#mainNav a:hover { color: #fff; }
+#mainNav li:before { content: " » "; }
+#mainNav li:first-child:before { content: " "; }
 #mainNav { margin-bottom: 15pt; }
 
 #searchbox { float: right; text-align: right; }

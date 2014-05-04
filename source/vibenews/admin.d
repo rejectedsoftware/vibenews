@@ -81,26 +81,29 @@ class AdminInterface {
 
 	void showAdminPanel(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		struct Info {
+			VibeNewsSettings settings;
+		}
+		auto info = Info(m_ctrl.settings);
+
 		Group[] groups;
 		GroupCategory[] categories;
 		m_ctrl.enumerateGroups((idx, group){ groups ~= group; }, true);
 		m_ctrl.enumerateGroupCategories((idx, cat){ categories ~= cat; });
-		res.renderCompat!("vibenews.admin.index.dt",
-				HTTPServerRequest, "req",
-				Group[], "groups",
-				GroupCategory[], "categories"
-			)(Variant(req), Variant(groups), Variant(categories));
+		res.render!("vibenews.admin.index.dt", req, info, groups, categories);
 	}
 
 	void showGroupCategory(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		struct Info {
+			VibeNewsSettings settings;
+		}
+		auto info = Info(m_ctrl.settings);
+
 		auto category = m_ctrl.getGroupCategory(BsonObjectID.fromString(req.params["category"]));
 		Group[] groups;
 		m_ctrl.enumerateGroups((idx, grp){ groups ~= grp; });
-		res.renderCompat!("vibenews.admin.editcategory.dt",
-			HTTPServerRequest, "req",
-			GroupCategory*, "category",
-			Group[], "groups")(Variant(req), Variant(&category), Variant(groups));
+		res.render!("vibenews.admin.editcategory.dt", req, info, category, groups);
 	}
 
 	void updateGroupCategory(HTTPServerRequest req, HTTPServerResponse res)
@@ -123,11 +126,13 @@ class AdminInterface {
 
 	void showGroup(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		struct Info {
+			VibeNewsSettings settings;
+		}
+		auto info = Info(m_ctrl.settings);
+
 		auto group = m_ctrl.getGroupByName(req.params["groupname"], true);
-		res.renderCompat!("vibenews.admin.editgroup.dt",
-				HTTPServerRequest, "req",
-				Group*, "group"
-			)(Variant(req), Variant(&group));
+		res.render!("vibenews.admin.editgroup.dt", req, info, group);
 	}
 
 	void createGroupCategory(HTTPServerRequest req, HTTPServerResponse res)
@@ -189,6 +194,7 @@ class AdminInterface {
 	void showArticles(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		struct Info {
+			VibeNewsSettings settings;
 			enum articlesPerPage = 20;
 			string groupname;
 			int page;
@@ -197,6 +203,7 @@ class AdminInterface {
 			int pageCount;
 		}
 		Info info;
+		info.settings = m_ctrl.settings;
 		info.groupname = req.params["groupname"];
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
 		m_ctrl.enumerateAllArticlesBackwards(info.groupname, info.page*info.articlesPerPage, info.articlesPerPage, (ref art){ info.articles ~= art; });
@@ -239,6 +246,7 @@ class AdminInterface {
 	void showListUsers(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		struct Info {
+			VibeNewsSettings settings;
 			enum itemsPerPage = 20;
 			UserInfo[] users;
 			int page;
@@ -247,6 +255,7 @@ class AdminInterface {
 		}
 
 		Info info;
+		info.settings = m_ctrl.settings;
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
 		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){
 			UserInfo nfo;
@@ -265,9 +274,11 @@ class AdminInterface {
 	void showUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		struct Info {
+			VibeNewsSettings settings;
 			User user;
 		}
 		Info info;
+		info.settings = m_ctrl.settings;
 		info.user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
 		res.renderCompat!("vibenews.admin.edituser.dt",
 				HTTPServerRequest, "req",

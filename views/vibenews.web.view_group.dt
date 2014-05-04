@@ -3,13 +3,15 @@ extends vibenews.web.layout
 block title
 	- import vibe.textfilter.urlencode;
 
-	- auto title = info.group.caption ~ " - " ~ info.settings.title;
+	- auto title = info.group.caption;
 
 block vibenews.navigation
 	- import vibenews.webstrings;
 	ul
 		li
 			a(href="../../")= forumIndexNavCaption
+		li
+			a(href="./")= info.group.caption
 
 block vibenews.body
 	include vibenews.inc.gravatar

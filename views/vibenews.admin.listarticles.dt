@@ -1,7 +1,7 @@
 extends vibenews.admin.layout
 
 block title
-	- auto title = "VibeNews - View articles of " ~ info.groupname;
+	- auto title = "View articles of " ~ info.groupname;
 	
 block vibenews.body
 	- import std.algorithm;

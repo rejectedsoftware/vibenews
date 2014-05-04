@@ -1,7 +1,7 @@
 extends vibenews.admin.layout
 
 block title
-	- auto title = "VibeNews - Edit group " ~ group.name;
+	- auto title = "Edit group " ~ group.name;
 	
 block vibenews.body
 	p

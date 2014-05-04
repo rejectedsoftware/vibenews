@@ -1,7 +1,7 @@
 extends vibenews.admin.layout
 
 block title
-	- auto title = "VibeNews - Admin panel";
+	- auto title = "Admin panel";
 	
 block vibenews.body
 	h2 Groups
