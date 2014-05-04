@@ -121,7 +121,7 @@ footer a:hover { color: #fff; }
 #mainNav li:first-child:before { content: " "; }
 #mainNav { margin-bottom: 15pt; }
 
-#searchbox { float: right; text-align: right; }
+#searchbox { float: right; text-align: right; margin-top: 2.5pt; }
 #searchbox input { width: 120pt; }
 #searchbox button { width: auto; }
 
