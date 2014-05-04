@@ -3,6 +3,15 @@ extends vibenews.admin.layout
 block title
 	- auto title = "View articles of " ~ info.groupname;
 	
+block vibenews.navigation
+	ul
+		li
+			a(href="../../") Admin panel
+		li
+			a(href="./show") Edit group #{info.groupname}
+		li
+			a(href="./articles")= title
+
 block vibenews.body
 	- import std.algorithm;
 	

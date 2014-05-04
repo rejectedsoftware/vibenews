@@ -4,5 +4,8 @@ block title
 	block title
 
 block body
+	nav#mainNav
+		block vibenews.navigation
+
 	#content
 		block vibenews.body

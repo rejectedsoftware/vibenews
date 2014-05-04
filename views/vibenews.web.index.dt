@@ -5,6 +5,12 @@ block title
 	- auto title = "";
 	meta(name="description", content="#{info.settings.description}")
 
+block vibenews.navigation
+	- import vibenews.webstrings;
+	ul
+		li
+			a(href="./")= forumIndexNavCaption
+
 block vibenews.body
 	include vibenews.inc.gravatar
 

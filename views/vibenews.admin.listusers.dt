@@ -3,6 +3,13 @@ extends vibenews.admin.layout
 block title
 	- auto title = "All users";
 	
+block vibenews.navigation
+	ul
+		li
+			a(href="../") Admin panel
+		li
+			a(href="./")= title
+
 block vibenews.body
 	- import std.algorithm;
 	- import vibe.data.bson;

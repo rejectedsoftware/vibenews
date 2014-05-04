@@ -3,6 +3,11 @@ extends vibenews.admin.layout
 block title
 	- auto title = "Admin panel";
 	
+block vibenews.navigation
+	ul
+		li
+			a(href="./")= title
+
 block vibenews.body
 	h2 Groups
 	form(method="POST", action="/groups/create")

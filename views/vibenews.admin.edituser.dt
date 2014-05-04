@@ -3,6 +3,15 @@ extends vibenews.admin.layout
 block title
 	- auto title = "Edit user " ~ info.user.email;
 	
+block vibenews.navigation
+	ul
+		li
+			a(href="../../") Admin panel
+		li
+			a(href="../") All users
+		li
+			a(href="./show")= title
+
 block vibenews.body
 	p
 		a(href="#{req.rootDir}users/") Back to user list

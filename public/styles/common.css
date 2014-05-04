@@ -116,7 +116,7 @@ footer a:hover { color: #fff; }
 #mainNav li, #mainNav a { color: #000; }
 
 #mainNav a { text-decoration: none; }
-#mainNav a:hover { color: #fff; }
+#mainNav a:hover { text-decoration: underline; }
 #mainNav li:before { content: " » "; }
 #mainNav li:first-child:before { content: " "; }
 #mainNav { margin-bottom: 15pt; }
@@ -169,7 +169,7 @@ a.title {
 #content td {
 	padding: 7.5pt;
 	background-color: #eae8dd;
-	border-bottom: 1px solid #dec;
+	border-bottom: 1px solid #ddc;
 	color: black;
 }
 

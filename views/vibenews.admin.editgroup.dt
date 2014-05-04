@@ -3,6 +3,13 @@ extends vibenews.admin.layout
 block title
 	- auto title = "Edit group " ~ group.name;
 	
+block vibenews.navigation
+	ul
+		li
+			a(href="../../") Admin panel
+		li
+			a(href="./show")= title
+
 block vibenews.body
 	p
 		a(href="#{req.rootDir}") Back to overview
