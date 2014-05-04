@@ -1,7 +1,6 @@
 extends vibenews.web.layout
 
 block title
-	- import std.digest.md;
 	- import vibe.textfilter.markdown;
 	- import vibe.textfilter.html;
 
@@ -21,6 +20,8 @@ block vibenews.navigation
 			a(href="../../")= info.group.caption
 
 block vibenews.body
+	include vibenews.inc.gravatar
+
 	- void pageLinks()
 		- if( info.pageCount > 1 )
 			p.pages Pages: 
@@ -49,10 +50,7 @@ block vibenews.body
 					a(href="nntp://#{info.settings.hostName}/#{info.group.name}/#{post.number}") NNTP
 			.post-body
 				.post-info
-					.avatar
-						- auto hash = toLower(hexDigest!MD5(toLower(post.poster.email)).idup);
-						a(href="http://www.gravatar.com/#{hash}")
-							img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&amp;s=120", alt="avatar")
+					- mixinAvatarImage(post.poster.email, 120);
 					
 					.poster-name
 						a(href="mailto:#{obfuscateEmail(post.poster.email)}")= post.poster.name

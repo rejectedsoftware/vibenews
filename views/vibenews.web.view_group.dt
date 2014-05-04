@@ -12,6 +12,8 @@ block vibenews.navigation
 			a(href="../../")= forumIndexNavCaption
 
 block vibenews.body
+	include vibenews.inc.gravatar
+
 	p
 		a.link-button(href="../post?group=#{info.group.name}") Post new topic
 
@@ -33,7 +35,7 @@ block vibenews.body
 
 	- pageLinks();
 
-	table
+	table.overview.thread-overview
 		col.topic
 		col.num-answers
 		col.last-post
@@ -44,11 +46,13 @@ block vibenews.body
 		- foreach( thr; info.threads )
 			tr
 				td.topic
+					- if (info.settings.showOverviewAvatars)
+						- mixinAvatarImage(thr.firstPost.poster.email, 32);
 					.primary
 						a.title(href="thread/#{thr.firstPost.number}/")= thr.subject
 					.secondary
 						| by 
-						a(href="thread/#{thr.firstPost.number}/")= thr.firstPost.poster.name
+						a(href=profileLink(thr.firstPost.poster.email))= thr.firstPost.poster.name
 						| on #{thr.firstPost.date}
 					- if( thr.pageCount > 1 )
 						span.pages Pages: 
@@ -63,8 +67,13 @@ block vibenews.body
 								a.page(href="thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
 				td.num-answers= thr.postCount-1
 				td.last-post
-					a(href="post/#{info.group.lastPostNumber}")
-						| by #{thr.lastPost.poster.name}
-					| on #{thr.lastPost.date}
+					- if (info.settings.showOverviewAvatars)
+						- mixinAvatarImage(thr.lastPost.poster.email, 32);
+					.primary
+						a(href="post/#{info.group.lastPostNumber}")= thr.lastPost.subject.length ? thr.lastPost.subject : "(no subject)"
+					.secondary
+						| by 
+						a(href=profileLink(thr.lastPost.poster.email))= thr.lastPost.poster.name
+						| on #{thr.lastPost.date}
 					
 	- pageLinks();

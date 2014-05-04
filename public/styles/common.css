@@ -164,6 +164,8 @@ a.title {
 	background-color: #ddd;
 }
 
+#content table.overview .avatar { float: left; margin-right: 5pt; }
+
 blockquote {
 	display: block;
 	border-left: 2px solid gray;

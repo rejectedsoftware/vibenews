@@ -508,11 +508,13 @@ struct ThreadInfo {
 			firstPost.poster = PosterInfo(firstpost.getHeader("From"));
 			firstPost.date = firstpost.getHeader("Date");//.parseRFC822DateTimeString();
 			firstPost.number = firstpost.groups[escapeGroup(groupname)].articleNumber;
+			firstPost.subject = firstpost.subject;
 			
 			auto lastpost = ctrl.getArticle(thr.lastArticleId);
 			lastPost.poster = PosterInfo(lastpost.getHeader("From"));
 			lastPost.date = lastpost.getHeader("Date");//.parseRFC822DateTimeString();
-			lastPost.number = firstpost.groups[escapeGroup(groupname)].articleNumber;
+			lastPost.number = lastpost.groups[escapeGroup(groupname)].articleNumber;
+			lastPost.subject = lastpost.subject;
 		} catch( Exception ){}
 	}
 

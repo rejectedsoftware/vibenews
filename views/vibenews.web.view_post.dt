@@ -1,7 +1,6 @@
 extends vibenews.web.layout
 
 block title
-	- import std.digest.md;
 	- import vibe.textfilter.markdown;
 	- import vibe.textfilter.html;
 
@@ -23,6 +22,8 @@ block vibenews.navigation
 			a(href="../thread/#{info.thread.firstPost.number}/") Back to thread
 
 block vibenews.body
+	include vibenews.inc.gravatar
+	
 	.post.first
 		.post-header
 			h2.skeleton= info.post.subject
@@ -31,10 +32,7 @@ block vibenews.body
 				a(href="nntp://#{info.settings.hostName}/#{info.group.name}/#{info.post.number}") NNTP
 		.post-body
 			.post-info
-				.avatar
-					- auto hash = toLower(hexDigest!MD5(toLower(info.post.poster.email)).idup);
-					a(href="http://www.gravatar.com/#{hash}")
-						img(src="http://www.gravatar.com/avatar/#{hash}?d=mm&amp;s=120", alt="avatar")
+				- mixinAvatarImage(info.post.poster.email, 120);
 
 				.poster-name
 					a(href="mailto:#{obfuscateEmail(info.post.poster.email)}")= info.post.poster.name

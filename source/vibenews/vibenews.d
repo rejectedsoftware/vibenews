@@ -41,6 +41,7 @@ class VibeNewsSettings {
 
 	// enables a google site-search box in the top-right corner of the web forum
 	bool googleSearch = false;
+	bool showOverviewAvatars = true;
 
 	SpamFilter[] spamFilters;
 
@@ -56,9 +57,10 @@ class VibeNewsSettings {
 		if( auto pv = "description" in json ) description = pv.get!string;
 		if( auto pv = "sslCertFile" in json ) sslCertFile = pv.get!string;
 		if( auto pv = "sslKeyFile" in json ) sslKeyFile = pv.get!string;
-		if( auto pv = "googleSearch" in json ) googleSearch = pv.get!bool;
 		if (auto pv = "requireSSL" in json) requireSSL = pv.get!bool;
 		if (auto pv = "requireAccountValidation" in json) requireAccountValidation = pv.get!bool;
+		if( auto pv = "googleSearch" in json ) googleSearch = pv.get!bool;
+		if (auto pv = "showOverviewAvatars"in json) showOverviewAvatars = pv.get!bool;
 		if( auto psf = "spamfilters" in json ){
 			foreach( string key, value; *psf ){
 				foreach( flt; spamFilters )
