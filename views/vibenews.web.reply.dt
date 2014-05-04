@@ -7,9 +7,10 @@ block title
 	script(type="text/javascript", src="#{req.rootDir}scripts/vibenews-reply.js")
 
 block vibenews.navigation
+	- import vibenews.webstrings;
 	ul
 		li
-			a(href="../") Forum index
+			a(href="../")= forumIndexNavCaption
 		li
 			a(href="#{info.group.name}/")= info.group.caption
 		- if( auto prp = "thread" in req.query )

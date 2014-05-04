@@ -6,9 +6,10 @@ block title
 	- auto title = info.group.caption ~ " - " ~ info.settings.title;
 
 block vibenews.navigation
+	- import vibenews.webstrings;
 	ul
 		li
-			a(href="../../") Forum index
+			a(href="../../")= forumIndexNavCaption
 
 block vibenews.body
 	p

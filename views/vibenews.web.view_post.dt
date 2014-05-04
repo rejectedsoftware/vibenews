@@ -13,9 +13,10 @@ block title
 		- return email[0 .. idx] ~ " /at/ " ~ email[idx+1 .. $];
 
 block vibenews.navigation
+	- import vibenews.webstrings;
 	ul
 		li
-			a(href="../../../") Forum index
+			a(href="../../../")= forumIndexNavCaption
 		li
 			a(href="../")= info.group.caption
 		li
