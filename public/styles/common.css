@@ -169,7 +169,7 @@ a.title {
 #content td {
 	padding: 7.5pt;
 	background-color: #eae8dd;
-	border-bottom: 1px solid gray;
+	border-bottom: 1px solid #dec;
 	color: black;
 }
 
@@ -178,11 +178,11 @@ a.title {
 }
 
 #content tr.odd td {
-	background-color: #f8f6ef;
+	background-color: #fdfdf8;
 }
 
 #content tr.even td {
-	background-color: #eae8e0;
+	background-color: #f8f6ec;
 }
 
 #content table.overview .avatar {
