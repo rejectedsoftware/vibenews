@@ -34,7 +34,7 @@ block vibenews.body
 						td.num-posts= grp.numberOfPosts
 						td.last-post
 							- if( grp.lastPostDate.length )
-								- if (info.settings.showOverviewAvatars)
+								- if (info.settings.showLastPostAvatars)
 									- mixinAvatarImage(grp.lastPoster.email, 32);
 								.primary
 									a(href="groups/#{grp.name}/post/#{grp.lastPostNumber}")

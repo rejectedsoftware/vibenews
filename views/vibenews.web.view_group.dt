@@ -69,7 +69,7 @@ block vibenews.body
 								a.page(href="thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
 				td.num-answers= thr.postCount-1
 				td.last-post
-					- if (info.settings.showOverviewAvatars)
+					- if (info.settings.showLastPostAvatars)
 						- mixinAvatarImage(thr.lastPost.poster.email, 32);
 					.primary
 						a(href="post/#{info.group.lastPostNumber}")= thr.lastPost.subject.length ? thr.lastPost.subject : "(no subject)"
