@@ -493,20 +493,20 @@ class Controller {
 
 		// validate sender
 		if( user_id == BsonObjectID() ){
-			enforce(!isEmailRegistered(from_email), new NntpStatusException(NntpStatus.ArticleRejected, "Need to log in to send from a registered email address."));
+			enforce(!isEmailRegistered(from_email), new NNTPStatusException(NNTPStatus.articleRejected, "Need to log in to send from a registered email address."));
 		} else {
 			User usr;
 			User lusr = m_userdb.getUser(user_id);
 			try usr = m_userdb.getUserByEmail(from_email);
 			catch( Exception ){}
-			enforce(usr && usr._id == user_id, new NntpStatusException(NntpStatus.ArticleRejected, "Not allowed to post with a foreign email address, please use "~lusr.email~"."));
+			enforce(usr && usr._id == user_id, new NNTPStatusException(NNTPStatus.articleRejected, "Not allowed to post with a foreign email address, please use "~lusr.email~"."));
 		}
 
 		// validate groups
 		foreach( grp; newsgroups ){
 			auto bgpre = m_groups.findOne(["name": grp]);
-			enforce(!bgpre.isNull(), new NntpStatusException(NntpStatus.ArticleRejected, "Invalid group: "~grp));
-			enforce(isAuthorizedForWritingGroup(user_id, grp), new NntpStatusException(NntpStatus.ArticleRejected, "Not allowed to post in "~grp));
+			enforce(!bgpre.isNull(), new NNTPStatusException(NNTPStatus.articleRejected, "Invalid group: "~grp));
+			enforce(isAuthorizedForWritingGroup(user_id, grp), new NNTPStatusException(NNTPStatus.articleRejected, "Not allowed to post in "~grp));
 		}
 
 		foreach( grp; newsgroups ){
