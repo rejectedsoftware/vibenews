@@ -43,8 +43,8 @@ block vibenews.body
 		col.last-post
 		tr
 			th.topic Topic
-			th.num-answers Answers
-			th.last-post Last post
+			th.num-answers Replies
+			th.last-post Last reply
 		- foreach (ti, thr; info.threads)
 			tr(class=ti % 2 ? "odd" : "even")
 				td.topic
@@ -69,13 +69,16 @@ block vibenews.body
 								a.page(href="thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
 				td.num-answers= thr.postCount-1
 				td.last-post
-					- if (info.settings.showLastPostAvatars)
-						- mixinAvatarImage(thr.lastPost.poster.email, 32);
-					.primary
-						a(href="post/#{info.group.lastPostNumber}")= thr.lastPost.subject.length ? thr.lastPost.subject : "(no subject)"
-					.secondary
-						| by 
-						a(href=profileLink(thr.lastPost.poster.email))= thr.lastPost.poster.name
-						| on #{thr.lastPost.date}
+					- if (thr.lastPost.number != thr.firstPost.number)
+						- if (info.settings.showLastPostAvatars)
+							- mixinAvatarImage(thr.lastPost.poster.email, 32);
+						.primary
+							a(href="post/#{info.group.lastPostNumber}")= thr.lastPost.subject.length ? thr.lastPost.subject : "(no subject)"
+						.secondary
+							| by 
+							a(href=profileLink(thr.lastPost.poster.email))= thr.lastPost.poster.name
+							| on #{thr.lastPost.date}
+					- else
+						.primary ---
 					
 	- pageLinks();
