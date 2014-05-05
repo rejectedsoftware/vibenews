@@ -69,16 +69,14 @@ block vibenews.body
 								a.page(href="thread/#{thr.firstPost.number}/?page=#{i+1}")= i+1
 				td.num-answers= thr.postCount-1
 				td.last-post
-					- if (thr.lastPost.number != thr.firstPost.number)
+					- if (thr.lastPost.number > thr.firstPost.number)
 						- if (info.settings.showLastPostAvatars)
 							- mixinAvatarImage(thr.lastPost.poster.email, 32);
 						.primary
-							a(href="post/#{info.group.lastPostNumber}")= thr.lastPost.subject.length ? thr.lastPost.subject : "(no subject)"
+							a(href="post/#{thr.lastPost.number}")= thr.lastPost.subject.length ? thr.lastPost.subject : "(no subject)"
 						.secondary
 							| by 
 							a(href=profileLink(thr.lastPost.poster.email))= thr.lastPost.poster.name
 							| on #{thr.lastPost.date}
-					- else
-						.primary ---
 					
 	- pageLinks();
