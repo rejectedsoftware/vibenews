@@ -573,6 +573,7 @@ class Controller {
 
 		// update the group counters
 		foreach( string gname, grp; oldart.groups ){
+			// update the group
 			string numfield = "groups."~gname~".articleNumber";
 			auto groupname = Bson(unescapeGroup(gname));
 			auto articlequery = Bson([numfield: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
@@ -582,22 +583,27 @@ class Controller {
 			if( g.minArticleNumber == num ){
 				auto minorder = serializeToBson([numfield: 1]);
 				auto minart = m_articles.findOne(["query": articlequery, "orderby": minorder]);
-				long newnum = minart.groups[gname].articleNumber.get!long;
+				long newnum;
+				if (minart.isNull()) newnum = long.max;
+				else newnum = minart.groups[gname].articleNumber.get!long;
 				m_groups.update(["name": groupname, "minArticleNumber": num], ["$set": ["minArticleNumber": newnum]]);
 			}
 			if( g.maxArticleNumber == num ){
 				auto maxorder = serializeToBson([numfield: -1]);
 				auto maxart = m_articles.findOne(["query": articlequery, "orderby": maxorder]);
-				long newnum = maxart.groups[gname].articleNumber.get!long;
+				long newnum;
+				if (!maxart.isNull()) newnum = maxart.groups[gname].articleNumber.get!long;
+				else newnum = -1;
 				m_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
 			}
 
+			// update the matching thread
 			auto threadid = grp.threadId;
 			auto newfirstart = m_articles.findOne(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(1)]], ["_id": true]);
 			auto newfirstid = newfirstart.isNull() ? BsonObjectID() : newfirstart._id.get!BsonObjectID;
+			m_threads.update(["_id": threadid, "firstArticleId": oldart._id], ["$set": ["firstArticleId": newfirstid]]);
 			auto newlastart = m_articles.findOne(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(-1)]], ["_id": true]);
 			auto newlastid = newfirstart.isNull() ? BsonObjectID() : newlastart._id.get!BsonObjectID;
-			m_threads.update(["_id": threadid, "firstArticleId": oldart._id], ["$set": ["firstArticleId": newfirstid]]);
 			m_threads.update(["_id": threadid, "lastArticleId": oldart._id], ["$set": ["lastArticleId": newlastid]]);
 		}
 	}
@@ -617,7 +623,8 @@ class Controller {
 			m_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
 			m_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
 
-			m_threads.update(["_id": threadid, "firstArticleId": Bson(["$gt": oldart._id])], ["$set": ["firstArticleId": oldart._id]]);
+			auto first_matches = serializeToBson([["firstArticleId": Bson(["$gt": oldart._id])], ["firstArticleId": Bson(BsonObjectID())]]);
+			m_threads.update(["_id": threadid, "$or": first_matches], ["$set": ["firstArticleId": oldart._id]]);
 			m_threads.update(["_id": threadid, "lastArticleId": Bson(["$lt": oldart._id])], ["$set": ["lastArticleId": oldart._id]]);
 		}
 	}
