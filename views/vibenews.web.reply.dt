@@ -33,9 +33,9 @@ block vibenews.body
 		- else if( auto prt = "reply-to" in req.form )
 			input(type="hidden", name="reply-to", value=*prt)
 		table
-			col.caption
+			col.caption.helptext
 			tr
-				td.top-align(rowspan=2)
+				td.helptext.top-align(rowspan=3)
 					p(style="color: gray;") Use 
 						a(href="http://daringfireball.net/projects/markdown/basics", target="_blank") Markdown
 						| with GitHub style extensions to format your message.
@@ -82,6 +82,5 @@ block vibenews.body
 							#message-preview
 							:javascript onTextChange()
 			tr
-				td
 				td
 					button(type="submit") Post

@@ -441,6 +441,7 @@ td form { display: inline-block; }
 	}
 
 	table .last-post { display: none; }
+	table .helptext { display: none; }
 
 	.post h2.skeleton { float: none; }
 	.post .permalink { text-align: left; }
