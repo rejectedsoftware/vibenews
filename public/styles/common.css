@@ -305,10 +305,33 @@ input, textarea {
 	font-size: 10pt;
 }
 
-#message-preview {
+.top-align { vertical-align: top; }
+
+.post-content.markdown-cheatsheet {
+	display: block;
+	padding: 2.5pt;
+	margin: 0;
+	font-size: 75%;
+	background-color: #fffff8;
 	border: 1px solid #aaa;
-	background-color: white;
+}
+
+#message {
+	box-sizing: border-box;
+	resize: vertical;
+}
+
+#message-preview {
+	display: none;
+	border: 1px solid #aaa;
+	background-color: #eee;
 	overflow: auto;
+}
+
+#message, #message-preview {
+	height: auto;
+	margin: 0;
+	padding: 7.5pt;
 }
 
 /*************/
@@ -322,6 +345,28 @@ td form { display: inline-block; }
 #content td.spam { background-color: #e52; }
 #content td.ham { background-color: #8d4; }
 #content td.undecided { background-color: #999; }
+
+
+/* side-by-side preview pane for post authoring */
+@media (min-width: 800pt) {
+	#message-area {
+		width: 100%;
+	}
+	#message-area > div {
+		display: flex;
+		flex-direction: row;
+	}
+	#message {
+		flex: 1;
+		overflow-y: hidden;
+		display: block;
+		vertical-align: top;
+	}
+	#message-preview {
+		display: block;
+		flex: 1;
+	}
+}
 
 
 @media (max-width: 580pt) {

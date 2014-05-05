@@ -51,18 +51,40 @@ block vibenews.body
 				td
 					input#subject(type="text", name="subject", value="#{info.subject}")
 			tr
-				td
+				td.top-align
 					label(for="message") Message
 					p(style="color: gray;") Note that you can use 
 						a(href="http://daringfireball.net/projects/markdown/basics", target="_blank") Markdown
-						| to markup your message.
-					p(style="color: gray;") In addition to vanilla Markdown, line breaks will appear in the output and triple back-ticks (```) can be used to embed a block of code.
-				td
+						| with GitHub style extensions to markup your message. Examples:
+					div.post-content.markdown-cheatsheet
+						h1 # heading
+						h2 ## sub heading
+						h3 ### sub sub heading
+						em *emphasized text*
+						br
+						strong **strong text**
+						br
+						code `inline_code()`
+						br
+						a(href="http://example.org") &lt;http://example.org&gt;
+						br
+						a(href="http://example.org") [link label](http://example.org)
+						br
+						blockquote &gt; quoted<br>&gt; text
+						br
+						pre.code.
+							```
+							void code_block()
+							{
+								print("Hello!");
+							}
+							```
+
+				td.top-align
 					#message-area
-						textarea#message(name="message", rows="18")= info.message
-						#message-preview(style="display: none;")
-					input#preview-checkbox(type="checkbox", onchange="previewToggle()", style="width: auto;")
-					label(for="preview-checkbox") Preview
+						div
+							textarea#message(name="message", rows="18", onkeyup="onTextChange()", onchange="onTextChange()")= info.message
+							#message-preview
 			tr
 				td
 				td

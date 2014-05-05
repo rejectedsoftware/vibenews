@@ -1,16 +1,18 @@
-function previewToggle()
-{
-	var enabled = $("#preview-checkbox").is(':checked');
-	if( enabled ){
-		var message = $("#message");
-		var preview = $("#message-preview");
-		preview.height(message.height());
-		message.hide();
-		preview.show();
+var preview_timer;
 
-		$.post("/markup", {message: message.val()}, function(data){ preview.html(data); });
-	} else {
-		$("#message").show();
-		$("#message-preview").hide();
-	}
+function onTextChange()
+{
+	if (preview_timer) window.clearInterval(preview_timer);
+	preview_timer = window.setInterval(updatePreview, 1000);
+}
+
+function updatePreview()
+{
+	var message = $("#message");
+	var preview = $("#message-preview");
+	$.post("/markup", {message: message.val()}, function(data){
+		preview.html(data);
+		prettyPrint();
+		preview.show();
+	});
 }
