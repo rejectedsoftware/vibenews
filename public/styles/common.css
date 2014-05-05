@@ -308,11 +308,12 @@ input, textarea {
 .top-align { vertical-align: top; }
 
 .post-content.markdown-cheatsheet {
+	box-sizing: border-box;
 	display: block;
-	padding: 2.5pt;
+	padding: 0 5pt;
 	margin: 0;
 	font-size: 75%;
-	background-color: #fffff8;
+	background-color: #f0f0ea;
 	border: 1px solid #aaa;
 }
 
@@ -348,7 +349,7 @@ td form { display: inline-block; }
 
 
 /* side-by-side preview pane for post authoring */
-@media (min-width: 800pt) {
+@media (min-width: 900pt) {
 	#message-area {
 		width: 100%;
 	}

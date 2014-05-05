@@ -34,51 +34,46 @@ block vibenews.body
 			input(type="hidden", name="reply-to", value=*prt)
 		table
 			col.caption
-			- if( !info.loggedIn )
-				tr
-					td
-						label(for="name") Name
-					td
-						input#name(type="text", name="name", value="#{info.name}")
-				tr
-					td
-						label(for="email") Email
-					td
-						input#email(type="email", name="email", value="#{info.email}")
 			tr
-				td
-					label(for="subject") Subject
-				td
-					input#subject(type="text", name="subject", value="#{info.subject}")
-			tr
-				td.top-align
-					label(for="message") Message
-					p(style="color: gray;") Note that you can use 
+				td.top-align(rowspan=2)
+					p(style="color: gray;") Use 
 						a(href="http://daringfireball.net/projects/markdown/basics", target="_blank") Markdown
-						| with GitHub style extensions to markup your message. Examples:
+						| with GitHub style extensions to format your message.
 					div.post-content.markdown-cheatsheet
 						h1 # heading
 						h2 ## sub heading
 						h3 ### sub sub heading
-						em *emphasized text*
-						br
-						strong **strong text**
-						br
-						code `inline_code()`
-						br
-						a(href="http://example.org") &lt;http://example.org&gt;
-						br
-						a(href="http://example.org") [link label](http://example.org)
-						br
+						p
+							em *emphasized text*
+						p
+							strong **strong text**
+						p
+							code.prettyprint.lang-d `print("inline code");`
+						p
+							a(href="http://example.org") &lt;http://example.org&gt;
+						p
+							a(href="http://example.org") [link label](http://example.org)
 						blockquote &gt; quoted<br>&gt; text
-						br
-						pre.code.
+						pre.code.prettyprint.lang-d.
 							```
 							void code_block()
 							{
 								print("Hello!");
 							}
 							```
+
+				td
+					- if (!info.loggedIn)
+						div
+							label(for="name") Name:
+							input#name(type="text", name="name", value="#{info.name}")
+						div
+							label(for="email") Email:
+							input#email(type="email", name="email", value="#{info.email}")
+					div
+						label(for="subject") Subject:
+						input#subject(type="text", name="subject", value="#{info.subject}")
+			tr
 
 				td.top-align
 					#message-area
