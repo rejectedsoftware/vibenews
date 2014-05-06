@@ -582,7 +582,7 @@ class Controller {
 			auto num = grp.articleNumber;
 			if( g.minArticleNumber == num ){
 				auto minorder = serializeToBson([numfield: 1]);
-				auto minart = m_articles.findOne(["query": articlequery, "orderby": minorder]);
+				auto minart = m_articles.findOne(Bson(["query": articlequery, "orderby": minorder]));
 				long newnum;
 				if (minart.isNull()) newnum = long.max;
 				else newnum = minart.groups[gname].articleNumber.get!long;
@@ -590,7 +590,7 @@ class Controller {
 			}
 			if( g.maxArticleNumber == num ){
 				auto maxorder = serializeToBson([numfield: -1]);
-				auto maxart = m_articles.findOne(["query": articlequery, "orderby": maxorder]);
+				auto maxart = m_articles.findOne(Bson(["query": articlequery, "orderby": maxorder]));
 				long newnum;
 				if (!maxart.isNull()) newnum = maxart.groups[gname].articleNumber.get!long;
 				else newnum = 0;
@@ -599,10 +599,10 @@ class Controller {
 
 			// update the matching thread
 			auto threadid = grp.threadId;
-			auto newfirstart = m_articles.findOne(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(1)]], ["_id": true]);
+			auto newfirstart = m_articles.findOne(serializeToBson(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(1)]]), ["_id": true]);
 			auto newfirstid = newfirstart.isNull() ? BsonObjectID() : newfirstart._id.get!BsonObjectID;
 			m_threads.update(["_id": threadid, "firstArticleId": oldart._id], ["$set": ["firstArticleId": newfirstid]]);
-			auto newlastart = m_articles.findOne(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(-1)]], ["_id": true]);
+			auto newlastart = m_articles.findOne(serializeToBson(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(-1)]]), ["_id": true]);
 			auto newlastid = newfirstart.isNull() ? BsonObjectID() : newlastart._id.get!BsonObjectID;
 			m_threads.update(["_id": threadid, "lastArticleId": oldart._id], ["$set": ["lastArticleId": newlastid]]);
 		}
