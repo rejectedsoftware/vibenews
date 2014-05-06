@@ -593,7 +593,7 @@ class Controller {
 				auto maxart = m_articles.findOne(["query": articlequery, "orderby": maxorder]);
 				long newnum;
 				if (!maxart.isNull()) newnum = maxart.groups[gname].articleNumber.get!long;
-				else newnum = -1;
+				else newnum = 0;
 				m_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
 			}
 
@@ -717,22 +717,31 @@ class Controller {
 
 	void repairGroupNumbers()
 	{
-		foreach (grp; m_groups.find(Bson.emptyObject)) {
+		foreach (grp; m_groups.find()) {
+			logInfo("Repairing group numbers of %s:", grp.name.get!string);
 			auto grpname = escapeGroup(grp.name.get!string);
 			auto numbername = "groups."~grpname~".articleNumber";
 
 			auto artquery = serializeToBson([numbername: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
 			auto artcnt = m_articles.count(artquery);
+			logInfo("  article count: %s", artcnt);
 			m_groups.update(["_id": grp._id, "articleCount": grp.articleCount], ["$set": ["articleCount": artcnt]]);
 
-			auto first_art = m_articles.findOne(["query": artquery, "orderby": serializeToBson([numbername: 1])], ["groups": 1]);
-			auto last_art = m_articles.findOne(["query": artquery, "orderby": serializeToBson([numbername: -1])], ["groups": 1]);
-			if( first_art.isNull() ) continue;
-			assert(!last_art.isNull());
+			auto first_art = m_articles.findOne(Bson(["$query": artquery, "$orderby": serializeToBson([numbername: 1])]), ["groups": 1]);
+			auto last_art = m_articles.findOne(Bson(["$query": artquery, "$orderby": serializeToBson([numbername: -1])]), ["groups": 1]);
 
-			m_groups.update(["_id": grp._id, "minArticleNumber": grp.minArticleNumber], ["$set": ["minArticleNumber": first_art.groups[grpname].articleNumber]]);
-			m_groups.update(["_id": grp._id, "maxArticleNumber": grp.maxArticleNumber], ["$set": ["maxArticleNumber": last_art.groups[grpname].articleNumber]]);
+			auto first_art_num = first_art.isNull() ? 1 : first_art.groups[grpname].articleNumber.get!long;
+			auto last_art_num = last_art.isNull() ? 0 : last_art.groups[grpname].articleNumber.get!long;
+			assert(first_art.isNull() == last_art.isNull());
+
+			logInfo("  first article: %s", first_art_num);
+			logInfo("  last article: %s", last_art_num);
+
+			m_groups.update(["_id": grp._id, "minArticleNumber": grp.minArticleNumber], ["$set": ["minArticleNumber": first_art_num]]);
+			m_groups.update(["_id": grp._id, "maxArticleNumber": grp.maxArticleNumber], ["$set": ["maxArticleNumber": last_art_num]]);
 		}
+
+		logInfo("Repair of group numbers finished.");
 	}
 
 	void repairThreads()
