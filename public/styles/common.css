@@ -199,6 +199,7 @@ a.title {
 blockquote {
 	display: block;
 	border-left: 2px solid gray;
+	margin: 0;
 	padding-left: 7.5pt;
 	margin-left: 0;
 }
@@ -328,6 +329,7 @@ input, textarea {
 }
 
 #message-preview {
+	box-sizing: border-box;
 	display: none;
 	border: 1px solid #aaa;
 	background-color: #eee;
@@ -357,15 +359,14 @@ td form { display: inline-block; }
 @media (min-width: 900pt) {
 	#message-area {
 		width: 100%;
-	}
-	#message-area > div {
 		display: flex;
 		flex-direction: row;
 	}
 	#message {
 		flex: 1;
+		resize: none;
 		display: block;
-		vertical-align: top;
+		height: auto;
 	}
 	#message-preview {
 		display: block;

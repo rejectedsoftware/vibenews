@@ -77,10 +77,9 @@ block vibenews.body
 
 				td.top-align
 					#message-area
-						div
-							textarea#message(name="message", rows="18", onkeyup="onTextChange()", onchange="onTextChange()")= info.message
-							#message-preview.post-content
-							:javascript onTextChange()
+						textarea#message(name="message", rows="18", onkeyup="onTextChange()", onchange="onTextChange()")= info.message
+						#message-preview.post-content
+						:javascript updatePreview()
 			tr
 				td
 					button(type="submit") Post
