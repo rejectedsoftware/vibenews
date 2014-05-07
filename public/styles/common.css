@@ -288,6 +288,10 @@ input.checkbox { width: auto; }
 	border-left: 1px solid #877;
 }
 
+.post-content a {
+	text-decoration: underline;
+}
+
 .post-content pre {
 	margin: 7.5;
 	overflow: auto;

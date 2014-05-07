@@ -79,7 +79,7 @@ block vibenews.body
 					#message-area
 						div
 							textarea#message(name="message", rows="18", onkeyup="onTextChange()", onchange="onTextChange()")= info.message
-							#message-preview
+							#message-preview.post-content
 							:javascript onTextChange()
 			tr
 				td
