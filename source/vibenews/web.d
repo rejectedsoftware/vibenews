@@ -83,7 +83,8 @@ class WebInterface {
 		router.get("/groups/:group/thread/:thread/:post", &redirectShowPost); // deprecated
 
 		auto settings = new HTTPFileServerSettings;
-		settings.serverPathPrefix = router.prefix;
+		static if (is(typeof(router.prefix))) // vibe.d 0.7.20 and up
+			settings.serverPathPrefix = router.prefix;
 		router.get("*", serveStaticFiles("public", settings));
 
 		m_userMan.register(router);
