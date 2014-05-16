@@ -275,7 +275,7 @@ class WebInterface {
 
 	void redirectShowPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		res.redirect((Path(req.path)~"../../post/"~req.params["post"]).toString(), HTTPStatus.movedPermanently);
+		res.redirect((Path(req.path)~"../../../post/"~req.params["post"]).toString(), HTTPStatus.movedPermanently);
 	}
 
 	void showPostArticle(HTTPServerRequest req, HTTPServerResponse res)
