@@ -36,7 +36,7 @@ block vibenews.body
 						| …
 						- last = true;
 					- if( info.page == i )
-						|= i+1
+						span.active-page= i+1
 					- else
 						a.page(href="?page=#{i+1}")= i+1
 

@@ -223,6 +223,15 @@ input.checkbox { width: auto; }
 	clear: both;
 }
 
+.active-page {
+	padding: 0 1.5pt;
+	color: black;
+	font-weight: bold;
+	border: 1px solid #D0C8C0;
+	background-color: #C8C0B8;
+	box-shadow: 0px 0px 10px #000;
+}
+
 .post {
 	margin-bottom: 15pt;
 	background-color: #eae8dd;
