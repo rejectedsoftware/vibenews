@@ -12,7 +12,7 @@ import vibenews.message;
 import vibenews.vibenews;
 
 import antispam.antispam;
-import userman.web : UserManController, UserManWebInterface, User;
+import userman.web : UserManController, UserManWebAuthenticator, User, updateProfile, registerUserManWebInterface;
 
 import vibe.core.core;
 import vibe.core.log;
@@ -43,7 +43,7 @@ class WebInterface {
 	private {
 		Controller m_ctrl;
 		VibeNewsSettings m_settings;
-		UserManWebInterface m_userMan;
+		UserManWebAuthenticator m_userAuth;
 		size_t m_postsPerPage = 10;
 	}
 
@@ -51,7 +51,7 @@ class WebInterface {
 	{
 		m_ctrl = ctrl;
 		m_settings = ctrl.settings;
-		m_userMan = new UserManWebInterface(ctrl.userManController);
+		m_userAuth = new UserManWebAuthenticator(ctrl.userManController);
 	}
 
 	void listen()
@@ -70,8 +70,8 @@ class WebInterface {
 	void register(URLRouter router)
 	{
 		router.get("/", &showIndex);
-		router.get("/profile", m_userMan.auth(&showEditProfile));
-		router.post("/profile", m_userMan.auth(&updateProfile));
+		router.get("/profile", m_userAuth.auth(&showEditProfile));
+		router.post("/profile", m_userAuth.auth(&updateProfile));
 		router.post("/markup", &markupArticle);
 		router.get("/groups", staticRedirect("/"));
 		router.get("/groups/", staticRedirect("/"));
@@ -87,7 +87,7 @@ class WebInterface {
 			settings.serverPathPrefix = router.prefix;
 		router.get("*", serveStaticFiles("public", settings));
 
-		m_userMan.register(router);
+		registerUserManWebInterface(router, m_ctrl.userManController);
 	}
 
 	void showIndex(HTTPServerRequest req, HTTPServerResponse res)
@@ -154,7 +154,7 @@ class WebInterface {
 	void updateProfile(HTTPServerRequest req, HTTPServerResponse res, User user)
 	{
 		try {
-			m_userMan.updateProfile(user, req);
+			.updateProfile(m_ctrl.userManController, user, req);
 
 			// TODO: notifications
 		} catch(Exception e){
