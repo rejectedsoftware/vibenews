@@ -46,12 +46,12 @@ block vibenews.body
 		- foreach( usr; info.users )
 			tr(class='#{usr.banned ? "inactive" : "active"}')
 				td
-					a(href="#{req.rootDir}users/#{usr._id}/")= usr.email
+					a(href="#{req.rootDir}users/#{usr.id}/")= usr.email
 				td= usr.fullName
 				td #{usr.messageCount} (#{usr.deletedMessageCount})
-				td= join(usr.groups, ", ")
+				td= join(usr.groupStrings, ", ")
 				td
-					form(method="POST", action="/users/#{usr._id}/update")
+					form(method="POST", action="/users/#{usr.id}/update")
 						- if (usr.active)
 							input(type="hidden", name="active", value=true)
 						- if (!usr.banned)

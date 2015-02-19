@@ -13,6 +13,7 @@ import vibenews.controller;
 import vibenews.vibenews;
 
 import antispam.antispam;
+import userman.controller : User;
 import vibe.core.core;
 import vibe.core.log;
 import vibe.crypto.passwordhash;
@@ -40,7 +41,7 @@ class NewsInterface {
 
 		static TaskLocal!string s_group;
 		static TaskLocal!string s_authUser;
-		static TaskLocal!BsonObjectID s_authUserID;
+		static TaskLocal!(User.ID) s_authUserID;
 	}
 
 	this(Controller controller)
@@ -253,7 +254,7 @@ class NewsInterface {
 				try {
 					auto usr = m_ctrl.getUserByEmail(s_authUser);
 					enforce(testSimplePasswordHash(usr.auth.passwordHash, password));
-					s_authUserID = usr._id;
+					s_authUserID = usr.id;
 					res.status = NNTPStatus.authAccepted;
 					res.statusText = "authentication successful";
 					res.writeVoidBody();
@@ -553,7 +554,7 @@ class NewsInterface {
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
 			return true;
 
-		if (s_authUserID == BsonObjectID.init) {
+		if (s_authUserID == User.ID.init) {
 			if (res) {
 				res.status = NNTPStatus.authRequired;
 				res.statusText = "auth info required";

@@ -16,7 +16,7 @@ block vibenews.body
 	p
 		a(href="#{req.rootDir}users/") Back to user list
 
-	form(method="POST", action="/users/#{info.user._id}/update")
+	form(method="POST", action="/users/#{info.user.id}/update")
 		table 
 			col.caption
 			tr
@@ -49,12 +49,12 @@ block vibenews.body
 				td
 					label(for="groups") Groups (auth tags)
 				td
-					input#groups(type="text", name="groups", value='#{join(info.user.groups, ", ")}')
+					input#groups(type="text", name="groups", value='#{join(info.user.groupStrings, ", ")}')
 			tr
 				td
 				td
 					input(type="submit", value="Apply changes")
 		p Note: Auth tags are separated by commas
 
-	form(method="POST", action="/users/#{info.user._id}/delete")
+	form(method="POST", action="/users/#{info.user.id}/delete")
 		input(type="submit", value="Delete account")

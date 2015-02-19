@@ -38,13 +38,13 @@ class Controller {
 
 		auto settings = new UserManSettings;
 		settings.useUserNames = false;
-		settings.databaseName = m_settings.databaseName;
+		settings.databaseURL = "mongodb://127.0.0.1:27017/"~m_settings.databaseName;
 		settings.serviceName = m_settings.title;
 		settings.serviceUrl = URL("http://"~m_settings.hostName~"/");
 		settings.serviceEmail = "info@"~m_settings.hostName;
 		settings.mailSettings = m_settings.mailSettings;
 		settings.requireAccountValidation = m_settings.requireAccountValidation;
-		m_userdb = new UserManController(settings);
+		m_userdb = createUserManController(settings);
 
 		auto db = connectMongoDB("127.0.0.1").getDatabase(m_settings.databaseName);
 		m_groups = db["groups"];
@@ -127,8 +127,11 @@ class Controller {
 
 	bool isEmailRegistered(string email) { return m_userdb.isEmailRegistered(email); }
 
-	User getUser(BsonObjectID user_id) { return m_userdb.getUser(user_id); }
+	User getUser(User.ID user_id) { return m_userdb.getUser(user_id); }
 	User getUserByEmail(string email) { return m_userdb.getUserByEmail(email); }
+
+	userman.controller.Group getAuthGroup(userman.controller.Group.ID id) { return m_userdb.getGroup(id); }
+	userman.controller.Group getAuthGroupByName(string name) { return m_userdb.getGroupByName(name); }
 
 	void enumerateUsers(int first_user, int max_count, void delegate(ref User usr) del)
 	{
@@ -138,7 +141,7 @@ class Controller {
 	long getUserCount() { return m_userdb.getUserCount(); }
 
 	void updateUser(User user) { m_userdb.updateUser(user); }
-	void deleteUser(BsonObjectID user_id) { m_userdb.deleteUser(user_id); }
+	void deleteUser(User.ID user_id) { m_userdb.deleteUser(user_id); }
 
 	void getUserMessageCount(string email, out ulong active_count, out ulong inactive_count)
 	{
@@ -452,7 +455,7 @@ class Controller {
 		return m_articles.count(["groups."~escapeGroup(groupname)~".articleNumber": ["$exists": true]]);
 	}
 
-	void postArticle(ref Article art, BsonObjectID user_id)
+	void postArticle(ref Article art, User.ID user_id)
 	{
 		AntispamMessage msg = toAntispamMessage(art);
 		bool revoke = false;
@@ -492,14 +495,14 @@ class Controller {
 		art.messageLines = countLines(art.message);
 
 		// validate sender
-		if( user_id == BsonObjectID() ){
+		if (user_id == User.ID.init) {
 			enforce(!isEmailRegistered(from_email), new NNTPStatusException(NNTPStatus.articleRejected, "Need to log in to send from a registered email address."));
 		} else {
 			User usr;
 			User lusr = m_userdb.getUser(user_id);
 			try usr = m_userdb.getUserByEmail(from_email);
-			catch( Exception ){}
-			enforce(usr && usr._id == user_id, new NNTPStatusException(NNTPStatus.articleRejected, "Not allowed to post with a foreign email address, please use "~lusr.email~"."));
+			catch (Exception) {}
+			enforce(usr.id == user_id, new NNTPStatusException(NNTPStatus.articleRejected, "Not allowed to post with a foreign email address, please use "~lusr.email~"."));
 		}
 
 		// validate groups
@@ -679,12 +682,12 @@ class Controller {
 		m_articles.remove(["active": Bson(false), "groups."~escapeGroup(name)~".articleNumber": Bson(["$exists": Bson(true)])]);
 	}
 
-	bool isAuthorizedForReadingGroup(BsonObjectID user, string groupname)
+	bool isAuthorizedForReadingGroup(User.ID user, string groupname)
 	{
 		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
 		if( grp.isNull() ) return false;
 		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
-		enforce(user != BsonObjectID(), "Group does not allow public access.");
+		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
 		foreach( g; grp.readOnlyAuthTags )
 			foreach( tag; usr.groups )
@@ -697,12 +700,12 @@ class Controller {
 		return false;
 	}
 
-	bool isAuthorizedForWritingGroup(BsonObjectID user, string groupname)
+	bool isAuthorizedForWritingGroup(User.ID user, string groupname)
 	{
 		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
 		if( grp.isNull() ) return false;
 		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
-		enforce(user != BsonObjectID(), "Group does not allow public access.");
+		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
 		foreach( g; grp.readWriteAuthTags )
 			foreach( tag; usr.groups )

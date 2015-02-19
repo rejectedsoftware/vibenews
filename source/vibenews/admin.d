@@ -257,11 +257,9 @@ class AdminInterface {
 		Info info;
 		info.settings = m_ctrl.settings;
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
+		string[userman.controller.Group.ID] groups;
 		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){
-			UserInfo nfo;
-			nfo.user = user;
-			m_ctrl.getUserMessageCount(user.email, nfo.messageCount, nfo.deletedMessageCount);
-			info.users ~= nfo;
+			info.users ~= getUserInfo(user, groups);
 		});
 		info.itemCount = cast(int)m_ctrl.getUserCount();
 		info.pageCount = (info.itemCount-1)/info.itemsPerPage + 1;
@@ -275,11 +273,12 @@ class AdminInterface {
 	{
 		struct Info {
 			VibeNewsSettings settings;
-			User user;
+			UserInfo user;
 		}
+		string[userman.controller.Group.ID] groups;
 		Info info;
 		info.settings = m_ctrl.settings;
-		info.user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
+		info.user = getUserInfo(m_ctrl.getUser(User.ID.fromString(req.params["user"])), groups);
 		res.renderCompat!("vibenews.admin.edituser.dt",
 				HTTPServerRequest, "req",
 				Info*, "info"
@@ -288,13 +287,13 @@ class AdminInterface {
 
 	void updateUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		auto user = m_ctrl.getUser(BsonObjectID.fromString(req.params["user"]));
+		auto user = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
 		if (auto pv = "email" in req.form) {
 			validateEmail(*pv);
 			user.email = user.name = *pv;
 		}
 		if (auto pv = "fullName" in req.form) user.fullName = *pv;
-		if (auto pv = "groups" in req.form) user.groups = (*pv).split(",").map!(g => g.strip())().array();
+		if (auto pv = "groups" in req.form) user.groups = (*pv).split(",").map!(g => m_ctrl.getAuthGroupByName(g.strip()).id)().array();
 		user.active = ("active" in req.form) !is null;
 		user.banned = ("banned" in req.form) !is null;
 		m_ctrl.updateUser(user);
@@ -304,8 +303,20 @@ class AdminInterface {
 
 	void deleteUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		m_ctrl.deleteUser(BsonObjectID.fromString(req.params["user"]));
+		m_ctrl.deleteUser(User.ID.fromString(req.params["user"]));
 		res.redirect("/users/");
+	}
+
+	private UserInfo getUserInfo(User user, ref string[userman.controller.Group.ID] groups)
+	{
+		UserInfo nfo;
+		nfo.user = user;
+		m_ctrl.getUserMessageCount(user.email, nfo.messageCount, nfo.deletedMessageCount);
+		foreach (g; user.groups) {
+			if (auto gd = g in groups) nfo.groupStrings ~= *gd;
+			else nfo.groupStrings ~= (groups[g] = m_ctrl.getAuthGroup(g).name);
+		}
+		return nfo;
 	}
 }
 
@@ -314,4 +325,5 @@ struct UserInfo {
 	alias user this;
 	ulong messageCount;
 	ulong deletedMessageCount;
+	string[] groupStrings;
 }

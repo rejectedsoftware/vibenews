@@ -102,7 +102,8 @@ class WebInterface {
 		string[] authTags;
 		if( req.session && req.session.isKeySet("userEmail") ){
 			auto usr = m_ctrl.getUserByEmail(req.session["userEmail"]);
-			authTags = usr.groups;
+			foreach (g; usr.groups)
+				authTags ~= m_ctrl.getAuthGroup(g).name;
 		}
 
 		Group[] groups;
@@ -351,7 +352,7 @@ class WebInterface {
 	{
 		auto grp = m_ctrl.getGroupByName(req.form["group"]);
 
-		BsonObjectID user_id;
+		User.ID user_id;
 		if( !enforceAuth(req, res, grp, true, &user_id) )
 			return;
 
@@ -435,16 +436,17 @@ class WebInterface {
 		res.redirect(url, redirect_status_code);
 	}
 
-	bool enforceAuth(HTTPServerRequest req, HTTPServerResponse res, ref Group grp, bool read_write, BsonObjectID* user_id = null)
+	bool enforceAuth(HTTPServerRequest req, HTTPServerResponse res, ref Group grp, bool read_write, User.ID* user_id = null)
 	{
-		if( user_id ) *user_id = BsonObjectID();
-		BsonObjectID uid;
+		if( user_id ) *user_id = User.ID.init;
+		User.ID uid;
 		string[] authTags;
 		if( req.session && req.session.isKeySet("userEmail") ){
 			auto usr = m_ctrl.getUserByEmail(req.session["userEmail"]);
-			authTags = usr.groups;
-			if( user_id ) *user_id = usr._id;
-			uid = usr._id;
+			foreach (g; usr.groups)
+				authTags ~= m_ctrl.getAuthGroup(g).name;
+			if( user_id ) *user_id = usr.id;
+			uid = usr.id;
 		}
 
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
@@ -460,7 +462,7 @@ class WebInterface {
 				break;
 			}
 		if( !found ){
-			if( uid == BsonObjectID() ){
+			if (uid == User.ID.init) {
 				res.redirect("/login?redirect="~urlEncode(req.requestURL));
 				return false;
 			} else {
