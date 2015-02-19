@@ -101,7 +101,7 @@ class WebInterface {
 
 		string[] authTags;
 		if( req.session && req.session.isKeySet("userEmail") ){
-			auto usr = m_ctrl.getUserByEmail(req.session["userEmail"]);
+			auto usr = m_ctrl.getUserByEmail(req.session.get!string("userEmail"));
 			foreach (g; usr.groups)
 				authTags ~= m_ctrl.getAuthGroup(g).name;
 		}
@@ -307,11 +307,11 @@ class WebInterface {
 		if( req.session ){
 			if( req.session.isKeySet("userEmail") ){
 				info.loggedIn = true;
-				info.name = req.session["userFullName"];
-				info.email = req.session["userEmail"];
+				info.name = req.session.get!string("userFullName");
+				info.email = req.session.get!string("userEmail");
 			} else {
-				info.name = req.session["lastUsedName"];
-				info.email = req.session["lastUsedEmail"];
+				info.name = req.session.get!string("lastUsedName");
+				info.email = req.session.get!string("lastUsedEmail");
 			}
 		}
 
@@ -357,8 +357,8 @@ class WebInterface {
 			return;
 
 		bool loggedin = req.session && req.session.isKeySet("userEmail");
-		string email = loggedin ? req.session["userEmail"] : req.form["email"].strip();
-		string name = loggedin ? req.session["userFullName"] : req.form["name"].strip();
+		string email = loggedin ? req.session.get!string("userEmail") : req.form["email"].strip();
+		string name = loggedin ? req.session.get!string("userFullName") : req.form["name"].strip();
 		string subject = req.form["subject"].strip();
 		string message = req.form["message"];
 
@@ -411,8 +411,8 @@ class WebInterface {
 		}
 
 		if( !req.session ) req.session = res.startSession();
-		req.session["lastUsedName"] = name.idup;
-		req.session["lastUsedEmail"] = email.idup;
+		req.session.set("lastUsedName", name.idup);
+		req.session.set("lastUsedEmail", email.idup);
 
 		redirectToThreadPost(res, Path(req.path).parentPath.toString(), grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
 	}
@@ -442,7 +442,7 @@ class WebInterface {
 		User.ID uid;
 		string[] authTags;
 		if( req.session && req.session.isKeySet("userEmail") ){
-			auto usr = m_ctrl.getUserByEmail(req.session["userEmail"]);
+			auto usr = m_ctrl.getUserByEmail(req.session.get!string("userEmail"));
 			foreach (g; usr.groups)
 				authTags ~= m_ctrl.getAuthGroup(g).name;
 			if( user_id ) *user_id = usr.id;

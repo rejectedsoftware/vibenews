@@ -4,7 +4,7 @@ block header
 	.loginArea
 		- if( req.session && req.session.isKeySet("userEmail") )
 			div
-				|Logged in as #{req.session["userFullName"]}
+				|Logged in as #{req.session.get!string("userFullName")}
 			div
 				a(href="#{req.rootDir}profile") Edit profile
 				a(href="#{req.rootDir}logout") Log out
