@@ -7,7 +7,7 @@
 	"license": "AGPL-3.0",
 	"dependencies": {
 		"antispam": "~>0.0.5",
-		"userman": "~>0.2.2",
+		"userman": "~>0.2.3",
 		"vibe-d": "~>0.7.22"
 	},
 	"versions": ["VibeDefaultMain"]
