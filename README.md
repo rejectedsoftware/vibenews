@@ -44,7 +44,7 @@ Example `settings.json`:
 ```
 {
 	"title": "Example Forum",
-	"hostName": "forum.example.org",
+	"host": "forum.example.org",
 	"nntpPort": 119,
 	"webPort": 8009,
 	"adminPort": 9009,
