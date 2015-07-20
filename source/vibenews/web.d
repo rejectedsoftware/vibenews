@@ -126,9 +126,7 @@ class WebInterface {
 
 		info.categories.sort!"a.index < b.index"();
 
-		res.renderCompat!("vibenews.web.index.dt",
-			HTTPServerRequest, "req",
-			Info1*, "info")(Variant(req), Variant(&info));
+		res.render!("vibenews.web.index.dt", req, info);
 	}
 
 	void showEditProfile(HTTPServerRequest req, HTTPServerResponse res, User user)
@@ -147,9 +145,7 @@ class WebInterface {
 
 		m_ctrl.enumerateGroups((idx, grp){ info.groups ~= grp; });
 
-		res.renderCompat!("vibenews.web.edit_profile.dt",
-			HTTPServerRequest, "req",
-			Info*, "info")(req, &info);
+		res.render!("vibenews.web.edit_profile.dt", req, info);
 	}
 
 	void updateProfile(HTTPServerRequest req, HTTPServerResponse res, User user)
@@ -193,9 +189,7 @@ class WebInterface {
 		
 		info.pageCount = (info.group.numberOfTopics + info.pageSize-1) / info.pageSize;
 
-		res.renderCompat!("vibenews.web.view_group.dt",
-			HTTPServerRequest, "req",
-			Info2*, "info")(Variant(req), Variant(&info));
+		res.render!("vibenews.web.view_group.dt", req, info);
 	}
 
 	void showThread(HTTPServerRequest req, HTTPServerResponse res)
@@ -237,9 +231,7 @@ class WebInterface {
 			info.posts ~= PostInfo(art, replart, info.group.name);
 		});
 
-		res.renderCompat!("vibenews.web.view_thread.dt",
-			HTTPServerRequest, "req",
-			Info3*, "info")(Variant(req), Variant(&info));
+		res.render!("vibenews.web.view_thread.dt", req, info);
 	}
 
 	void showPost(HTTPServerRequest req, HTTPServerResponse res)
@@ -269,9 +261,7 @@ class WebInterface {
 		info.post = PostInfo(art, replart, info.group.name);
 		info.thread = ThreadInfo(m_ctrl.getThread(art.groups[escapeGroup(grp.name)].threadId), m_ctrl, 0, grp.name);
 
-		res.renderCompat!("vibenews.web.view_post.dt",
-			HTTPServerRequest, "req",
-			Info4*, "info")(Variant(req), Variant(&info));
+		res.render!("vibenews.web.view_post.dt", req, info);
 	}
 
 	void redirectShowPost(HTTPServerRequest req, HTTPServerResponse res)
@@ -336,9 +326,7 @@ class WebInterface {
 		if( auto psj = "subject" in req.form ) info.subject = *psj;
 		if( auto pmg = "message" in req.form ) info.message = *pmg;
 
-		res.renderCompat!("vibenews.web.reply.dt",
-			HTTPServerRequest, "req",
-			Info5*, "info")(Variant(req), Variant(&info));
+		res.render!("vibenews.web.reply.dt", req, info);
 	}
 
 	void markupArticle(HTTPServerRequest req, HTTPServerResponse res)
