@@ -45,7 +45,7 @@ class AdminInterface {
 
 		auto settings = new HTTPServerSettings;
 		settings.port = vnsettings.adminPort;
-		settings.bindAddresses = ["127.0.0.1"];
+		settings.bindAddresses = vnsettings.adminBindAddresses;
 
 		auto router = new URLRouter;
 		register(router);

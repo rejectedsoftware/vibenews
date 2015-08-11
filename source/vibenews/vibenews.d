@@ -27,11 +27,13 @@ class VibeNewsSettings {
 	ushort nntpPort = 119;
 	ushort nntpSSLPort = 563;
 	deprecated @property ref inout(ushort) nntpSslPort() inout { return nntpSSLPort; }
-	ushort webPort = 8009;
+	ushort webPort = 80;
 	ushort adminPort = 9009;
 	string databaseName = "vibenews";
 	string sslCertFile;
 	string sslKeyFile;
+	string[] webBindAddresses;
+	string[] adminBindAddresses;
 
 	SMTPClientSettings mailSettings;
 
@@ -46,13 +48,23 @@ class VibeNewsSettings {
 
 	SpamFilter[] spamFilters;
 
+	this()
+	{
+		import vibe.http.server : HTTPServerSettings;
+		auto defaultBindAddresses = (new HTTPServerSettings).bindAddresses;
+		webBindAddresses = defaultBindAddresses;
+		adminBindAddresses = defaultBindAddresses;
+	}
+
 	void parseSettings(Json json)
 	{
-		if( auto pv = "nntpPort" in json ) nntpPort = cast(short)pv.get!long;
-		if( auto pv = "nntpSslPort" in json ) nntpSSLPort = cast(short)pv.get!long; // deprecated
-		if( auto pv = "nntpSSLPort" in json ) nntpSSLPort = cast(short)pv.get!long;
-		if( auto pv = "webPort" in json ) webPort = cast(short)pv.get!long;
-		if( auto pv = "adminPort" in json ) adminPort = cast(short)pv.get!long;
+		import std.conv;
+
+		if( auto pv = "nntpPort" in json ) nntpPort = pv.get!long.to!short;
+		if( auto pv = "nntpSslPort" in json ) nntpSSLPort = pv.get!long.to!short; // deprecated
+		if( auto pv = "nntpSSLPort" in json ) nntpSSLPort = pv.get!long.to!short;
+		if( auto pv = "webPort" in json ) webPort = pv.get!long.to!short;
+		if( auto pv = "adminPort" in json ) adminPort = pv.get!long.to!short;
 		if( auto pv = "host" in json ) hostName = pv.get!string;
 		if( auto pv = "title" in json ) title = pv.get!string;
 		if( auto pv = "description" in json ) description = pv.get!string;
@@ -69,6 +81,16 @@ class VibeNewsSettings {
 					if( flt.id == key )
 						flt.applySettings(value);
 			}
+		}
+		if( auto pa = "webBindAddresses" in json ){
+			webBindAddresses = [];
+			foreach( address; *pa )
+				webBindAddresses ~= address.get!string;
+		}
+		if( auto pa = "adminBindAddresses" in json ){
+			adminBindAddresses = [];
+			foreach( address; *pa )
+				adminBindAddresses ~= address.get!string;
 		}
 	}
 }

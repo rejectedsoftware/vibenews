@@ -1,0 +1,15 @@
+{
+	"title": "Example Forum",
+	"host": "forum.example.org",
+	"nntpPort": 119,
+	"webPort": 8009,
+	"webBindAddresses": ["127.0.0.1"],
+	"adminPort": 9009,
+	"adminBindAddresses": ["127.0.0.1"],
+	"googleSearch": true,
+	"spamfilters": {
+		"blacklist": {
+			"ips": []
+		}
+	}
+}

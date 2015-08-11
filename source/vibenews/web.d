@@ -58,7 +58,7 @@ class WebInterface {
 	{
 		auto settings = new HTTPServerSettings;
 		settings.port = m_settings.webPort;
-		settings.bindAddresses = ["127.0.0.1"];
+		settings.bindAddresses = m_settings.webBindAddresses;
 		settings.sessionStore = new MemorySessionStore;
 
 		auto router = new URLRouter;

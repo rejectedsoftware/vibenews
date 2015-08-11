@@ -31,23 +31,24 @@ Installation
         cd vibenews
         dub run
 
-The following ports are now available:
+The following ports are now available, per the default `settings.json` file:
 
  - :119 provides the NNTP interface
  - 127.0.0.1:8009 provides the HTTP web interface
  - 127.0.0.1:9009 provides the admin interface
 
-You probably want to put the web forum behind a reverse proxy to make it available to the public. Alternatively, you can also create a `settings.json` file and change the web interface port among other things.
+You can leave these settings unchanged if you use a reverse proxy to make the web forum available to the public. Alternatively, you change the settings file to make the web forum directly reachable from the Internet. You can delete the key `webBindAddresses` to listen on the default network interfaces or you can provide your own list of bind addresses.
 
 Example `settings.json`:
 
 ```
 {
 	"title": "Example Forum",
-	"hostName": "forum.example.org",
+	"host": "forum.example.org",
 	"nntpPort": 119,
-	"webPort": 8009,
+	"webPort": 80,
 	"adminPort": 9009,
+	"adminBindAddresses": ["127.0.0.1"],
 	"googleSearch": true,
 	"spamfilters": {
 		"blacklist": {
