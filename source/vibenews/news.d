@@ -392,6 +392,7 @@ class NewsInterface {
 		res.status = NNTPStatus.overviewFollows;
 		res.statusText = "Overview information follows (multi-line)";
 		auto dst = res.bodyWriter;
+		auto app = appender!string();
 		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) {
 			string sanitizeHeader(string hdr) {
 				auto ret = appender!string();
@@ -412,7 +413,7 @@ class NewsInterface {
 
 			if (idx > 0) dst.write("\r\n");
 
-			dst.formattedWrite("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d",
+			app.formattedWrite("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d",
 				art.groups[escapeGroup(grpname)].articleNumber,
 				sanitizeHeader(art.getHeader("Subject")),
 				sanitizeHeader(art.getHeader("From")),
@@ -428,8 +429,9 @@ class NewsInterface {
 				if (icmp(h.key, "Date") == 0) continue;
 				if (icmp(h.key, "Message-ID") == 0) continue;
 				if (icmp(h.key, "References") == 0) continue;
-				dst.formattedWrite("\t%s: %s", h.key, sanitizeHeader(h.value));
+				app.formattedWrite("\t%s: %s", h.key, sanitizeHeader(h.value));
 			}
+			dst.write(app.data);
 		});
 	}
 
