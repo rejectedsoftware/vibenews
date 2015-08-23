@@ -211,7 +211,7 @@ class NewsInterface {
 				dst.write(": ");
 				dst.write(hdr.value);
 			}
-			
+
 			// write Xref header
 			dst.write("\r\n");
 			dst.write("Xref: ");
@@ -222,7 +222,7 @@ class NewsInterface {
 				dst.write(":");
 				dst.write(to!string(grpref.articleNumber));
 			}
-			
+
 			if( req.command == "article" )
 				dst.write("\r\n\r\n");
 		}
@@ -235,7 +235,7 @@ class NewsInterface {
 	void authinfo(NNTPServerRequest req, NNTPServerResponse res)
 	{
 		req.enforceNParams(2, "USER/PASS <value>");
-		
+
 		switch(req.parameters[0].toLower()){
 			default:
 				res.status = NNTPStatus.commandSyntaxError;
@@ -382,17 +382,18 @@ class NewsInterface {
 		} else fromstr = tostr = req.parameters[0];
 
 		auto grp = m_ctrl.getGroupByName(grpname);
-		
+
 		if( !testAuth(grp, false, res) )
 			return;
 
 		long fromnum = to!long(fromstr);
 		long tonum = tostr.length ? to!long(tostr) : grp.maxArticleNumber;
-		
+
 		res.status = NNTPStatus.overviewFollows;
 		res.statusText = "Overview information follows (multi-line)";
-		auto dst = res.bodyWriter;
-		auto app = appender!string();
+
+        import vibe.stream.wrapper : StreamOutputRange;
+        auto dst = StreamOutputRange(res.bodyWriter);
 		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) {
 			string sanitizeHeader(string hdr) {
 				auto ret = appender!string();
@@ -411,9 +412,9 @@ class NewsInterface {
 				else { ret.put(hdr[sidx .. $]); return ret.data; }
 			}
 
-			if (idx > 0) dst.write("\r\n");
+			if (idx > 0) dst.put("\r\n");
 
-			app.formattedWrite("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d",
+			(&dst).formattedWrite("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d",
 				art.groups[escapeGroup(grpname)].articleNumber,
 				sanitizeHeader(art.getHeader("Subject")),
 				sanitizeHeader(art.getHeader("From")),
@@ -429,9 +430,9 @@ class NewsInterface {
 				if (icmp(h.key, "Date") == 0) continue;
 				if (icmp(h.key, "Message-ID") == 0) continue;
 				if (icmp(h.key, "References") == 0) continue;
-				app.formattedWrite("\t%s: %s", h.key, sanitizeHeader(h.value));
+				(&dst).formattedWrite("\t%s: %s", h.key, sanitizeHeader(h.value));
 			}
-			dst.write(app.data);
+			dst.flush();
 		});
 	}
 
@@ -496,7 +497,7 @@ class NewsInterface {
 			m_ctrl.enumerateGroups((gi, group){
 				if( !testAuth(group.name, false, res) )
 					return;
-					
+
 				m_ctrl.enumerateNewArticles(group.name, SysTime(date, UTC()), (i, id, msgid, msgnum){
 						if( !first ) writer.write("\r\n");
 						first = false;
