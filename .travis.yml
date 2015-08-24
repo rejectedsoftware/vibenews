@@ -1,0 +1,16 @@
+language: d
+
+d:
+  - dmd-2.068.0
+  - dmd-2.067.1
+  - dmd-2.066.1
+
+addons:
+  apt:
+    packages:
+    - libev-dev
+
+services:
+  - mongodb
+
+sudo: false
