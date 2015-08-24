@@ -371,6 +371,8 @@ class NewsInterface {
 
 	void over(NNTPServerRequest req, NNTPServerResponse res)
 	{
+		import vibe.stream.wrapper : StreamOutputRange;
+
 		req.enforceNParams(1, "(X)OVER [range]");
 		req.enforce(s_group.length > 0, NNTPStatus.noGroupSelected, "No newsgroup selected");
 		string grpname = s_group;
@@ -392,8 +394,7 @@ class NewsInterface {
 		res.status = NNTPStatus.overviewFollows;
 		res.statusText = "Overview information follows (multi-line)";
 
-        import vibe.stream.wrapper : StreamOutputRange;
-        auto dst = StreamOutputRange(res.bodyWriter);
+		auto dst = StreamOutputRange(res.bodyWriter);
 		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) {
 			string sanitizeHeader(string hdr) {
 				auto ret = appender!string();
