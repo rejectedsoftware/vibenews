@@ -949,3 +949,5 @@ struct Thread {
 	BsonObjectID firstArticleId;
 	BsonObjectID lastArticleId;
 }
+
+enum authGroupPrefix = "vibenews.authgroup.";

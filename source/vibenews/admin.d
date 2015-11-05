@@ -28,7 +28,6 @@ import std.exception;
 import std.string;
 import std.variant;
 
-
 class AdminInterface {
 	private {
 		Controller m_ctrl;
@@ -257,7 +256,7 @@ class AdminInterface {
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
 		string[userman.controller.Group.ID] groups;
 		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){
-			info.users ~= getUserInfo(user, groups);
+			info.users ~= getUserInfo(m_ctrl, user, groups);
 		});
 		info.itemCount = cast(int)m_ctrl.getUserCount();
 		info.pageCount = (info.itemCount-1)/info.itemsPerPage + 1;
@@ -271,10 +270,11 @@ class AdminInterface {
 			VibeNewsSettings settings;
 			UserInfo user;
 		}
+		User usr = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
 		string[userman.controller.Group.ID] groups;
 		Info info;
 		info.settings = m_ctrl.settings;
-		info.user = getUserInfo(m_ctrl.getUser(User.ID.fromString(req.params["user"])), groups);
+		info.user = getUserInfo(m_ctrl, usr, groups);
 		res.render!("vibenews.admin.edituser.dt", req, info);
 	}
 
@@ -286,7 +286,16 @@ class AdminInterface {
 			user.email = user.name = *pv;
 		}
 		if (auto pv = "fullName" in req.form) user.fullName = *pv;
-		if (auto pv = "groups" in req.form) user.groups = (*pv).split(",").map!(g => m_ctrl.getAuthGroupByName(g.strip()).id)().array();
+		if (auto pv = "groups" in req.form) {
+			user.groups.length = 0;
+			foreach (grp; (*pv).splitter(",").map!(g => authGroupPrefix ~ g.strip())) {
+				try user.groups ~= m_ctrl.getAuthGroupByName(grp).id;
+				catch (Exception) {
+					m_ctrl.userManController.addGroup(grp, "VibeNews authentication group");
+					user.groups ~= m_ctrl.getAuthGroupByName(grp).id;
+				}
+			}
+		}
 		user.active = ("active" in req.form) !is null;
 		user.banned = ("banned" in req.form) !is null;
 		m_ctrl.updateUser(user);
@@ -299,18 +308,6 @@ class AdminInterface {
 		m_ctrl.deleteUser(User.ID.fromString(req.params["user"]));
 		res.redirect("/users/");
 	}
-
-	private UserInfo getUserInfo(User user, ref string[userman.controller.Group.ID] groups)
-	{
-		UserInfo nfo;
-		nfo.user = user;
-		m_ctrl.getUserMessageCount(user.email, nfo.messageCount, nfo.deletedMessageCount);
-		foreach (g; user.groups) {
-			if (auto gd = g in groups) nfo.groupStrings ~= *gd;
-			else nfo.groupStrings ~= (groups[g] = m_ctrl.getAuthGroup(g).name);
-		}
-		return nfo;
-	}
 }
 
 struct UserInfo {
@@ -319,4 +316,20 @@ struct UserInfo {
 	ulong messageCount;
 	ulong deletedMessageCount;
 	string[] groupStrings;
+}
+
+private UserInfo getUserInfo(Controller ctrl, User user, ref string[userman.controller.Group.ID] groups)
+{
+	UserInfo nfo;
+	nfo.user = user;
+	ctrl.getUserMessageCount(user.email, nfo.messageCount, nfo.deletedMessageCount);
+	foreach (g; user.groups) {
+		string grpname;
+		if (auto gd = g in groups) grpname = *gd;
+		else grpname = groups[g] = ctrl.getAuthGroup(g).name;
+		if (!grpname.startsWith(authGroupPrefix)) continue;
+		grpname = grpname[authGroupPrefix.length .. $];
+		nfo.groupStrings ~= grpname;
+	}
+	return nfo;
 }
