@@ -148,7 +148,7 @@ class WebInterface {
 
 		info.categories.sort!"a.index < b.index"();
 
-		res.render!("vibenews.web.index.dt", req, info);
+		render!("vibenews.web.index.dt", info);
 	}
 
 	void getGroups()
@@ -157,7 +157,7 @@ class WebInterface {
 	}
 
 	@auth
-	void getProfile(HTTPServerRequest req, HTTPServerResponse res, User user)
+	void getProfile(HTTPServerRequest req, User user, string _error = null)
 	{
 		struct Info {
 			VibeNewsSettings settings;
@@ -170,30 +170,25 @@ class WebInterface {
 		info.settings = m_settings;
 		req.form["email"] = user.email;
 		req.form["full_name"] = user.fullName;
+		if (_error.length) req.params["error"] = _error;
 
 		m_ctrl.enumerateGroups((idx, grp){ info.groups ~= grp; });
 
-		res.render!("vibenews.web.edit_profile.dt", req, info);
+		render!("vibenews.web.edit_profile.dt", info);
 	}
 
-	@auth
-	void postProfile(HTTPServerRequest req, HTTPServerResponse res, User user)
+	@auth @errorDisplay!getProfile
+	void postProfile(HTTPServerRequest req, User user)
 	{
-		try {
-			.updateProfile(m_ctrl.userManController, user, req);
+		.updateProfile(m_ctrl.userManController, user, req);
 
-			// TODO: notifications
-		} catch(Exception e){
-			req.params["error"] = e.msg;
-			getProfile(req, res, user);
-			return;
-		}
+		// TODO: notifications
 
-		res.redirect(req.path);
+		redirect(req.path);
 	}
 
 	@path("/groups/post")
-	void getPostArticle(HTTPServerRequest req, HTTPServerResponse res)
+	void getPostArticle(HTTPServerRequest req, HTTPServerResponse res, string _error = null)
 	{
 		string groupname;
 		if( auto pg = "group" in req.query ) groupname = *pg;
@@ -244,7 +239,7 @@ class WebInterface {
 		info.group = GroupInfo(grp, m_ctrl);
 
 		// recover old values if showPostArticle was called because of an error
-		if( auto per = "error" in req.params ) info.error = *per;
+		info.error = _error;
 		if( auto pnm = "name" in req.form ) info.name = *pnm;
 		if( auto pem = "email" in req.form ) info.email = *pem;
 		if( auto psj = "subject" in req.form ) info.subject = *psj;
@@ -253,10 +248,10 @@ class WebInterface {
 		render!("vibenews.web.reply.dt", info);
 	}
 
-	@path("/groups/post")
-	void postArticle(HTTPServerRequest req, HTTPServerResponse res)
+	@path("/groups/post") @errorDisplay!getPostArticle
+	void postArticle(HTTPServerRequest req, HTTPServerResponse res, string group, string subject, string message)
 	{
-		auto grp = m_ctrl.getGroupByName(req.form["group"]);
+		auto grp = m_ctrl.getGroupByName(group);
 
 		User.ID user_id;
 		if( !enforceAuth(req, res, grp, true, &user_id) )
@@ -265,22 +260,14 @@ class WebInterface {
 		bool loggedin = req.session && req.session.isKeySet("userEmail");
 		string email = loggedin ? req.session.get!string("userEmail") : req.form["email"].strip();
 		string name = loggedin ? req.session.get!string("userFullName") : req.form["name"].strip();
-		string subject = req.form["subject"].strip();
-		string message = req.form["message"];
 
-		try {
-			validateEmail(email);
-			validateString(name, 3, 64, "The poster name");
-			validateString(subject, 1, 128, "The message subject");
-			validateString(message, 0, 128*1024, "The message body");
+		validateEmail(email);
+		validateString(name, 3, 64, "The poster name");
+		validateString(subject, 1, 128, "The message subject");
+		validateString(message, 0, 128*1024, "The message body");
 
-			if( !loggedin ){
-				enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
-			}
-		} catch(Exception e){
-			req.params["error"] = e.msg;
-			getPostArticle(req, res);
-			return;
+		if( !loggedin ){
+			enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
 		}
 
 		Article art;
@@ -309,12 +296,7 @@ class WebInterface {
 		else art.peerAddress = [req.peer];
 		art.message = cast(ubyte[])(message ~ "\r\n");
 
-		try m_ctrl.postArticle(art, user_id);
-		catch( Exception e ){
-			req.params["error"] = e.msg;
-			getPostArticle(req, res);
-			return;
-		}
+		m_ctrl.postArticle(art, user_id);
 
 		if( !req.session ) req.session = res.startSession();
 		req.session.set("lastUsedName", name.idup);
@@ -324,9 +306,9 @@ class WebInterface {
 	}
 
 	@path("/groups/:group/")
-	void getGroup(HTTPServerRequest req, HTTPServerResponse res)
+	void getGroup(HTTPServerRequest req, HTTPServerResponse res, string _group)
 	{
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		auto grp = m_ctrl.getGroupByName(_group);
 
 		if( !enforceAuth(req, res, grp, false) )
 			return;
@@ -354,9 +336,9 @@ class WebInterface {
 	}
 
 	@path("/groups/:group/thread/:thread/")
-	void getThread(HTTPServerRequest req, HTTPServerResponse res)
+	void getThread(HTTPServerRequest req, HTTPServerResponse res, string _group, long _thread)
 	{
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		auto grp = m_ctrl.getGroupByName(_group);
 
 		if( !enforceAuth(req, res, grp, false) )
 			return;
@@ -375,11 +357,10 @@ class WebInterface {
 		Info3 info;
 		info.settings = m_settings;
 		info.pageSize = m_postsPerPage;
-		auto threadnum = req.params["thread"].to!long();
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
-		try info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, threadnum), m_ctrl, info.pageSize, grp.name);
+		try info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, _thread), m_ctrl, info.pageSize, grp.name);
 		catch( Exception e ){
-			redirectToThreadPost(res, (Path(req.path) ~ "../../../").toString(), grp.name, threadnum);
+			redirectToThreadPost(res, (Path(req.path) ~ "../../../").toString(), grp.name, _thread);
 			return;
 		}
 		info.group = GroupInfo(grp, m_ctrl);
@@ -397,9 +378,9 @@ class WebInterface {
 	}
 
 	@path("/groups/:group/post/:post")
-	void getPost(HTTPServerRequest req, HTTPServerResponse res)
+	void getPost(HTTPServerRequest req, HTTPServerResponse res, string _group, long _post)
 	{
-		auto grp = m_ctrl.getGroupByName(req.params["group"]);
+		auto grp = m_ctrl.getGroupByName(_group);
 
 		if( !enforceAuth(req, res, grp, false) )
 			return;
@@ -411,13 +392,11 @@ class WebInterface {
 			ThreadInfo thread;
 		}
 
-		auto postnum = req.params["post"].to!long();
-
 		Info4 info;
 		info.settings = m_settings;
 		info.group = GroupInfo(grp, m_ctrl);
 
-		auto art = m_ctrl.getArticle(grp.name, postnum);
+		auto art = m_ctrl.getArticle(grp.name, _post);
 		Article replart;
 		try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
 		catch( Exception ){}
@@ -429,20 +408,19 @@ class WebInterface {
 
 	// deprecated
 	@path("/groups/:group/thread/:thread/:post")
-	void getRedirectShowPost(HTTPServerRequest req, HTTPServerResponse res)
+	void getRedirectShowPost(HTTPServerRequest req, HTTPServerResponse res, string _group, long _thread, string _post)
 	{
-		res.redirect((Path(req.path)~"../../../post/"~req.params["post"]).toString(), HTTPStatus.movedPermanently);
+		res.redirect((Path(req.path)~"../../../post/"~_post).toString(), HTTPStatus.movedPermanently);
 	}
 
 
-	void getMarkup(HTTPServerRequest req, HTTPServerResponse res)
+	void postMarkup(HTTPServerRequest req, HTTPServerResponse res, string message)
 	{
-		auto msg = req.form["message"];
-		validateString(msg, 0, 128*1024, "The message body");
-		res.writeBody(filterMarkdown(msg, MarkdownFlags.forumDefault), "text/html");
+		validateString(message, 0, 128*1024, "The message body");
+		res.writeBody(filterMarkdown(message, MarkdownFlags.forumDefault), "text/html");
 	}
 
-	void redirectToThreadPost(HTTPServerResponse res, string groups_path, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)
+	private void redirectToThreadPost(HTTPServerResponse res, string groups_path, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)
 	{
 		if( thread_id == BsonObjectID() ){
 			auto refs = m_ctrl.getArticleGroupRefs(groupname, article_number);
