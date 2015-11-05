@@ -11,6 +11,11 @@ block vibenews.navigation
 			a(href="./show")= title
 
 block vibenews.body
+	- auto stripPrefix(string[] tags)
+		- import vibenews.controller;
+		- import std.algorithm : map, startsWith;
+		- return tags.map!(t => t.startsWith(authGroupPrefix) ? t[authGroupPrefix.length .. $] : t);
+
 	p
 		a(href="#{req.rootDir}") Back to overview
 
@@ -39,12 +44,12 @@ block vibenews.body
 				td
 					label(for="roauthtags") Read-only auth tags
 				td
-					input#roauthtags(type="text", name="roauthtags", value='#{join(group.readOnlyAuthTags, ", ")}')
+					input#roauthtags(type="text", name="roauthtags", value='#{join(stripPrefix(group.readOnlyAuthTags), ", ")}')
 			tr
 				td
 					label(for="rwauthtags") Read-write auth tags
 				td
-					input#rwauthtags(type="text", name="rwauthtags", value='#{join(group.readWriteAuthTags, ", ")}')
+					input#rwauthtags(type="text", name="rwauthtags", value='#{join(stripPrefix(group.readWriteAuthTags), ", ")}')
 			tr
 				td
 				td

@@ -684,33 +684,34 @@ class Controller {
 
 	bool isAuthorizedForReadingGroup(User.ID user, string groupname)
 	{
+		import std.range : chain;
 		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
-		if( grp.isNull() ) return false;
-		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
+		if (grp.isNull()) return false;
+		if (grp.readOnlyAuthTags.length == 0) return true;
 		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
-		foreach( g; grp.readOnlyAuthTags )
-			foreach( tag; usr.groups )
-				if( tag == g.get!string )
+		foreach (ag; chain(grp.readOnlyAuthTags, grp.readWriteAuthTags)) {
+			auto agid = getAuthGroupByName(ag.get!string).id;
+			foreach (gid; usr.groups)
+				if (gid == agid)
 					return true;
-		foreach( g; grp.readWriteAuthTags )
-			foreach( tag; usr.groups )
-				if( tag == g.get!string )
-					return true;
+		}
 		return false;
 	}
 
 	bool isAuthorizedForWritingGroup(User.ID user, string groupname)
 	{
 		auto grp = m_groups.findOne(["name": groupname], ["readOnlyAuthTags": 1, "readWriteAuthTags": 1]);
-		if( grp.isNull() ) return false;
-		if( grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0 ) return true;
+		if (grp.isNull()) return false;
+		if (grp.readOnlyAuthTags.length == 0 && grp.readWriteAuthTags.length == 0) return true;
 		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
-		foreach( g; grp.readWriteAuthTags )
-			foreach( tag; usr.groups )
-				if( tag == g.get!string )
+		foreach (ag; grp.readWriteAuthTags) {
+			auto agid = getAuthGroupByName(ag.get!string).id;
+			foreach (gid; usr.groups)
+				if (gid == agid)
 					return true;
+		}
 		return false;
 	}
 

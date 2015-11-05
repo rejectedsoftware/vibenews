@@ -166,8 +166,8 @@ class AdminInterface {
 		group.caption = req.form["caption"];
 		group.description = req.form["description"];
 		group.active = ("active" in req.form) !is null;
-		group.readOnlyAuthTags = req.form["roauthtags"].split(",").map!(s => strip(s))().array();
-		group.readWriteAuthTags = req.form["rwauthtags"].split(",").map!(s => strip(s))().array();
+		group.readOnlyAuthTags = req.form["roauthtags"].split(",").map!(s => authGroupPrefix ~ strip(s))().array();
+		group.readWriteAuthTags = req.form["rwauthtags"].split(",").map!(s => authGroupPrefix ~ strip(s))().array();
 		m_ctrl.updateGroup(group);
 		res.redirect("/groups/"~urlEncode(group.name)~"/show");
 	}

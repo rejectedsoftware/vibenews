@@ -130,11 +130,11 @@ class WebInterface {
 
 		Group[] groups;
 		m_ctrl.enumerateGroups((idx, grp){
-			auto alltags = grp.readOnlyAuthTags ~ grp.readWriteAuthTags;
-			if( alltags.length > 0 ){
+			auto alltags = grp.readOnlyAuthTags;
+			if (alltags.length > 0) {
 				bool found = false;
-				foreach( t; alltags )
-					if( authTags.canFind(t) ){
+				foreach (t; alltags)
+					if (authTags.canFind(t)) {
 						found = true;
 						break;
 					}
@@ -453,6 +453,9 @@ class WebInterface {
 			uid = usr.id;
 		}
 
+		if (!read_write && grp.readOnlyAuthTags.empty)
+			return true;
+
 		if( grp.readOnlyAuthTags.empty && grp.readWriteAuthTags.empty )
 			return true;
 
@@ -460,8 +463,8 @@ class WebInterface {
 		if( !read_write ) alltags ~= grp.readOnlyAuthTags;
 
 		bool found = false;
-		foreach( t; alltags )
-			if( authTags.canFind(t) ){
+		foreach (t; alltags)
+			if (authTags.canFind(t)) {
 				found = true;
 				break;
 			}
