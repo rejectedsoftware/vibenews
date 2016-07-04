@@ -1,7 +1,7 @@
 /**
 	(module summary)
 
-	Copyright: © 2012-2014 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -13,7 +13,7 @@ import vibenews.controller;
 import vibenews.vibenews;
 
 import antispam.antispam;
-import userman.controller : User;
+import userman.db.controller : User;
 import vibe.core.core;
 import vibe.core.log;
 import vibe.crypto.passwordhash;
@@ -21,7 +21,7 @@ import vibe.data.bson;
 import vibe.inet.message;
 import vibe.stream.counting;
 import vibe.stream.operations;
-import vibe.stream.ssl;
+import vibe.stream.tls;
 
 import std.algorithm;
 import std.array;
@@ -62,7 +62,7 @@ class NewsInterface {
 			auto nntpsettingsssl = new NNTPServerSettings;
 			nntpsettingsssl.host = m_settings.hostName;
 			nntpsettingsssl.port = m_settings.nntpSSLPort;
-			nntpsettingsssl.sslContext = createSSLContext(SSLContextKind.server);
+			nntpsettingsssl.sslContext = createTLSContext(TLSContextKind.server);
 			nntpsettingsssl.sslContext.useCertificateChainFile(m_settings.sslCertFile);
 			nntpsettingsssl.sslContext.usePrivateKeyFile(m_settings.sslKeyFile);
 			listenNNTP(nntpsettingsssl, &handleCommand);

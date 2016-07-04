@@ -1,7 +1,7 @@
 /**
 	(module summary)
 
-	Copyright: © 2012-2014 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -14,7 +14,7 @@ import vibe.core.log;
 import vibe.core.net;
 import vibe.stream.counting;
 import vibe.stream.operations;
-import vibe.stream.ssl;
+import vibe.stream.tls;
 
 import std.algorithm;
 import std.conv;
@@ -34,15 +34,15 @@ void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NN
 
 		void acceptSsl()
 		{
-			SSLContext ctx;
+			TLSContext ctx;
 			if (settings.sslContext) ctx = settings.sslContext;
 			else {
-				ctx = createSSLContext(SSLContextKind.server);
+				ctx = createTLSContext(TLSContextKind.server);
 				ctx.useCertificateChainFile(settings._sslCertFile);
 				ctx.usePrivateKeyFile(settings._sslKeyFile);
 			}
 			logTrace("accepting SSL");
-			stream = createSSLStream(stream, ctx, SSLStreamState.accepting);
+			stream = createTLSStream(stream, ctx, TLSStreamState.accepting);
 			logTrace("accepted SSL");
 			tls_active = true;
 		}
@@ -142,7 +142,7 @@ class NNTPServerSettings {
 	ushort port = 119; // SSL port is 563
 	string[] bindAddresses = ["0.0.0.0"];
 	string host = "localhost"; // host name
-	SSLContext sslContext;
+	TLSContext sslContext;
 	bool requireSSL = false; // require STARTTLS on unencrypted connections
 
 	deprecated @property ref inout(bool) enableSsl() inout { return _enableSsl; }

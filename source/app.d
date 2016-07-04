@@ -1,7 +1,7 @@
 /**
 	Application entry point for the vibenews forum server.
 
-	Copyright: © 2012-2014 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -40,6 +40,5 @@ shared static this()
 	s_server.listen();
 	s_adminInterface = new AdminInterface(ctrl);
 	s_adminInterface.listen();
-	s_webInterface = new WebInterface(ctrl);
-	s_webInterface.listen();
+	startVibeNewsWebFrontend(ctrl);
 }

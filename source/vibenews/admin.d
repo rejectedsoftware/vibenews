@@ -1,7 +1,7 @@
 /**
 	(module summary)
 
-	Copyright: © 2012-2014 RejectedSoftware e.K.
+	Copyright: © 2012-2016 RejectedSoftware e.K.
 	License: Subject to the terms of the General Public License version 3, as written in the included LICENSE.txt file.
 	Authors: Sönke Ludwig
 */
@@ -10,7 +10,8 @@ module vibenews.admin;
 import vibenews.controller;
 import vibenews.vibenews;
 
-import userman.controller : User;
+import userman.db.controller : User;
+static import userman.db.controller;
 
 import vibe.core.log;
 import vibe.crypto.passwordhash;
@@ -254,7 +255,7 @@ class AdminInterface {
 		Info info;
 		info.settings = m_ctrl.settings;
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
-		string[userman.controller.Group.ID] groups;
+		string[userman.db.controller.Group.ID] groups;
 		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){
 			info.users ~= getUserInfo(m_ctrl, user, groups);
 		});
@@ -271,7 +272,7 @@ class AdminInterface {
 			UserInfo user;
 		}
 		User usr = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
-		string[userman.controller.Group.ID] groups;
+		string[userman.db.controller.Group.ID] groups;
 		Info info;
 		info.settings = m_ctrl.settings;
 		info.user = getUserInfo(m_ctrl, usr, groups);
@@ -280,6 +281,8 @@ class AdminInterface {
 
 	void updateUser(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		import std.algorithm.iteration : splitter;
+
 		auto user = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
 		if (auto pv = "email" in req.form) {
 			validateEmail(*pv);
@@ -318,7 +321,7 @@ struct UserInfo {
 	string[] groupStrings;
 }
 
-private UserInfo getUserInfo(Controller ctrl, User user, ref string[userman.controller.Group.ID] groups)
+private UserInfo getUserInfo(Controller ctrl, User user, ref string[userman.db.controller.Group.ID] groups)
 {
 	UserInfo nfo;
 	nfo.user = user;
