@@ -10,4 +10,12 @@ dependency "antispam" version="~>0.0.5"
 dependency "userman" version="~>0.3.0"
 sourcePaths "source/"
 
-versions "VibeDefaultMain"
+configuration "application" {
+	targetType "executable"
+	versions "VibeDefaultMain"
+}
+
+configuration "unittest" {
+	targetType "library"
+	excludedSourceFiles "source/app.d"
+}
