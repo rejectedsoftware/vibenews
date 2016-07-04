@@ -1,0 +1,13 @@
+name "vibenews"
+description "Combined web forum and NNTP server implementation for stand-alone newsgroups"
+homepage "https://github.com/rejectedsoftware/vibenews"
+authors "Sönke Ludwig"
+copyright "Copyright (c) 2012-2014 Sönke Ludwig"
+license "AGPL-3.0"
+
+dependency "vibe-d" version="~>0.7.26"
+dependency "antispam" version="~>0.0.5"
+dependency "userman" version="~>0.3.0"
+sourcePaths "source/"
+
+versions "VibeDefaultMain"
