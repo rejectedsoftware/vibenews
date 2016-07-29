@@ -497,6 +497,8 @@ class Controller {
 		art.messageLength = art.message.length;
 		art.messageLines = countLines(art.message);
 
+		enforce(art.message.length > 0, "You must enter a message.");
+
 		// validate sender
 		if (user_id == User.ID.init) {
 			enforce(!isEmailRegistered(from_email), new NNTPStatusException(NNTPStatus.articleRejected, "Need to log in to send from a registered email address."));
