@@ -1,7 +1,7 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"antispam": "0.0.5",
+		"antispam": "0.0.6",
 		"libasync": "0.7.9",
 		"libev": "5.0.0+4.04",
 		"libevent": "2.0.1+2.0.16",
