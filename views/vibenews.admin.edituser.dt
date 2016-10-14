@@ -13,6 +13,8 @@ block vibenews.navigation
 			a(href="./show")= title
 
 block vibenews.body
+	- import std.array : join;
+
 	p
 		a(href="#{req.rootDir}users/") Back to user list
 

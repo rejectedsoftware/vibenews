@@ -1,3 +1,5 @@
+- import std.string : toLower;
+
 - void mixinAvatarImage(string email, int size = 120, bool fixed_size = true)
 	- import std.digest.md;
 	.avatar

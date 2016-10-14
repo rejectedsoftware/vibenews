@@ -12,6 +12,7 @@ block vibenews.navigation
 
 block vibenews.body
 	- import std.algorithm;
+	- import std.array : join;
 	- import vibe.data.bson;
 	
 	p

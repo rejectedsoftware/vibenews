@@ -11,6 +11,7 @@ block vibenews.navigation
 			a(href="./show")= title
 
 block vibenews.body
+	- import std.array : join;
 	- auto stripPrefix(string[] tags)
 		- import vibenews.controller;
 		- import std.algorithm : map, startsWith;

@@ -3,6 +3,7 @@ extends vibenews.web.layout
 block title
 	- import vibe.textfilter.markdown;
 	- import vibe.textfilter.html;
+	- import std.string : indexOf;
 
 	- auto title = info.post.subject;
 
