@@ -40,6 +40,7 @@ block vibenews.body
 						span.active-page= i+1
 					- else
 						a.page(href="?page=#{i+1}")= i+1
+					|  
 
 	- pageLinks();
 
