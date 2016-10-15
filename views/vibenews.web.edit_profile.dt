@@ -54,9 +54,9 @@ block vibenews.body
 					button(type="submit") Apply
 
 
-	h2 E-mail notifications
+	//-h2 E-mail notifications
 
-	form(action="profile", method="POST")
+	//-form(action="profile", method="POST")
 		table
 			tr
 				th Enable
@@ -75,9 +75,9 @@ block vibenews.body
 					button(type="submit") Apply
 
 
-	h2 Notification frequency
+	//-h2 Notification frequency
 
-	form(action="profile", method="POST")
+	//-form(action="profile", method="POST")
 		table
 			col.caption
 			col.radio
