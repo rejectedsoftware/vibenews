@@ -67,12 +67,23 @@ a:hover { text-decoration: underline; }
 	display: table-cell;
 	padding: 0 15pt;
 	width: 180pt;
+}
 
+#mainHeader input, #mainHeader button, #mainNav input, #mainNav button {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	height: 18pt;
+	margin-bottom: 2pt;
+}
+
+#mainHeader .loginArea button {
+	white-space: nowrap;
 }
 
 #mainHeader a { color: #000; }
 #mainHeader table { width: 100%; }
-#mainHeader td { padding-left: 5pt; }
+#mainHeader td { padding: 0; padding-left: 5pt; text-align: center; }
 #mainHeader .loginArea input { width: 100%; }
 
 /******************************************************************************/
@@ -123,7 +134,7 @@ footer a:hover { color: #fff; }
 #mainNav li:first-child:before { content: " "; }
 #mainNav { margin-bottom: 15pt; }
 
-#searchbox { float: right; text-align: right; margin-top: 2.5pt; }
+#searchbox { float: right; text-align: right; }
 #searchbox input { width: 120pt; }
 #searchbox button { width: auto; }
 

@@ -13,24 +13,22 @@ block header
 				input(name="redirect", type="hidden", value="#{req.requestURL}")
 				table
 					tr
-						td
-							input(name="name", type="email", placeholder="email", tabindex="1")
-						td
-							button(type="submit", tabindex="3") Log in
+						td: input(name="name", type="email", placeholder="email", tabindex="1")
+						td: button(type="submit", tabindex="3") Log in
 					tr
-						td
-							input(name="password", type="password", placeholder="password", tabindex="2")
-						td
-							a(hreF="#{req.rootDir}register", tabindex="4") Sign up
+						td: input(name="password", type="password", placeholder="password", tabindex="2")
+						td: a(hreF="#{req.rootDir}register", tabindex="4") Sign up
 
 block body
 	nav#mainNav
-		- if( info.settings.googleSearch )
+		- if (info.settings.googleSearch)
 			#searchbox
 				form(method="GET", action="http://www.google.com/search")
 					input(type="hidden", name="sitesearch", value="#{info.settings.hostName}")
-					input(type="text", name="q", size="31", maxlength="255")
-					button(type="submit") Google Search
+					table
+						tr
+							td: input(type="text", name="q", size="31", maxlength="255")
+							td: button(type="submit") Google Search
 
 		block vibenews.navigation
 
