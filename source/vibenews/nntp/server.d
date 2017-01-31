@@ -26,7 +26,7 @@ void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NN
 {
 	void handleNNTPConnection(TCPConnection conn)
 	{
-		Stream stream = conn;
+		StreamProxy stream = conn;
 
 		bool tls_active = false;
 
@@ -53,7 +53,9 @@ void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NN
 		logDebug("welcomed");
 
 		while(!stream.empty){
-			auto res = new NNTPServerResponse(stream);
+			OutputStreamProxy os;
+			os = stream;
+			auto res = new NNTPServerResponse(os);
 			logTrace("waiting for request");
 			auto ln = cast(string)stream.readLine();
 			logDebug("REQUEST: %s", !ln.startsWith("AUTHINFO") ? ln : "AUTHINFO (...)");
@@ -103,7 +105,9 @@ void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NN
 				acceptSsl();
 			}
 
-			auto req = new NNTPServerRequest(stream);
+			InputStreamProxy is_;
+			is_ = stream;
+			auto req = new NNTPServerRequest(is_);
 			req.command = cmd;
 			req.parameters = params;
 			req.peerAddress = conn.peerAddress;
@@ -160,7 +164,7 @@ deprecated alias NntpServerSettings = NNTPServerSettings;
 
 class NNTPServerRequest {
 	private {
-		InputStream m_stream;
+		InputStreamProxy m_stream;
 		NNTPBodyReader m_reader;
 	}
 
@@ -168,7 +172,7 @@ class NNTPServerRequest {
 	string[] parameters;
 	string peerAddress;
 
-	this(InputStream str)
+	this(InputStreamProxy str)
 	{
 		m_stream = str;
 	}
@@ -199,7 +203,7 @@ deprecated alias NntpServerRequest = NNTPServerRequest;
 
 class NNTPServerResponse {
 	private {
-		OutputStream m_stream;
+		OutputStreamProxy m_stream;
 		NNTPBodyWriter m_bodyWriter;
 		bool m_headerWritten = false;
 		bool m_bodyWritten = false;
@@ -208,7 +212,7 @@ class NNTPServerResponse {
 	int status;
 	string statusText;
 
-	this(OutputStream stream)
+	this(OutputStreamProxy stream)
 	{
 		m_stream = stream;
 	}

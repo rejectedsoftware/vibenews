@@ -21,6 +21,7 @@ import vibe.data.bson;
 import vibe.inet.message;
 import vibe.stream.counting;
 import vibe.stream.operations;
+import vibe.stream.wrapper;
 import vibe.stream.tls;
 
 import std.algorithm;
@@ -306,7 +307,7 @@ class NewsInterface {
 		} else {
 			res.statusText = "Article list follows";
 			res.bodyWriter();
-			m_ctrl.enumerateArticles(groupname, (i, id, msgid, msgnum){
+			m_ctrl.enumerateArticles(groupname, (i, id, msgid, msgnum) @trusted {
 					if( i > 0 ) res.bodyWriter.write("\r\n");
 					res.bodyWriter.write(to!string(msgnum));
 				});
@@ -334,7 +335,7 @@ class NewsInterface {
 				res.statusText = "Descriptions in form \"group description\".";
 				res.bodyWriter();
 				size_t cnt = 0;
-				m_ctrl.enumerateGroups((i, grp){
+				m_ctrl.enumerateGroups((i, grp) @trusted {
 						if( !grp.active ) return;
 						logDebug("Got group %s", grp.name);
 						if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
@@ -344,7 +345,7 @@ class NewsInterface {
 			case "active":
 				res.statusText = "Newsgroups in form \"group high low flags\".";
 				size_t cnt = 0;
-				m_ctrl.enumerateGroups((i, grp){
+				m_ctrl.enumerateGroups((i, grp) @trusted {
 						if( !grp.active ) return;
 						if( cnt++ > 0 ) res.bodyWriter.write("\r\n");
 						auto high = to!string(grp.maxArticleNumber);
@@ -394,8 +395,8 @@ class NewsInterface {
 		res.status = NNTPStatus.overviewFollows;
 		res.statusText = "Overview information follows (multi-line)";
 
-		auto dst = StreamOutputRange(res.bodyWriter);
-		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) {
+		auto dst = streamOutputRange(res.bodyWriter);
+		m_ctrl.enumerateArticles(grpname, fromnum, tonum, (idx, art) @trusted {
 			string sanitizeHeader(string hdr) {
 				auto ret = appender!string();
 				size_t sidx = 0;
@@ -452,13 +453,14 @@ class NewsInterface {
 		parseRFC5322Header(req.bodyReader, headers);
 		foreach( k, v; headers ) art.addHeader(k, v);
 
-		auto limitedReader = new LimitedInputStream(req.bodyReader, 2048*1024, true);
+		auto limitedReader = createLimitedInputStream(req.bodyReader, 2048*1024, true);
 
 		try {
 			art.message = limitedReader.readAll();
 		} catch( LimitException e ){
-			auto sink = new NullOutputStream;
-			sink.write(req.bodyReader);
+			static if (__traits(compiles, req.bodyReader.pipe(nullSink)))
+				req.bodyReader.pipe(nullSink);
+			else nullSink.write(req.bodyReader);
 			res.restart();
 			res.status = NNTPStatus.articleRejected;
 			res.statusText = "Message too big, please keep below 2.0 MiB";
@@ -495,7 +497,7 @@ class NewsInterface {
 			auto writer = res.bodyWriter();
 
 			bool first = true;
-			m_ctrl.enumerateGroups((gi, group){
+			m_ctrl.enumerateGroups((gi, group) @trusted {
 				if( !testAuth(group.name, false, res) )
 					return;
 
