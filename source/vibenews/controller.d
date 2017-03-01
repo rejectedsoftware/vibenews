@@ -156,10 +156,11 @@ class Controller {
 
 	void enumerateGroupCategories(void delegate(size_t idx, GroupCategory) @safe del)
 	{
-		foreach( idx, bc; m_groupCategories.find() ){
+		size_t idx = 0;
+		foreach (bc; m_groupCategories.find()) {
 			GroupCategory c;
 			deserializeBson(c, bc);
-			del(idx, c);
+			del(idx++, c);
 		}
 	}
 
@@ -204,11 +205,12 @@ class Controller {
 	void enumerateGroups(void delegate(size_t idx, Group) @safe cb, bool allow_inactive = false)
 	{
 		Group group;
-		foreach( idx, bg; m_groups.find() ){
+		size_t idx = 0;
+		foreach (bg; m_groups.find()) {
 			if( !allow_inactive && !bg["active"].get!bool )
 				continue;
 			deserializeBson(group, bg);
-			cb(idx, group);
+			cb(idx++, group);
 		}
 	}
 
@@ -216,11 +218,12 @@ class Controller {
 	{
 		Group group;
 		Bson idmatch = Bson(BsonObjectID.createDateID(date));
-		foreach( idx, bg; m_groups.find(["_id": Bson(["$gte": idmatch])]) ){
+		size_t idx = 0;
+		foreach (bg; m_groups.find(["_id": Bson(["$gte": idmatch])])) {
 			if( !allow_inactive && !bg["active"].get!bool )
 				continue;
 			deserializeBson(group, bg);
-			del(idx, group);
+			del(idx++, group);
 		}
 	}
 
