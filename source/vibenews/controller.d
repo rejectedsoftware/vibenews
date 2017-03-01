@@ -696,7 +696,7 @@ class Controller {
 		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
 		foreach (ag; chain(grp["readOnlyAuthTags"].get!(Bson[]), grp["readWriteAuthTags"].get!(Bson[]))) {
-			auto agid = () @trusted { return getAuthGroupByName(authGroupPrefix~ag.get!string).id; } ();
+			auto agid = () @trusted { return getAuthGroupByName(ag.get!string).id; } ();
 			foreach (gid; usr.groups)
 				if (gid == agid)
 					return true;
@@ -712,7 +712,7 @@ class Controller {
 		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
 		foreach (ag; grp["readWriteAuthTags"]) {
-			auto agid = () @trusted { return getAuthGroupByName(authGroupPrefix~ag.get!string).id; } ();
+			auto agid = () @trusted { return getAuthGroupByName(ag.get!string).id; } ();
 			foreach (gid; usr.groups)
 				if (gid == agid)
 					return true;
