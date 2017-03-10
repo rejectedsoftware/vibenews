@@ -163,12 +163,14 @@ class WebInterface {
 		struct Info {
 			VibeNewsSettings settings;
 			Group[] groups;
+			string error;
 		}
 
 		enforceHTTP(req.session && req.session.isKeySet("userEmail"), HTTPStatus.forbidden, "Please log in to change your profile information.");
 
 		Info info;
 		info.settings = m_settings;
+		info.error = _error;
 		req.form["email"] = user.email;
 		req.form["full_name"] = user.fullName;
 		if (_error.length) req.params["error"] = _error;

@@ -16,6 +16,9 @@ block vibenews.navigation
 
 
 block vibenews.body
+	- if (info.error.length)
+		p.error= info.error
+
 	h2 Personal information
 
 	form(action="profile", method="POST")
