@@ -22,6 +22,7 @@ import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
 import vibe.inet.message;
+import vibe.inet.path;
 import vibe.textfilter.markdown;
 import vibe.textfilter.urlencode;
 import vibe.utils.string;
@@ -142,7 +143,7 @@ class WebInterface {
 			}
 			groups ~= grp;
 		});
-		m_ctrl.enumerateGroupCategories((idx, cat){ info.categories ~= Category(cat, groups, m_ctrl); });
+		m_ctrl.enumerateGroupCategories((idx, cat) @trusted { info.categories ~= Category(cat, groups, m_ctrl); });
 
 		if( !info.categories.length ) info.categories ~= Category("All", groups, m_ctrl);
 
@@ -162,12 +163,14 @@ class WebInterface {
 		struct Info {
 			VibeNewsSettings settings;
 			Group[] groups;
+			string error;
 		}
 
 		enforceHTTP(req.session && req.session.isKeySet("userEmail"), HTTPStatus.forbidden, "Please log in to change your profile information.");
 
 		Info info;
 		info.settings = m_settings;
+		info.error = _error;
 		req.form["email"] = user.email;
 		req.form["full_name"] = user.fullName;
 		if (_error.length) req.params["error"] = _error;
@@ -326,7 +329,7 @@ class WebInterface {
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps)-1;
 
 		info.group = GroupInfo(grp, m_ctrl);
-		m_ctrl.enumerateThreads(grp._id, info.page*info.pageSize, info.pageSize, (idx, thr){
+		m_ctrl.enumerateThreads(grp._id, info.page*info.pageSize, info.pageSize, (idx, thr) @trusted {
 			info.threads ~= ThreadInfo(thr, m_ctrl, info.pageSize, grp.name);
 		});
 		
@@ -367,7 +370,7 @@ class WebInterface {
 		info.postCount = info.thread.postCount;
 		info.pageCount = info.thread.pageCount;
 
-		m_ctrl.enumerateThreadPosts(info.thread.id, grp.name, info.page*info.pageSize, info.pageSize, (idx, art){
+		m_ctrl.enumerateThreadPosts(info.thread.id, grp.name, info.page*info.pageSize, info.pageSize, (idx, art) @trusted {
 			Article replart;
 			try replart = m_ctrl.getArticle(art.getHeader("In-Reply-To"));
 			catch( Exception ){}

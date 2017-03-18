@@ -1,14 +1,17 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"antispam": "0.0.6",
-		"diet-ng": "1.1.0",
-		"libasync": "0.7.9",
+		"antispam": "0.0.9",
+		"diet-ng": "1.2.0+commit.1.g206d498",
+		"eventcore": "0.8.7",
+		"libasync": "0.8.3",
 		"libev": "5.0.0+4.04",
-		"libevent": "2.0.1+2.0.16",
-		"memutils": "0.4.8",
-		"openssl": "1.1.4+1.0.1g",
-		"userman": "0.3.3",
-		"vibe-d": "0.7.30"
+		"libevent": "2.0.2+2.0.16",
+		"memutils": "0.4.9",
+		"openssl": "1.1.5+1.0.1g",
+		"taggedalgebraic": "0.10.5+commit.1.ge4c5ec7",
+		"userman": "0.3.4",
+		"vibe-core": "1.0.0-beta.4+commit.4.g5fd9fc4",
+		"vibe-d": "0.8.0-beta.4+commit.6.g9b4987e"
 	}
 }

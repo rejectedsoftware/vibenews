@@ -13,14 +13,15 @@ import vibe.stream.operations;
 import std.algorithm;
 import std.exception;
 
+
 class NNTPBodyReader : InputStream {
 	private {
-		InputStream m_stream;
+		InputStreamProxy m_stream;
 		bool m_eof = false;
 		ubyte[] m_currLine;
 	}
 
-	this(InputStream stream)
+	this(InputStreamProxy stream)
 	{
 		m_stream = stream;
 		readNextLine();
@@ -39,9 +40,13 @@ class NNTPBodyReader : InputStream {
 		return m_currLine;
 	}
 
-	void read(ubyte[] dst)
+	static if (!is(IOMode)) override void read(scope ubyte[] bytes) { readImpl(bytes); }
+	else override size_t read(scope ubyte[] bytes, IOMode) { readImpl(bytes); return bytes.length; }
+	alias read = InputStream.read;
+
+	private void readImpl()(scope ubyte[] dst)
 	{
-		while( dst.length > 0 ){
+		while (dst.length > 0) {
 			enforce(!m_eof);
 			auto amt = min(dst.length, m_currLine.length);
 			dst[0 .. amt] = m_currLine[0 .. amt];
@@ -54,10 +59,10 @@ class NNTPBodyReader : InputStream {
 		}
 	}
 
-	private void readNextLine()
+	private void readNextLine()()
 	{
 		enforce(!m_eof);
-		m_currLine = m_stream.readLine() ~ cast(ubyte[])"\r\n";
+		m_currLine = m_stream.readLine() ~ cast(const(ubyte)[])"\r\n";
 		m_eof = m_currLine == ".\r\n";
 		if( m_currLine.startsWith("..") ) m_currLine = m_currLine[1 .. $];
 	}
@@ -68,19 +73,23 @@ deprecated alias NntpBodyReader = NNTPBodyReader;
 
 class NNTPBodyWriter : OutputStream {
 	private {
-		OutputStream m_stream;
+		OutputStreamProxy m_stream;
 		bool m_finalized = false;
 		int m_lineState = 0;
 		static immutable ubyte[] m_lineStateString = cast(immutable(ubyte)[])"\r\n.";
 		bool m_empty = true;
 	}
 
-	this(OutputStream stream)
+	this(OutputStreamProxy stream)
 	{
 		m_stream = stream;
 	}
 
-	void write(in ubyte[] bytes_)
+	static if (!is(IOMode)) override void write(in ubyte[] bytes) { writeImpl(bytes); }
+	else override size_t write(in ubyte[] bytes, IOMode) { writeImpl(bytes); return bytes.length; }
+	alias write = OutputStream.write;
+
+	private void writeImpl()(in ubyte[] bytes_)
 	{
 		const(ubyte)[] bytes = bytes_;
 		assert(!m_finalized);
@@ -88,7 +97,7 @@ class NNTPBodyWriter : OutputStream {
 		if( bytes.length ){
 			if( m_empty && bytes[0] == '.' ){
 				m_stream.write("..");
-				logDebugV("WS <..>", cast(string)bytes[0 .. $-m_lineState]);
+				logDebugV("WS <..>", cast(const(char)[])bytes[0 .. $-m_lineState]);
 				bytes = bytes[1 .. $];
 			}
 			m_empty = false;
@@ -100,7 +109,7 @@ class NNTPBodyWriter : OutputStream {
 				if( bytes[i-m_lineState] != m_lineStateString[i] ){
 					m_stream.write(m_lineStateString[0 .. i]);
 					bytes = bytes[i-m_lineState .. $];
-					logDebugV("WPM <%s>", cast(string)m_lineStateString[0 .. i]);
+					logDebugV("WPM <%s>", cast(const(char)[])m_lineStateString[0 .. i]);
 					m_lineState = 0;
 					break;
 				}
@@ -123,7 +132,7 @@ class NNTPBodyWriter : OutputStream {
 			if( idx >= 0 ){
 				m_stream.write(bytes[0 .. idx]);
 				m_stream.write("\r\n..");
-				logDebugV("WMM <%s\\r\\n..>", cast(string)bytes[0 .. idx]);
+				logDebugV("WMM <%s\\r\\n..>", cast(const(char)[])bytes[0 .. idx]);
 				bytes = bytes[idx+m_lineStateString.length .. $];
 			} else {
 				foreach( i; 1 .. min(m_lineStateString.length, bytes.length) )
@@ -132,7 +141,7 @@ class NNTPBodyWriter : OutputStream {
 						break;
 					}
 				m_stream.write(bytes[0 .. $-m_lineState]);
-				logDebugV("WP <%s>", cast(string)bytes[0 .. $-m_lineState]);
+				logDebugV("WP <%s>", cast(const(char)[])bytes[0 .. $-m_lineState]);
 				bytes = null;
 			}
 		}
@@ -154,9 +163,11 @@ class NNTPBodyWriter : OutputStream {
 		logDebugV("WF <\\r\\n.\\r\\n>");
 	}
 
-	void write(InputStream stream, ulong nbytes = 0)
-	{
-		writeDefault(stream, nbytes);
+	static if (!is(IOMode)) {
+		override void write(InputStream stream, ulong nbytes = 0)
+		{
+			writeDefault(stream, nbytes);
+		}
 	}
 }
 

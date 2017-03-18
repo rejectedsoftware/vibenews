@@ -54,9 +54,9 @@ class Controller {
 		//m_users = m_db["vibenews.users"];
 
 		// fixup old article format
-		foreach( a; m_articles.find(["number": ["$exists": true]]) ){
+		foreach (a; m_articles.find(["number": ["$exists": true]])) {
 			GroupRef[string] grprefs;
-			foreach( string gname, num; a["number"] ){
+			foreach (string gname, num; a["number"]) {
 				auto grp = m_groups.findOne(["name": unescapeGroup(gname)], ["_id": true]);
 				if( grp.isNull() ) continue;
 
@@ -71,9 +71,9 @@ class Controller {
 		}
 
 		// find old group auth format
-		foreach( g; m_groups.find(["passwordHash": ["$exists": true]]) ){
+		foreach (g; m_groups.find(["passwordHash": ["$exists": true]])){
 			Bson[] tags;
-			if( g["passwordHash"].length > 0 ) tags ~= g["name"];
+			if (g["passwordHash"].length > 0) tags ~= g["name"];
 			m_groups.update(["_id": g["_id"]], ["$set": ["readOnlyAuthTags": tags, "readWriteAuthTags": tags]]);
 			m_groups.update(["_id": g["_id"]], ["$unset": ["username": true, "passwordHash": true]]);
 		}
@@ -85,18 +85,18 @@ class Controller {
 		}
 
 		// upgrade old peerAddress format
-		foreach( art; m_articles.find(["$where" : "!Array.isArray(this.peerAddress)"], ["peerAddress": 1]) )
+		foreach (art; m_articles.find(["$where" : "!Array.isArray(this.peerAddress)"], ["peerAddress": 1]))
 			m_articles.update(["_id": art["_id"]], ["$set": ["peerAddress": art["peerAddress"].get!string.split(",").map!strip().array()]]);
 
 		// upgrade missing posterEmail field
-		foreach (bart; m_articles.find(["posterEmail": ["$exists": false]])) {
+		foreach (bart; m_articles.find(["posterEmail": ["$exists": false]])) () @safe {
 			Article art;
 			art._id = bart["_id"].get!BsonObjectID;
 			art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
 			string name, email;
 			decodeEmailAddressHeader(art.getHeader("From"), name, email);
 			m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
-		}
+		} ();
 
 		// fix missing Date headers
 		foreach (bart; m_articles.find(["headers": ["$not": ["$elemMatch": ["key": "Date"]]]], ["headers": true])) {
@@ -154,12 +154,13 @@ class Controller {
 	/* Group categories        */
 	/***************************/
 
-	void enumerateGroupCategories(void delegate(size_t idx, GroupCategory) del)
+	void enumerateGroupCategories(void delegate(size_t idx, GroupCategory) @safe del)
 	{
-		foreach( idx, bc; m_groupCategories.find() ){
+		size_t idx = 0;
+		foreach (bc; m_groupCategories.find()) {
 			GroupCategory c;
 			deserializeBson(c, bc);
-			del(idx, c);
+			del(idx++, c);
 		}
 	}
 
@@ -201,26 +202,28 @@ class Controller {
 	/* Groups                  */
 	/***************************/
 
-	void enumerateGroups(void delegate(size_t idx, Group) cb, bool allow_inactive = false)
+	void enumerateGroups(void delegate(size_t idx, Group) @safe cb, bool allow_inactive = false)
 	{
 		Group group;
-		foreach( idx, bg; m_groups.find() ){
+		size_t idx = 0;
+		foreach (bg; m_groups.find()) {
 			if( !allow_inactive && !bg["active"].get!bool )
 				continue;
 			deserializeBson(group, bg);
-			cb(idx, group);
+			cb(idx++, group);
 		}
 	}
 
-	void enumerateNewGroups(SysTime date, void delegate(size_t idx, Group) del, bool allow_inactive = false)
+	void enumerateNewGroups(SysTime date, void delegate(size_t idx, Group) @safe del, bool allow_inactive = false)
 	{
 		Group group;
 		Bson idmatch = Bson(BsonObjectID.createDateID(date));
-		foreach( idx, bg; m_groups.find(["_id": Bson(["$gte": idmatch])]) ){
+		size_t idx = 0;
+		foreach (bg; m_groups.find(["_id": Bson(["$gte": idmatch])])) {
 			if( !allow_inactive && !bg["active"].get!bool )
 				continue;
 			deserializeBson(group, bg);
-			del(idx, group);
+			del(idx++, group);
 		}
 	}
 
@@ -259,7 +262,7 @@ class Controller {
 		m_groups.update(["_id": g._id], g);
 	}
 
-	void createGroupIndexes(string grpname)
+	void createGroupIndexes()(string grpname)
 	{
 		import std.typecons : tuple;
 
@@ -298,7 +301,7 @@ class Controller {
 		return t;
 	}
 
-	void enumerateThreads(BsonObjectID group, size_t skip, size_t max_count, void delegate(size_t, Thread) del)
+	void enumerateThreads(BsonObjectID group, size_t skip, size_t max_count, void delegate(size_t, Thread) @safe del)
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
@@ -316,7 +319,7 @@ class Controller {
 		return m_articles.count(["groups."~escapeGroup(groupname)~".threadId" : Bson(thread), "active": Bson(true)]);
 	}
 
-	void enumerateThreadPosts(BsonObjectID thread, string groupname, size_t skip, size_t max_count, void delegate(size_t, Article) del)
+	void enumerateThreadPosts(BsonObjectID thread, string groupname, size_t skip, size_t max_count, void delegate(size_t, Article) @safe del)
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
@@ -399,7 +402,7 @@ class Controller {
 		return ret;
 	}
 
-	void enumerateArticles(string groupname, void delegate(size_t idx, BsonObjectID _id, string msgid, long msgnum) del)
+	void enumerateArticles(string groupname, void delegate(size_t idx, BsonObjectID _id, string msgid, long msgnum) @safe del)
 	{
 		auto egrp = escapeGroup(groupname);
 		auto numkey = "groups."~egrp~".articleNumber";
@@ -410,7 +413,7 @@ class Controller {
 		}
 	}
 
-	void enumerateArticles(string groupname, long from, long to, void delegate(size_t idx, Article art) del)
+	void enumerateArticles(string groupname, long from, long to, void delegate(size_t idx, Article art) @safe del)
 	{
 		Article art;
 		string gpne = escapeGroup(groupname);
@@ -426,7 +429,7 @@ class Controller {
 		}
 	}
 
-	void enumerateNewArticles(string groupname, SysTime date, void delegate(size_t idx, BsonObjectID _id, string msgid, long msgnum) del)
+	void enumerateNewArticles(string groupname, SysTime date, void delegate(size_t idx, BsonObjectID _id, string msgid, long msgnum) @safe del)
 	{
 		Bson idmatch = Bson(BsonObjectID.createDateID(date));
 		Bson groupmatch = Bson(true);
@@ -439,7 +442,7 @@ class Controller {
 		}
 	}
 
-	void enumerateAllArticlesBackwards(string groupname, int first, int count, void delegate(ref Article art) del)
+	void enumerateAllArticlesBackwards(string groupname, int first, int count, void delegate(ref Article art) @safe del)
 	{
 		auto egrp = escapeGroup(groupname);
 		auto numkey = "groups."~egrp~".articleNumber";
@@ -696,7 +699,7 @@ class Controller {
 		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
 		foreach (ag; chain(grp["readOnlyAuthTags"].get!(Bson[]), grp["readWriteAuthTags"].get!(Bson[]))) {
-			auto agid = getAuthGroupByName(ag.get!string).id;
+			auto agid = () @trusted { return getAuthGroupByName(ag.get!string).id; } ();
 			foreach (gid; usr.groups)
 				if (gid == agid)
 					return true;
@@ -712,7 +715,7 @@ class Controller {
 		enforce(user != User.ID.init, "Group does not allow public access.");
 		auto usr = m_userdb.getUser(user);
 		foreach (ag; grp["readWriteAuthTags"]) {
-			auto agid = getAuthGroupByName(ag.get!string).id;
+			auto agid = () @trusted { return getAuthGroupByName(ag.get!string).id; } ();
 			foreach (gid; usr.groups)
 				if (gid == agid)
 					return true;
@@ -757,7 +760,7 @@ class Controller {
 	{
 		m_threads.remove(Bson.emptyObject);
 
-		foreach (ba; m_articles.find(["active": Bson(true)]).sort(["_id": Bson(1)])) {
+		foreach (ba; m_articles.find(["active": Bson(true)]).sort(["_id": Bson(1)])) () @safe {
 			Article a;
 			deserializeBson(a, ba);
 
@@ -770,9 +773,9 @@ class Controller {
 			}
 			auto rart = repl.length ? m_articles.findOne(["id": repl]) : Bson(null);
 
-			foreach( gname; a.groups.byKey() ){
+			foreach (gname; trustedRange(() => a.groups.byKey())) ()@safe{
 				auto grp = m_groups.findOne(["name": unescapeGroup(gname)], ["_id": true]);
-				if( grp.isNull() ) continue;
+				//if( grp.isNull() ) continue;
 
 				BsonObjectID threadid;
 
@@ -799,14 +802,14 @@ class Controller {
 				}
 
 				m_articles.update(["_id": a._id], ["$set": ["groups."~gname~".threadId": threadid]]);
-			}
-		}
+			}();
+		}();
 	}
 
 }
 
 AntispamMessage toAntispamMessage(in ref Article art)
-{
+@safe {
 	AntispamMessage msg;
 	foreach (hdr; art.headers) msg.headers[hdr.key] = hdr.value;
 	msg.message = art.message;
@@ -816,17 +819,17 @@ AntispamMessage toAntispamMessage(in ref Article art)
 
 
 string escapeGroup(string str)
-{
+@safe {
 	return str.translate(['.': '#'], null);
 }
 
 string unescapeGroup(string str)
-{
+@safe {
 	return str.translate(['#': '.'], null);
 }
 
 string[] commaSplit(string str)
-{
+@safe {
 	string[] ret;
 	while(true){
 		auto idx = str.countUntil(',');
@@ -842,7 +845,7 @@ string[] commaSplit(string str)
 }
 
 long countLines(const(ubyte)[] str)
-{
+@safe {
 	long sum = 1;
 	while(str.length > 0){
 		auto idx = str.countUntil('\n');
@@ -866,7 +869,9 @@ struct Article {
 	long messageLines;
 	string[] peerAddress; // list of hops starting from the original client
 
-	@property string subject() const { return sanitize(decodeEncodedWords(getHeader("Subject"))); }
+	@safe:
+
+	@property string subject() const @trusted { return sanitize(decodeEncodedWords(getHeader("Subject"))); }
 
 	string getHeader(string name)
 	const {
@@ -912,8 +917,10 @@ struct Article {
 		if( last_non_ascii < first_non_ascii ) return str;
 
 		auto non_ascii = str[first_non_ascii .. last_non_ascii+1];
-		auto encoded = "=?UTF-8?B?"~cast(string)Base64.encode(cast(ubyte[])non_ascii)~"?=";
-		return str[0 .. first_non_ascii] ~ encoded ~ str[last_non_ascii+1 .. $];
+
+		return format("%s=?UTF-8?B?%s?=%s", str[0 .. first_non_ascii],
+			cast(const(char)[])Base64.encode(cast(const(ubyte)[])non_ascii),
+			str[last_non_ascii+1 .. $]);
 	}
 }
 
@@ -957,3 +964,16 @@ struct Thread {
 }
 
 enum authGroupPrefix = "vibenews.authgroup.";
+
+
+private auto trustedRange(R)(scope R delegate() rng)
+@trusted {
+	static struct TR {
+		R _rng;
+		bool empty() @trusted { return _rng.empty; }
+		auto front() @trusted { return _rng.front; }
+		void popFront() @trusted { _rng.popFront(); }
+	}
+
+	return TR(rng());
+}
