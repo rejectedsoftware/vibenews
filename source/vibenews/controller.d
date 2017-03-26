@@ -773,7 +773,7 @@ class Controller {
 			}
 			auto rart = repl.length ? m_articles.findOne(["id": repl]) : Bson(null);
 
-			foreach (gname; trustedRange(() => a.groups.byKey())) ()@safe{
+			foreach (gname; trustedRange(() @system => a.groups.byKey())) ()@safe{
 				auto grp = m_groups.findOne(["name": unescapeGroup(gname)], ["_id": true]);
 				//if( grp.isNull() ) continue;
 
