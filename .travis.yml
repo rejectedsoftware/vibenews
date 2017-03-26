@@ -1,9 +1,9 @@
 language: d
 
 d:
-  - dmd-2.071.1
-  - dmd-2.068.0
-  - dmd-2.067.1
+  - dmd-2.073.2
+  - dmd-2.072.2
+  - dmd-2.071.2
 
 addons:
   apt:
@@ -14,3 +14,7 @@ services:
   - mongodb
 
 sudo: false
+
+script:
+  - dub upgrade --missing-only
+  - dub test
