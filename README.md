@@ -5,6 +5,7 @@ NNTP server/web forum implementation for stand-alone newsgroups
 
 See <http://news.rejectedsoftware.com/> for a running version.
 
+[![Build Status](https://travis-ci.org/rejectedsoftware/vibenews.svg?branch=master)](https://travis-ci.org/rejectedsoftware/vibenews)
 
 Features
 --------
@@ -29,7 +30,7 @@ Installation
 3. Compile and run
 
         cd vibenews
-        dub run
+        dub
 
 The following ports are now available, per the default `settings.json` file:
 
