@@ -3,11 +3,8 @@ extends layout
 block header
 	.loginArea
 		- if( req.session && req.session.isKeySet("userEmail") )
-			div
-				|Logged in as #{req.session.get!string("userFullName")}
-			div
-				a(href="#{req.rootDir}profile") Edit profile
-				a(href="#{req.rootDir}logout") Log out
+			div Logged in as #{req.session.get!string("userFullName")}
+			div #[a(href="#{req.rootDir}profile") Edit profile] #[a(href="#{req.rootDir}logout") Log out]
 		- else
 			form(action="#{req.rootDir}login", method="POST")
 				input(name="redirect", type="hidden", value="#{req.requestURL}")
