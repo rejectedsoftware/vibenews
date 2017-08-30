@@ -53,42 +53,7 @@ class Controller {
 		m_threads = db["threads"];
 		//m_users = m_db["vibenews.users"];
 
-		// fixup old article format
-		foreach (a; m_articles.find(["number": ["$exists": true]])) {
-			GroupRef[string] grprefs;
-			foreach (string gname, num; a["number"]) {
-				auto grp = m_groups.findOne(["name": unescapeGroup(gname)], ["_id": true]);
-				if( grp.isNull() ) continue;
-
-				// create new GroupRef instead of the simple long
-				GroupRef grpref;
-				grpref.articleNumber = num.get!long;
-				grprefs[gname] = grpref;
-			}
-			// remove the old number field and add the group refs instead
-			m_articles.update(["_id": a["_id"]], ["$set": ["groups": grprefs]]);
-			m_articles.update(["_id": a["_id"]], ["$unset": ["number": true]]);
-		}
-
-		// find old group auth format
-		foreach (g; m_groups.find(["passwordHash": ["$exists": true]])){
-			Bson[] tags;
-			if (g["passwordHash"].length > 0) tags ~= g["name"];
-			m_groups.update(["_id": g["_id"]], ["$set": ["readOnlyAuthTags": tags, "readWriteAuthTags": tags]]);
-			m_groups.update(["_id": g["_id"]], ["$unset": ["username": true, "passwordHash": true]]);
-		}
-
-		// create missing fields
-		Bson[string] fields = ["caption": Bson("Group caption")];
-		foreach( k, v; fields ){
-			m_groups.update([k: ["$exists": false]], ["$set": [k: v]], UpdateFlags.MultiUpdate);
-		}
-
-		// upgrade old peerAddress format
-		foreach (art; m_articles.find(["$where" : "!Array.isArray(this.peerAddress)"], ["peerAddress": 1]))
-			m_articles.update(["_id": art["_id"]], ["$set": ["peerAddress": art["peerAddress"].get!string.split(",").map!strip().array()]]);
-
-		// upgrade missing posterEmail field
+		// 07/2013: upgrade missing posterEmail field
 		foreach (bart; m_articles.find(["posterEmail": ["$exists": false]])) () @safe {
 			Article art;
 			art._id = bart["_id"].get!BsonObjectID;
@@ -98,7 +63,7 @@ class Controller {
 			m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
 		} ();
 
-		// fix missing Date headers
+		// 11/2013: fix missing Date headers
 		foreach (bart; m_articles.find(["headers": ["$not": ["$elemMatch": ["key": "Date"]]]], ["headers": true])) {
 			Article art;
 			art._id = bart["_id"].get!BsonObjectID;
@@ -338,7 +303,7 @@ class Controller {
 			enforce(!thr.isNull());
 			auto grp = m_groups.findOne(["_id": thr["groupId"]], ["name": true]);
 			enforce(!grp.isNull());
-			
+
 			group_name = grp["name"].get!string;
 		}
 
@@ -650,7 +615,7 @@ class Controller {
 	{
 		foreach (flt; m_settings.spamFilters)
 			flt.resetClassification();
-		
+
 		foreach (bart; m_articles.find()) {
 			auto art = deserializeBson!Article(bart);
 			foreach (flt; m_settings.spamFilters) {
