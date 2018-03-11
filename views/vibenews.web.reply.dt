@@ -1,7 +1,7 @@
 extends vibenews.web.layout
 
 block title
-	- auto title = ("reply-to" in req.query || "reply-to" in req.form ? "Reply" : "Post new topic");
+	- title = ("reply-to" in req.query || "reply-to" in req.form ? "Reply" : "Post new topic");
 
 	script(type="text/javascript", src="#{req.rootDir}scripts/jquery.js")
 	script(type="text/javascript", src="#{req.rootDir}scripts/vibenews-reply.js")

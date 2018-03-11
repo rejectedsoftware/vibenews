@@ -3,7 +3,7 @@ extends vibenews.web.layout
 block title
 	- import vibe.textfilter.urlencode;
 
-	- auto title = "Edit profile";
+	- title = "Edit profile";
 
 
 block vibenews.navigation

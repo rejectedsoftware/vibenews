@@ -5,7 +5,7 @@ block title
 	- import vibe.textfilter.html;
 	- import std.string : indexOf;
 
-	- auto title = info.post.subject;
+	- title = info.post.subject;
 
 	- string obfuscateEmail(string email)
 		- auto idx = email.indexOf('@');

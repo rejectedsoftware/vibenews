@@ -3,7 +3,7 @@ extends vibenews.admin.layout
 block title
 	- import std.algorithm;
 	
-	- auto title = "Edit category " ~ category.caption;
+	- title = "Edit category " ~ category.caption;
 	
 block vibenews.navigation
 	ul

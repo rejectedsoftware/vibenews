@@ -2,7 +2,7 @@ extends vibenews.web.layout
 
 block title
 	- import vibe.textfilter.urlencode;
-	- auto title = "";
+	- title = "";
 	meta(name="description", content="#{info.settings.description}")
 
 block vibenews.navigation

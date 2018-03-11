@@ -21,7 +21,7 @@ AdminInterface s_adminInterface;
 WebInterface s_webInterface;
 
 version(unittest) {} else
-shared static this()
+void main()
 {
 	auto settings = new VibeNewsSettings;
 	settings.spamFilters ~= new BlackListSpamFilter;
@@ -41,4 +41,6 @@ shared static this()
 	s_adminInterface = new AdminInterface(ctrl);
 	s_adminInterface.listen();
 	startVibeNewsWebFrontend(ctrl);
+
+	runApplication();
 }
