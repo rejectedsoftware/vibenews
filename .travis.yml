@@ -1,9 +1,9 @@
 language: d
 
 d:
+  - dmd
   - dmd-2.073.2
   - dmd-2.072.2
-  - dmd-2.071.2
 
 addons:
   apt:
@@ -16,5 +16,4 @@ services:
 sudo: false
 
 script:
-  - dub upgrade --missing-only
   - dub test
