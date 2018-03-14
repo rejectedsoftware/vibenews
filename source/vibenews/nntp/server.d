@@ -139,8 +139,6 @@ void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NN
 	}
 }
 
-deprecated alias listenNNTP = listenNNTP;
-
 
 class NNTPServerSettings {
 	ushort port = 119; // SSL port is 563
@@ -228,7 +226,7 @@ class NNTPServerResponse {
 		assert(!m_bodyWritten);
 		assert(!m_headerWritten);
 		writeHeader();
-	} 
+	}
 
 	@property OutputStream bodyWriter()
 	{
