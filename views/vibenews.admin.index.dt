@@ -1,7 +1,7 @@
 extends vibenews.admin.layout
 
 block title
-	- auto title = "Admin panel";
+	- title = "Admin panel";
 	
 block vibenews.navigation
 	ul

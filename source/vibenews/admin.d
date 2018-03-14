@@ -150,7 +150,7 @@ class AdminInterface {
 	void createGroup(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		enforce(!m_ctrl.groupExists(req.form["name"], true), "A group with the specified name already exists");
-	
+
 		Group group;
 		group._id = BsonObjectID.generate();
 		group.active = false;
@@ -255,9 +255,8 @@ class AdminInterface {
 		Info info;
 		info.settings = m_ctrl.settings;
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
-		string[userman.db.controller.Group.ID] groups;
 		m_ctrl.enumerateUsers(info.page*info.itemsPerPage, info.itemsPerPage, (ref user){
-			info.users ~= getUserInfo(m_ctrl, user, groups);
+			info.users ~= getUserInfo(m_ctrl, user);
 		});
 		info.itemCount = cast(int)m_ctrl.getUserCount();
 		info.pageCount = (info.itemCount-1)/info.itemsPerPage + 1;
@@ -272,10 +271,9 @@ class AdminInterface {
 			UserInfo user;
 		}
 		User usr = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
-		string[userman.db.controller.Group.ID] groups;
 		Info info;
 		info.settings = m_ctrl.settings;
-		info.user = getUserInfo(m_ctrl, usr, groups);
+		info.user = getUserInfo(m_ctrl, usr);
 		res.render!("vibenews.admin.edituser.dt", req, info);
 	}
 
@@ -321,15 +319,12 @@ struct UserInfo {
 	string[] groupStrings;
 }
 
-private UserInfo getUserInfo(Controller ctrl, User user, ref string[userman.db.controller.Group.ID] groups)
+private UserInfo getUserInfo(Controller ctrl, User user)
 {
 	UserInfo nfo;
 	nfo.user = user;
 	ctrl.getUserMessageCount(user.email, nfo.messageCount, nfo.deletedMessageCount);
-	foreach (g; user.groups) {
-		string grpname;
-		if (auto gd = g in groups) grpname = *gd;
-		else grpname = groups[g] = ctrl.getAuthGroup(g).name;
+	foreach (grpname; user.groups) {
 		if (!grpname.startsWith(authGroupPrefix)) continue;
 		grpname = grpname[authGroupPrefix.length .. $];
 		nfo.groupStrings ~= grpname;

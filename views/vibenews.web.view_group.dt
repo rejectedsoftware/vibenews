@@ -3,7 +3,7 @@ extends vibenews.web.layout
 block title
 	- import vibe.textfilter.urlencode;
 
-	- auto title = info.group.caption;
+	- title = info.group.caption;
 
 block vibenews.navigation
 	- import vibenews.webstrings;

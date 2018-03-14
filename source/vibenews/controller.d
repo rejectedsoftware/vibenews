@@ -53,25 +53,27 @@ class Controller {
 		m_threads = db["threads"];
 		//m_users = m_db["vibenews.users"];
 
-		// 07/2013: upgrade missing posterEmail field
-		foreach (bart; m_articles.find(["posterEmail": ["$exists": false]])) () @safe {
-			Article art;
-			art._id = bart["_id"].get!BsonObjectID;
-			art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
-			string name, email;
-			decodeEmailAddressHeader(art.getHeader("From"), name, email);
-			m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
-		} ();
+		version (VibenewsLegacyUpgrades) {
+			// 07/2013: upgrade missing posterEmail field
+			foreach (bart; m_articles.find(["posterEmail": ["$exists": false]])) () @safe {
+				Article art;
+				art._id = bart["_id"].get!BsonObjectID;
+				art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
+				string name, email;
+				decodeEmailAddressHeader(art.getHeader("From"), name, email);
+				m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
+			} ();
 
-		// 11/2013: fix missing Date headers
-		foreach (bart; m_articles.find(["headers": ["$not": ["$elemMatch": ["key": "Date"]]]], ["headers": true])) {
-			Article art;
-			art._id = bart["_id"].get!BsonObjectID;
-			art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
-			assert(!art.hasHeader("Date"));
-			art.addHeader("Date", art._id.timeStamp.toRFC822DateTimeString());
-			assert(art.hasHeader("Date"));
-			m_articles.update(["_id": art._id], ["$set": ["headers": art.headers]]);
+			// 11/2013: fix missing Date headers
+			foreach (bart; m_articles.find(["headers": ["$not": ["$elemMatch": ["key": "Date"]]]], ["headers": true])) {
+				Article art;
+				art._id = bart["_id"].get!BsonObjectID;
+				art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
+				assert(!art.hasHeader("Date"));
+				art.addHeader("Date", art._id.timeStamp.toRFC822DateTimeString());
+				assert(art.hasHeader("Date"));
+				m_articles.update(["_id": art._id], ["$set": ["headers": art.headers]]);
+			}
 		}
 
 
@@ -96,7 +98,6 @@ class Controller {
 	User getUser(User.ID user_id) { return m_userdb.getUser(user_id); }
 	User getUserByEmail(string email) { return m_userdb.getUserByEmail(email); }
 
-	userman.db.controller.Group getAuthGroup(userman.db.controller.Group.ID id) { return m_userdb.getGroup(id); }
 	userman.db.controller.Group getAuthGroupByName(string name) { return m_userdb.getGroupByName(name); }
 
 	void enumerateUsers(int first_user, int max_count, void delegate(ref User usr) del)

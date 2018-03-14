@@ -1,6 +1,7 @@
 !!! 5
 html
 	head
+		- string title;
 		block title
 		- static if (is(typeof(info.settings.title)))
 			- if (title.length)

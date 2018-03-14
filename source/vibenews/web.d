@@ -126,7 +126,7 @@ class WebInterface {
 			assert(m_ctrl !is null);
 			auto usr = m_ctrl.getUserByEmail(email);
 			foreach (g; usr.groups)
-				authTags ~= m_ctrl.getAuthGroup(g).name;
+				authTags ~= g;
 		}
 
 		Group[] groups;
@@ -332,7 +332,7 @@ class WebInterface {
 		m_ctrl.enumerateThreads(grp._id, info.page*info.pageSize, info.pageSize, (idx, thr) @trusted {
 			info.threads ~= ThreadInfo(thr, m_ctrl, info.pageSize, grp.name);
 		});
-		
+
 		info.pageCount = (info.group.numberOfTopics + info.pageSize-1) / info.pageSize;
 
 		res.render!("vibenews.web.view_group.dt", req, info);
@@ -451,7 +451,7 @@ class WebInterface {
 			auto email = req.session.get!string("userEmail");
 			auto usr = m_ctrl.getUserByEmail(email);
 			foreach (g; usr.groups)
-				authTags ~= m_ctrl.getAuthGroup(g).name;
+				authTags ~= g;
 			if( user_id ) *user_id = usr.id;
 			uid = usr.id;
 		}
@@ -535,7 +535,7 @@ struct ThreadInfo {
 			firstPost.date = firstpost.getHeader("Date");//.parseRFC822DateTimeString();
 			firstPost.number = firstpost.groups[escapeGroup(groupname)].articleNumber;
 			firstPost.subject = firstpost.subject;
-			
+
 			auto lastpost = ctrl.getArticle(thr.lastArticleId);
 			lastPost.poster = PosterInfo(lastpost.getHeader("From"));
 			lastPost.date = lastpost.getHeader("Date");//.parseRFC822DateTimeString();
