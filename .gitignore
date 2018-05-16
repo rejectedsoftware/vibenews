@@ -1,3 +1,6 @@
-.dub
-vibenews
-bayes-words.json
+/.dub
+/vibenews
+/vibenews.exe
+/vibenews-test-*
+/bayes-words.json
+/docs/
