@@ -3,7 +3,7 @@ vibenews
 
 NNTP server/web forum implementation for stand-alone newsgroups
 
-See <http://news.rejectedsoftware.com/> for a running version.
+See <https://forum.rejectedsoftware.com/> for a running version.
 
 [![Build Status](https://travis-ci.org/rejectedsoftware/vibenews.svg?branch=master)](https://travis-ci.org/rejectedsoftware/vibenews)
 
