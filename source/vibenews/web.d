@@ -12,7 +12,7 @@ import vibenews.message;
 import vibenews.vibenews;
 
 import antispam.antispam;
-import userman.web : UserManController, UserManWebAuthenticator, User, updateProfile, registerUserManWebInterface;
+import userman.web : UserManWebAuthenticator, User, updateProfile, registerUserManWebInterface;
 
 import vibe.core.core;
 import vibe.core.log;

@@ -5,6 +5,6 @@ authors "Sönke Ludwig"
 copyright "Copyright (c) 2012-2018 Sönke Ludwig"
 license "AGPL-3.0"
 
-dependency "vibe-d" version="~>0.8.0"
+dependency "vibe-d" version=">=0.8.0 <0.10.0-0"
 dependency "antispam" version="~>0.1.2"
-dependency "userman" version="~>0.4.0-rc.1"
+dependency "userman" version="~>0.4.0"

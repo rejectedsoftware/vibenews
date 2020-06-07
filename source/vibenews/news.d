@@ -13,10 +13,9 @@ import vibenews.controller;
 import vibenews.vibenews;
 
 import antispam.antispam;
-import userman.db.controller : User;
+import userman.db.controller : User, validatePasswordHash;
 import vibe.core.core;
 import vibe.core.log;
-import vibe.crypto.passwordhash;
 import vibe.data.bson;
 import vibe.inet.message;
 import vibe.stream.counting;
@@ -254,7 +253,7 @@ class NewsInterface {
 				auto password = req.parameters[1];
 				try {
 					auto usr = m_ctrl.getUserByEmail(s_authUser);
-					enforce(testSimplePasswordHash(usr.auth.passwordHash, password));
+					enforce(validatePasswordHash(usr.auth.passwordHash, password));
 					s_authUserID = usr.id;
 					res.status = NNTPStatus.authAccepted;
 					res.statusText = "authentication successful";
