@@ -225,28 +225,34 @@ class AdminInterface {
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.activateArticle(artid);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
 	}
 
 	void deactivateArticle(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.deactivateArticle(artid);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
 	}
 
 	void markAsSpam(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.markAsSpam(artid, true);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
 	}
 
 	void markAsHam(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.markAsSpam(artid, false);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
+	}
+
+	private void redirectBackToArticles(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		string suff = req.query.get("only_active", "") == "1" ? "&only_active=1" : null;
+		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]~suff);
 	}
 
 	void showListUsers(HTTPServerRequest req, HTTPServerResponse res)
