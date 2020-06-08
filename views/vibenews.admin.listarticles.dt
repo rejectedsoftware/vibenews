@@ -66,16 +66,22 @@ block vibenews.body
 					form(action='#{req.rootDir}articles/#{art._id}/#{art.active?"deactivate":"activate"}', method="POST")
 						input(type="hidden", name="groupname", value="#{info.groupname}")
 						input(type="hidden", name="page", value="#{info.page+1}")
+						- if (info.onlyActive)
+							input(type="hidden", name="only_active", value="1")
 						button(type="submit")= art.active ? "Deactivate" : "Activate"
 					- if (is_undecided || is_spam)
 						form(action='#{req.rootDir}articles/#{art._id}/mark_ham', method="POST")
 							input(type="hidden", name="groupname", value="#{info.groupname}")
 							input(type="hidden", name="page", value="#{info.page+1}")
+							- if (info.onlyActive)
+								input(type="hidden", name="only_active", value="1")
 							button(type="submit") Mark non-spam
 					- if (is_undecided || !is_spam)
 						form(action='#{req.rootDir}articles/#{art._id}/mark_spam', method="POST")
 							input(type="hidden", name="groupname", value="#{info.groupname}")
 							input(type="hidden", name="page", value="#{info.page+1}")
+							- if (info.onlyActive)
+								input(type="hidden", name="only_active", value="1")
 							button(type="submit") Mark Spam
 
 	- pageLinks();

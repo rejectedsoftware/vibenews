@@ -76,6 +76,7 @@ class AdminInterface {
 		router.get("/users/:user/", &showUser);
 		router.post("/users/:user/update", &updateUser);
 		router.post("/users/:user/delete", &deleteUser);
+		router.post("/users/deleteOrphaned", &postDeleteOrphanedUsers);
 		router.get("*", serveStaticFiles("public"));
 	}
 
@@ -225,28 +226,34 @@ class AdminInterface {
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.activateArticle(artid);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
 	}
 
 	void deactivateArticle(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.deactivateArticle(artid);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
 	}
 
 	void markAsSpam(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.markAsSpam(artid, true);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
 	}
 
 	void markAsHam(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto artid = BsonObjectID.fromString(req.params["articleid"]);
 		m_ctrl.markAsSpam(artid, false);
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]);
+		redirectBackToArticles(req, res);
+	}
+
+	private void redirectBackToArticles(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		string suff = req.query.get("only_active", "") == "1" ? "&only_active=1" : null;
+		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]~suff);
 	}
 
 	void showListUsers(HTTPServerRequest req, HTTPServerResponse res)
@@ -278,7 +285,8 @@ class AdminInterface {
 			VibeNewsSettings settings;
 			UserInfo user;
 		}
-		User usr = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
+		auto uid = User.ID.fromString(req.params["user"]);
+		User usr = m_ctrl.getUser(uid);
 		Info info;
 		info.settings = m_ctrl.settings;
 		info.user = getUserInfo(m_ctrl, usr);
@@ -289,7 +297,8 @@ class AdminInterface {
 	{
 		import std.algorithm.iteration : splitter;
 
-		auto user = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
+		auto uid = User.ID.fromString(req.params["user"]);
+		auto user = m_ctrl.getUser(uid);
 		if (auto pv = "email" in req.form) {
 			validateEmail(*pv);
 			user.email = user.name = *pv;
@@ -317,6 +326,13 @@ class AdminInterface {
 		m_ctrl.deleteUser(User.ID.fromString(req.params["user"]));
 		res.redirect("/users/");
 	}
+
+	void postDeleteOrphanedUsers(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		m_ctrl.deleteOrphanedUsers();
+		res.redirect("/users/");
+	}
+
 }
 
 struct UserInfo {

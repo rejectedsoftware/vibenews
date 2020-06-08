@@ -60,3 +60,11 @@ block vibenews.body
 						button(type="submit")= usr.banned ? "Unban" : "Ban"
 
 	- pageLinks();
+
+	p
+		form(method="POST", action="deleteOrphaned")
+			button(type="sumbit") Delete orphaned user accounts
+
+		| Orphaned user accounts that are accounts that have no active articles
+		| (e.g. none at all or only spam/deactivated articles) and are older
+		| than two months.

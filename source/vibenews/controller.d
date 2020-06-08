@@ -87,6 +87,21 @@ class Controller {
 		m_articles.ensureIndex([tuple("id", 1)], IndexFlags.Unique);
 		foreach (grp; m_groups.find(Bson.emptyObject, ["name": 1]))
 			createGroupIndexes(grp["name"].get!string());
+
+		// run fixups asynchronously
+		runTask({
+			sleep(5.seconds);
+
+			// pre-0.8.3 did not write the posterEmail field correctly
+			foreach (bart; m_articles.find()) () @safe {
+				Article art;
+				art._id = bart["_id"].get!BsonObjectID;
+				art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
+				string name, email;
+				decodeEmailAddressHeader(art.getHeader("From"), name, email);
+				m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
+			} ();
+		});
 	}
 
 	@property VibeNewsSettings settings() { return m_settings; }
@@ -109,6 +124,16 @@ class Controller {
 
 	void updateUser(User user) { m_userdb.updateUser(user); }
 	void deleteUser(User.ID user_id) { m_userdb.deleteUser(user_id); }
+
+	void deleteOrphanedUsers()
+	{
+		auto limitdate = Clock.currTime() - (60 * 24).hours;
+		m_userdb.enumerateUsers(0, int.max, (ref usr) {
+			if (usr.id.bsonObjectIDValue.timeStamp > limitdate) return;
+			auto ac = m_articles.count(["posterEmail": Bson(usr.email), "active": Bson(true)]);
+			if (ac == 0) deleteUser(usr.id);
+		});
+	}
 
 	void getUserMessageCount(string email, out ulong active_count, out ulong inactive_count)
 	{
@@ -484,6 +509,7 @@ class Controller {
 		assert(art.hasHeader("Date"));
 		art.messageLength = art.message.length;
 		art.messageLines = countLines(art.message);
+		art.posterEmail = from_email;
 
 		enforce(art.message.length > 0, "You must enter a message.");
 
