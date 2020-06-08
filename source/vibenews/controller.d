@@ -87,6 +87,21 @@ class Controller {
 		m_articles.ensureIndex([tuple("id", 1)], IndexFlags.Unique);
 		foreach (grp; m_groups.find(Bson.emptyObject, ["name": 1]))
 			createGroupIndexes(grp["name"].get!string());
+
+		// run fixups asynchronously
+		runTask({
+			sleep(5.seconds);
+
+			// pre-0.8.3 did not write the posterEmail field correctly
+			foreach (bart; m_articles.find()) () @safe {
+				Article art;
+				art._id = bart["_id"].get!BsonObjectID;
+				art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
+				string name, email;
+				decodeEmailAddressHeader(art.getHeader("From"), name, email);
+				m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
+			} ();
+		});
 	}
 
 	@property VibeNewsSettings settings() { return m_settings; }
@@ -494,6 +509,7 @@ class Controller {
 		assert(art.hasHeader("Date"));
 		art.messageLength = art.message.length;
 		art.messageLines = countLines(art.message);
+		art.posterEmail = from_email;
 
 		enforce(art.message.length > 0, "You must enter a message.");
 
