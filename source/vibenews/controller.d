@@ -427,6 +427,25 @@ class Controller {
 		return m_articles.count(["groups."~escapeGroup(groupname)~".articleNumber": ["$exists": true]]);
 	}
 
+	void enumerateActiveArticlesBackwards(string groupname, int first, int count, void delegate(ref Article art) @safe del)
+	{
+		auto egrp = escapeGroup(groupname);
+		auto numkey = "groups."~egrp~".articleNumber";
+		logDebug("%s %s", groupname, egrp);
+		size_t idx = 0;
+		foreach (ba; m_articles.find([numkey: Bson(["$exists": Bson(true)]), "active": Bson(true)], null, QueryFlags.None, first, count).sort([numkey: -1])) {
+			Article art;
+			deserializeBson(art, ba);
+			del(art);
+			if (idx++ == count-1) break;
+		}
+	}
+
+	ulong getActiveArticlesCount(string groupname)
+	{
+		return m_articles.count(["groups."~escapeGroup(groupname)~".articleNumber": Bson(["$exists": Bson(true)]), "active": Bson(true)]);
+	}
+
 	void postArticle(ref Article art, User.ID user_id)
 	{
 		AntispamMessage msg = toAntispamMessage(art);

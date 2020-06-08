@@ -34,7 +34,7 @@ block vibenews.body
 					- if( info.page == i )
 						|= i+1
 					- else
-						a(href="#{req.rootDir}groups/#{info.groupname}/articles?page=#{i+1}")= i+1
+						a(href="#{req.rootDir}groups/#{info.groupname}/articles?page=#{i+1}#{info.onlyActive?`&only_active=1`:``}")= i+1
 
 	- pageLinks();
 
@@ -79,3 +79,13 @@ block vibenews.body
 							button(type="submit") Mark Spam
 
 	- pageLinks();
+
+	p
+		form(method="GET", action="articles")
+			input(type="hidden", name="page", value="1")
+			- if (!info.onlyActive)
+				input(type="hidden", name="only_active", value="1")
+			- if (info.onlyActive)
+				button(type="submit") Show all articles
+			- else
+				button(type="submit") Show only active articles

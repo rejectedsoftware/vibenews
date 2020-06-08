@@ -201,13 +201,21 @@ class AdminInterface {
 			Article[] articles;
 			int articleCount;
 			int pageCount;
+			bool onlyActive;
 		}
+
 		Info info;
 		info.settings = m_ctrl.settings;
 		info.groupname = req.params["groupname"];
 		info.page = ("page" in req.query) ? to!int(req.query["page"])-1 : 0;
-		m_ctrl.enumerateAllArticlesBackwards(info.groupname, info.page*info.articlesPerPage, info.articlesPerPage, (ref art){ info.articles ~= art; });
-		info.articleCount = cast(int)m_ctrl.getAllArticlesCount(info.groupname);
+		info.onlyActive = req.query.get("only_active", "") == "1";
+		if (info.onlyActive) {
+			m_ctrl.enumerateActiveArticlesBackwards(info.groupname, info.page*info.articlesPerPage, info.articlesPerPage, (ref art){ info.articles ~= art; });
+			info.articleCount = cast(int)m_ctrl.getActiveArticlesCount(info.groupname);
+		} else {
+			m_ctrl.enumerateAllArticlesBackwards(info.groupname, info.page*info.articlesPerPage, info.articlesPerPage, (ref art){ info.articles ~= art; });
+			info.articleCount = cast(int)m_ctrl.getAllArticlesCount(info.groupname);
+		}
 		info.pageCount = (info.articleCount-1)/info.articlesPerPage + 1;
 
 		res.render!("vibenews.admin.listarticles.dt", req, info);
