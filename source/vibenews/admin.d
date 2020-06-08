@@ -285,7 +285,8 @@ class AdminInterface {
 			VibeNewsSettings settings;
 			UserInfo user;
 		}
-		User usr = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
+		auto uid = User.ID.fromString(req.params["user"]);
+		User usr = m_ctrl.getUser(uid);
 		Info info;
 		info.settings = m_ctrl.settings;
 		info.user = getUserInfo(m_ctrl, usr);
@@ -296,7 +297,8 @@ class AdminInterface {
 	{
 		import std.algorithm.iteration : splitter;
 
-		auto user = m_ctrl.getUser(User.ID.fromString(req.params["user"]));
+		auto uid = User.ID.fromString(req.params["user"]);
+		auto user = m_ctrl.getUser(uid);
 		if (auto pv = "email" in req.form) {
 			validateEmail(*pv);
 			user.email = user.name = *pv;
