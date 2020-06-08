@@ -110,6 +110,16 @@ class Controller {
 	void updateUser(User user) { m_userdb.updateUser(user); }
 	void deleteUser(User.ID user_id) { m_userdb.deleteUser(user_id); }
 
+	void deleteOrphanedUsers()
+	{
+		auto limitdate = Clock.currTime() - (60 * 24).hours;
+		m_userdb.enumerateUsers(0, int.max, (ref usr) {
+			if (usr.id.bsonObjectIDValue.timeStamp > limitdate) return;
+			auto ac = m_articles.count(["posterEmail": Bson(usr.email), "active": Bson(true)]);
+			if (ac == 0) deleteUser(usr.id);
+		});
+	}
+
 	void getUserMessageCount(string email, out ulong active_count, out ulong inactive_count)
 	{
 		active_count = m_articles.count(["posterEmail": Bson(email), "active": Bson(true)]);

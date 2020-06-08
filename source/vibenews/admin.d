@@ -76,6 +76,7 @@ class AdminInterface {
 		router.get("/users/:user/", &showUser);
 		router.post("/users/:user/update", &updateUser);
 		router.post("/users/:user/delete", &deleteUser);
+		router.post("/users/deleteOrphaned", &postDeleteOrphanedUsers);
 		router.get("*", serveStaticFiles("public"));
 	}
 
@@ -323,6 +324,13 @@ class AdminInterface {
 		m_ctrl.deleteUser(User.ID.fromString(req.params["user"]));
 		res.redirect("/users/");
 	}
+
+	void postDeleteOrphanedUsers(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		m_ctrl.deleteOrphanedUsers();
+		res.redirect("/users/");
+	}
+
 }
 
 struct UserInfo {
