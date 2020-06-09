@@ -4,11 +4,6 @@ d:
   - dmd
   - ldc
 
-addons:
-  apt:
-    packages:
-    - libev-dev
-
 services:
   - mongodb
 

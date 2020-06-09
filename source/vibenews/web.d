@@ -16,7 +16,6 @@ import userman.web : UserManWebAuthenticator, User, updateProfile, registerUserM
 
 import vibe.core.core;
 import vibe.core.log;
-import vibe.crypto.passwordhash;
 import vibe.data.bson;
 import vibe.http.router;
 import vibe.http.server;
@@ -108,7 +107,7 @@ class WebInterface {
 	{
 		m_ctrl = ctrl;
 		m_settings = ctrl.settings;
-		m_userAuth = new UserManWebAuthenticator(ctrl.userManController);
+		m_userAuth = new UserManWebAuthenticator(ctrl.userManAPI);
 	}
 
 	void get(HTTPServerRequest req, HTTPServerResponse res)
@@ -183,7 +182,7 @@ class WebInterface {
 	@auth @errorDisplay!getProfile
 	void postProfile(HTTPServerRequest req, User user)
 	{
-		.updateProfile(m_ctrl.userManController, user, req);
+		.updateProfile(m_ctrl.userManAPI, user.id, req);
 
 		// TODO: notifications
 
@@ -305,7 +304,7 @@ class WebInterface {
 		req.session.set("lastUsedName", name.idup);
 		req.session.set("lastUsedEmail", email.idup);
 
-		redirectToThreadPost(res, Path(req.path).parentPath.toString(), grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
+		redirectToThreadPost(res, InetPath(req.path).parentPath.toString(), grp.name, art.groups[escapeGroup(grp.name)].articleNumber, art.groups[escapeGroup(grp.name)].threadId);
 	}
 
 	@path("/groups/:group/")
@@ -363,7 +362,7 @@ class WebInterface {
 		if( auto ps = "page" in req.query ) info.page = to!size_t(*ps) - 1;
 		try info.thread = ThreadInfo(m_ctrl.getThreadForFirstArticle(grp.name, _thread), m_ctrl, info.pageSize, grp.name);
 		catch( Exception e ){
-			redirectToThreadPost(res, (Path(req.path) ~ "../../../").toString(), grp.name, _thread);
+			redirectToThreadPost(res, (InetPath(req.path) ~ "../../../").toString(), grp.name, _thread);
 			return;
 		}
 		info.group = GroupInfo(grp, m_ctrl);
@@ -413,7 +412,7 @@ class WebInterface {
 	@path("/groups/:group/thread/:thread/:post")
 	void getRedirectShowPost(HTTPServerRequest req, HTTPServerResponse res, string _group, long _thread, string _post)
 	{
-		res.redirect((Path(req.path)~"../../../post/"~_post).toString(), HTTPStatus.movedPermanently);
+		res.redirect((InetPath(req.path)~"../../../post/"~_post).toString(), HTTPStatus.movedPermanently);
 	}
 
 

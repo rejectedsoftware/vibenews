@@ -450,7 +450,7 @@ class NewsInterface {
 
 		InetHeaderMap headers;
 		parseRFC5322Header(req.bodyReader, headers);
-		foreach( k, v; headers ) art.addHeader(k, v);
+		foreach (kv; headers.byKeyValue) art.addHeader(kv.key, kv.value);
 
 		auto limitedReader = createLimitedInputStream(req.bodyReader, 2048*1024, true);
 
