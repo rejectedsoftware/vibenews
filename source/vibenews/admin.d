@@ -251,7 +251,7 @@ class AdminInterface {
 
 	private void redirectBackToArticles(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		string suff = req.query.get("only_active", "") == "1" ? "&only_active=1" : null;
+		string suff = req.form.get("only_active", "") == "1" ? "&only_active=1" : null;
 		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]~suff);
 	}
 
