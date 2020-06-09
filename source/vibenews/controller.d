@@ -13,6 +13,7 @@ import vibenews.vibenews;
 import vibe.vibe;
 
 import antispam.antispam;
+import userman.api : UserManAPI, createLocalUserManAPI;
 import userman.db.controller;
 
 import std.algorithm;
@@ -30,6 +31,7 @@ class Controller {
 		MongoCollection m_articles;
 		MongoCollection m_threads;
 		UserManController m_userdb;
+		UserManAPI m_userapi;
 	}
 
 	this(VibeNewsSettings vnsettings)
@@ -45,6 +47,7 @@ class Controller {
 		settings.mailSettings = m_settings.mailSettings;
 		settings.requireAccountValidation = m_settings.requireAccountValidation;
 		m_userdb = createUserManController(settings);
+		m_userapi = createLocalUserManAPI(m_userdb);
 
 		auto db = connectMongoDB("127.0.0.1").getDatabase(m_settings.databaseName);
 		m_groups = db["groups"];
@@ -108,12 +111,14 @@ class Controller {
 
 	@property UserManController userManController() { return m_userdb; }
 
+	@property UserManAPI userManAPI() { return m_userapi; }
+
 	bool isEmailRegistered(string email) { return m_userdb.isEmailRegistered(email); }
 
 	User getUser(User.ID user_id) { return m_userdb.getUser(user_id); }
 	User getUserByEmail(string email) { return m_userdb.getUserByEmail(email); }
 
-	userman.db.controller.Group getAuthGroupByName(string name) { return m_userdb.getGroupByName(name); }
+	userman.db.controller.Group getAuthGroupByName(string name) { return m_userdb.getGroup(name); }
 
 	void enumerateUsers(int first_user, int max_count, void delegate(ref User usr) del)
 	{

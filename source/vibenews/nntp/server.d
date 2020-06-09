@@ -25,7 +25,7 @@ import std.string;
 void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NNTPServerResponse) command_handler)
 {
 	void handleNNTPConnection(TCPConnection conn)
-	{
+	@trusted {
 		StreamProxy stream = conn;
 
 		bool tls_active = false;
@@ -130,10 +130,18 @@ void listenNNTP(NNTPServerSettings settings, void delegate(NNTPServerRequest, NN
 		logDebug("disconnected");
 	}
 
+	void handleNNTPConnectionNothrow(TCPConnection conn)
+	@safe nothrow {
+		try handleNNTPConnection(conn);
+		catch (Exception e) {
+			logError("Failed to handle NTTP connection: %s", e.msg);
+		}
+	}
+
 
 	foreach( addr; settings.bindAddresses ){
 		try {
-			listenTCP(settings.port, &handleNNTPConnection, addr);
+			listenTCP(settings.port, &handleNNTPConnectionNothrow, addr);
 			logInfo("Listening for NNTP%s requests on %s:%s", settings.sslContext || settings._enableSsl ? "S" : "", addr, settings.port);
 		} catch( Exception e ) logWarn("Failed to listen on %s:%s", addr, settings.port);
 	}

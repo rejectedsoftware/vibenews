@@ -14,7 +14,6 @@ import userman.db.controller : User;
 static import userman.db.controller;
 
 import vibe.core.log;
-import vibe.crypto.passwordhash;
 import vibe.data.bson;
 import vibe.http.router;
 import vibe.http.server;
