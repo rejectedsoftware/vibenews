@@ -576,12 +576,13 @@ class Controller {
 		markAsSpam(art._id, revoke);
 
 		runTask({
+			bool async_revoke = revoke;
 			foreach (flt; m_settings.spamFilters) {
 				auto status = flt.determineAsyncSpamStatus(msg);
 				final switch (status) {
 					case SpamAction.amnesty: markAsSpam(art._id, false); return;
 					case SpamAction.pass: break;
-					case SpamAction.revoke: revoke = true; break;
+					case SpamAction.revoke: async_revoke = true; break;
 					case SpamAction.block: markAsSpam(art._id, true); return;
 				}
 				if (status == SpamAction.amnesty) break;
@@ -589,7 +590,8 @@ class Controller {
 					return;
 				}
 			}
-			markAsSpam(art._id, revoke);
+			if (async_revoke != revoke)
+				markAsSpam(art._id, async_revoke);
 		});
 	}
 
