@@ -62,7 +62,7 @@ block vibenews.body
 					- else
 						|= from
 				td= art.subject
-				td
+				td(style="text-align:right")
 					form(action='#{req.rootDir}articles/#{art._id}/#{art.active?"deactivate":"activate"}', method="POST")
 						input(type="hidden", name="groupname", value="#{info.groupname}")
 						input(type="hidden", name="page", value="#{info.page+1}")
