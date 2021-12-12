@@ -95,3 +95,9 @@ block vibenews.body
 				button(type="submit") Show all articles
 			- else
 				button(type="submit") Show only active articles
+
+		form(method="POST", action="#{req.rootDir}groups/#{info.groupname}/articles/mark_page_as_spam")
+			input(type="hidden", name="page", value=info.page+1)
+			- if (info.onlyActive)
+				input(type="hidden", name="only_active", value="1")
+			button(type="submit") MARK WHOLE PAGE AS SPAM
