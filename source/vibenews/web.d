@@ -280,7 +280,7 @@ class WebInterface {
 		art.addHeader("Newsgroups", grp.name);
 		art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
-		art.addHeader("Content-Type", "text/x-markdown; charset=UTF-8; format=flowed");
+		art.addHeader("Content-Type", "text/plain; charset=utf-8; format=flowed; delsp=no; markup=markdown");
 		art.addHeader("Content-Transfer-Encoding", "8bit");
 
 		if( auto prepto = "reply-to" in req.form ){
