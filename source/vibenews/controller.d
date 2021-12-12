@@ -92,18 +92,20 @@ class Controller {
 			createGroupIndexes(grp["name"].get!string());
 
 		// run fixups asynchronously
-		runTask({
-			sleep(5.seconds);
+		runTask(() nothrow {
+			sleepUninterruptible(5.seconds);
 
-			// pre-0.8.3 did not write the posterEmail field correctly
-			foreach (bart; m_articles.find()) () @safe {
-				Article art;
-				art._id = bart["_id"].get!BsonObjectID;
-				art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
-				string name, email;
-				decodeEmailAddressHeader(art.getHeader("From"), name, email);
-				m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
-			} ();
+			try {
+				// pre-0.8.3 did not write the posterEmail field correctly
+				foreach (bart; m_articles.find()) () @safe {
+					Article art;
+					art._id = bart["_id"].get!BsonObjectID;
+					art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
+					string name, email;
+					decodeEmailAddressHeader(art.getHeader("From"), name, email);
+					m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
+				} ();
+			} catch (Exception e) logException(e, "Failed to perform database fixups");
 		});
 	}
 
@@ -575,23 +577,28 @@ class Controller {
 
 		markAsSpam(art._id, revoke);
 
-		runTask({
+		runTask(() nothrow {
 			bool async_revoke = revoke;
-			foreach (flt; m_settings.spamFilters) {
-				auto status = flt.determineAsyncSpamStatus(msg);
-				final switch (status) {
-					case SpamAction.amnesty: markAsSpam(art._id, false); return;
-					case SpamAction.pass: break;
-					case SpamAction.revoke: async_revoke = true; break;
-					case SpamAction.block: markAsSpam(art._id, true); return;
+			try {
+				foreach (flt; m_settings.spamFilters) {
+					auto status = flt.determineAsyncSpamStatus(msg);
+					final switch (status) {
+						case SpamAction.amnesty: markAsSpam(art._id, false); return;
+						case SpamAction.pass: break;
+						case SpamAction.revoke: async_revoke = true; break;
+						case SpamAction.block: markAsSpam(art._id, true); return;
+					}
+					if (status == SpamAction.amnesty) break;
+					else if (status != SpamAction.pass) {
+						return;
+					}
 				}
-				if (status == SpamAction.amnesty) break;
-				else if (status != SpamAction.pass) {
-					return;
-				}
+			} catch (Exception e) logException(e, "Failed to determine asynchronous spam status");
+
+			if (async_revoke != revoke) {
+				try markAsSpam(art._id, async_revoke);
+				catch (Exception e) logException(e, "Failed to apply asynchronous spam status");
 			}
-			if (async_revoke != revoke)
-				markAsSpam(art._id, async_revoke);
 		});
 	}
 

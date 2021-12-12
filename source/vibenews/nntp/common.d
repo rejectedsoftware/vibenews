@@ -85,11 +85,10 @@ class NNTPBodyWriter : OutputStream {
 		m_stream = stream;
 	}
 
-	static if (!is(IOMode)) override void write(in ubyte[] bytes) { writeImpl(bytes); }
-	else override size_t write(in ubyte[] bytes, IOMode) { writeImpl(bytes); return bytes.length; }
+	override size_t write(scope const(ubyte)[] bytes, IOMode) { writeImpl(bytes); return bytes.length; }
 	alias write = OutputStream.write;
 
-	private void writeImpl()(in ubyte[] bytes_)
+	private void writeImpl()(scope const(ubyte)[] bytes_)
 	{
 		const(ubyte)[] bytes = bytes_;
 		assert(!m_finalized);

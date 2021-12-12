@@ -16,12 +16,12 @@ import userman.web : UserManWebAuthenticator, User, updateProfile, registerUserM
 
 import vibe.core.core;
 import vibe.core.log;
+import vibe.core.path;
 import vibe.data.bson;
 import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
 import vibe.inet.message;
-import vibe.inet.path;
 import vibe.textfilter.markdown;
 import vibe.textfilter.urlencode;
 import vibe.utils.string;
@@ -422,7 +422,7 @@ class WebInterface {
 		res.writeBody(filterMarkdown(message, MarkdownFlags.forumDefault), "text/html");
 	}
 
-	private void redirectToThreadPost(HTTPServerResponse res, string groups_path, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)
+	private void redirectToThreadPost(HTTPServerResponse res, string groups_path, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.found)
 	{
 		if( thread_id == BsonObjectID() ){
 			auto refs = m_ctrl.getArticleGroupRefs(groupname, article_number);
