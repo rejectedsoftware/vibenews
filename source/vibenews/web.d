@@ -101,13 +101,22 @@ class WebInterface {
 		VibeNewsSettings m_settings;
 		UserManWebAuthenticator m_userAuth;
 		size_t m_postsPerPage = 10;
+		size_t m_postEpoch;
 	}
 
 	this(Controller ctrl)
 	{
+		import std.random : unpredictableSeed;
+
 		m_ctrl = ctrl;
 		m_settings = ctrl.settings;
 		m_userAuth = new UserManWebAuthenticator(ctrl.userManAPI);
+
+		// Invalidates pending forms every 2 to 4 hours, just making sure it
+		// always starts with a random number, no need to be cryptographically
+		// secure, this is just to make it a little more difficult for spammers
+		m_postEpoch = unpredictableSeed();
+		setTimer(2.hours, { m_postEpoch++; }, true);
 	}
 
 	void get(HTTPServerRequest req, HTTPServerResponse res)
@@ -210,10 +219,12 @@ class WebInterface {
 			string email;
 			string subject;
 			string message;
+			size_t postEpoch;
 		}
 
 		Info5 info;
 		info.settings = m_settings;
+		info.postEpoch = m_postEpoch;
 
 		if( req.session ){
 			if( req.session.isKeySet("userEmail") ){
@@ -251,7 +262,7 @@ class WebInterface {
 	}
 
 	@path("/groups/post") @errorDisplay!getPostArticle
-	void postArticle(HTTPServerRequest req, HTTPServerResponse res, string group, string subject, string message)
+	void postArticle(HTTPServerRequest req, HTTPServerResponse res, string group, string subject, string message, string check)
 	{
 		auto grp = m_ctrl.getGroupByName(group);
 
@@ -271,6 +282,9 @@ class WebInterface {
 		if( !loggedin ){
 			enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
 		}
+
+		if (check != "a3fb"~m_postEpoch.to!string && check != "a3fb"~(m_postEpoch-1).to!string)
+			throw new Exception("Form expired");
 
 		Article art;
 		art._id = BsonObjectID.generate();

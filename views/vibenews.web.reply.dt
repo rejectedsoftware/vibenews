@@ -32,6 +32,7 @@ block vibenews.body
 			input(type="hidden", name="reply-to", value=*prt)
 		- else if( auto prt = "reply-to" in req.form )
 			input(type="hidden", name="reply-to", value=*prt)
+		input#fc(type="hidden", name="check", value="3fb")
 		table
 			col.caption.helptext
 			tr
@@ -83,3 +84,5 @@ block vibenews.body
 			tr
 				td
 					button(type="submit") Post
+
+	script var fc=document.getElementById("fc");fc.setAttribute("value","a"+fc.getAttribute("value")+"#{info.postEpoch}");
