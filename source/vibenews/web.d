@@ -16,12 +16,12 @@ import userman.web : UserManWebAuthenticator, User, updateProfile, registerUserM
 
 import vibe.core.core;
 import vibe.core.log;
+import vibe.core.path;
 import vibe.data.bson;
 import vibe.http.router;
 import vibe.http.server;
 import vibe.http.fileserver;
 import vibe.inet.message;
-import vibe.inet.path;
 import vibe.textfilter.markdown;
 import vibe.textfilter.urlencode;
 import vibe.utils.string;
@@ -101,13 +101,22 @@ class WebInterface {
 		VibeNewsSettings m_settings;
 		UserManWebAuthenticator m_userAuth;
 		size_t m_postsPerPage = 10;
+		size_t m_postEpoch;
 	}
 
 	this(Controller ctrl)
 	{
+		import std.random : unpredictableSeed;
+
 		m_ctrl = ctrl;
 		m_settings = ctrl.settings;
 		m_userAuth = new UserManWebAuthenticator(ctrl.userManAPI);
+
+		// Invalidates pending forms every 2 to 4 hours, just making sure it
+		// always starts with a random number, no need to be cryptographically
+		// secure, this is just to make it a little more difficult for spammers
+		m_postEpoch = unpredictableSeed();
+		setTimer(2.hours, { m_postEpoch++; }, true);
 	}
 
 	void get(HTTPServerRequest req, HTTPServerResponse res)
@@ -210,10 +219,12 @@ class WebInterface {
 			string email;
 			string subject;
 			string message;
+			size_t postEpoch;
 		}
 
 		Info5 info;
 		info.settings = m_settings;
+		info.postEpoch = m_postEpoch;
 
 		if( req.session ){
 			if( req.session.isKeySet("userEmail") ){
@@ -251,7 +262,7 @@ class WebInterface {
 	}
 
 	@path("/groups/post") @errorDisplay!getPostArticle
-	void postArticle(HTTPServerRequest req, HTTPServerResponse res, string group, string subject, string message)
+	void postArticle(HTTPServerRequest req, HTTPServerResponse res, string group, string subject, string message, string check)
 	{
 		auto grp = m_ctrl.getGroupByName(group);
 
@@ -272,6 +283,9 @@ class WebInterface {
 			enforce(!m_ctrl.isEmailRegistered(email), "The email address is already in use by a registered account. Please log in to use it.");
 		}
 
+		if (check != "a3fb"~m_postEpoch.to!string && check != "a3fb"~(m_postEpoch-1).to!string)
+			throw new Exception("Form expired");
+
 		Article art;
 		art._id = BsonObjectID.generate();
 		art.id = "<"~art._id.toString()~"@"~m_settings.hostName~">";
@@ -280,7 +294,7 @@ class WebInterface {
 		art.addHeader("Newsgroups", grp.name);
 		art.addHeader("Date", Clock.currTime(UTC()).toRFC822DateTimeString());
 		art.addHeader("User-Agent", "VibeNews Web");
-		art.addHeader("Content-Type", "text/x-markdown; charset=UTF-8; format=flowed");
+		art.addHeader("Content-Type", "text/plain; charset=utf-8; format=flowed; delsp=no; markup=markdown");
 		art.addHeader("Content-Transfer-Encoding", "8bit");
 
 		if( auto prepto = "reply-to" in req.form ){
@@ -422,7 +436,7 @@ class WebInterface {
 		res.writeBody(filterMarkdown(message, MarkdownFlags.forumDefault), "text/html");
 	}
 
-	private void redirectToThreadPost(HTTPServerResponse res, string groups_path, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.Found)
+	private void redirectToThreadPost(HTTPServerResponse res, string groups_path, string groupname, long article_number, BsonObjectID thread_id = BsonObjectID(), HTTPStatus redirect_status_code = HTTPStatus.found)
 	{
 		if( thread_id == BsonObjectID() ){
 			auto refs = m_ctrl.getArticleGroupRefs(groupname, article_number);

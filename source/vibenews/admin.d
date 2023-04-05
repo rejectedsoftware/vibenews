@@ -33,6 +33,8 @@ class AdminInterface {
 		Controller m_ctrl;
 	}
 
+	enum articlesPerPage = 20;
+
 	this(Controller ctrl)
 	{
 		m_ctrl = ctrl;
@@ -67,6 +69,7 @@ class AdminInterface {
 		router.post("/groups/:groupname/update", &updateGroup);
 		router.post("/groups/:groupname/purge", &purgeGroup);
 		router.get("/groups/:groupname/articles", &showArticles);
+		router.post("/groups/:groupname/articles/mark_page_as_spam", &markPageAsSpam);
 		router.post("/articles/:articleid/activate", &activateArticle);
 		router.post("/articles/:articleid/deactivate", &deactivateArticle);
 		router.post("/articles/:articleid/mark_ham", &markAsHam);
@@ -195,12 +198,12 @@ class AdminInterface {
 	{
 		struct Info {
 			VibeNewsSettings settings;
-			enum articlesPerPage = 20;
 			string groupname;
 			int page;
 			Article[] articles;
 			int articleCount;
-			int pageCount;
+			enum articlesPerPage = AdminInterface.articlesPerPage;
+ 			int pageCount;
 			bool onlyActive;
 		}
 
@@ -249,10 +252,27 @@ class AdminInterface {
 		redirectBackToArticles(req, res);
 	}
 
+	void markPageAsSpam(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		string groupname = req.params["groupname"];
+		int page = req.form["page"].to!int-1;
+		bool onlyactive = req.form.get("only_active", "") == "1";
+		void handleArticle(ref Article art)
+		@trusted {
+			m_ctrl.markAsSpam(art._id, true);
+		}
+		if (onlyactive)
+			m_ctrl.enumerateActiveArticlesBackwards(groupname, page*articlesPerPage, articlesPerPage, &handleArticle);
+		else
+			m_ctrl.enumerateAllArticlesBackwards(groupname, page*articlesPerPage, articlesPerPage, &handleArticle);
+		redirectBackToArticles(req, res);
+	}
+
 	private void redirectBackToArticles(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		string suff = req.form.get("only_active", "") == "1" ? "&only_active=1" : null;
-		res.redirect("/groups/"~req.form["groupname"]~"/articles?page="~req.form["page"]~suff);
+		auto group = "groupname" in req.params ? req.params["groupname"] : req.form["groupname"];
+		res.redirect("/groups/"~group~"/articles?page="~req.form["page"]~suff);
 	}
 
 	void showListUsers(HTTPServerRequest req, HTTPServerResponse res)
