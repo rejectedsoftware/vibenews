@@ -81,13 +81,14 @@ class Controller {
 
 
 		// create indexes
-		import std.typecons : tuple;
-		//m_users.ensureIndex([tuple("email", 1)], IndexFlags.Unique);
-		m_groups.ensureIndex([tuple("name", 1)], IndexFlags.Unique);
-		m_threads.ensureIndex([tuple("groupId", 1)]);
-		m_threads.ensureIndex([tuple("firstArticleId", 1)]);
-		m_threads.ensureIndex([tuple("lastArticleId", -1)]);
-		m_articles.ensureIndex([tuple("id", 1)], IndexFlags.Unique);
+		IndexOptions uniqopts;
+		uniqopts.unique = true;
+		//m_users.createIndex(["email": 1], uniqopts);
+		m_groups.createIndex(["name": 1], uniqopts);
+		m_threads.createIndex(["groupId": 1]);
+		m_threads.createIndex(["firstArticleId": 1]);
+		m_threads.createIndex(["lastArticleId": -1]);
+		m_articles.createIndex(["id": 1], uniqopts);
 		foreach (grp; m_groups.find(Bson.emptyObject, ["name": 1]))
 			createGroupIndexes(grp["name"].get!string());
 
@@ -103,7 +104,7 @@ class Controller {
 					art.headers = deserializeBson!(ArticleHeader[])(bart["headers"]);
 					string name, email;
 					decodeEmailAddressHeader(art.getHeader("From"), name, email);
-					m_articles.update(["_id": art._id], ["$set": ["posterEmail": email]]);
+					m_articles.updateOne(["_id": art._id], ["$set": ["posterEmail": email]]);
 				} ();
 			} catch (Exception e) logException(e, "Failed to perform database fixups");
 		});
@@ -137,15 +138,15 @@ class Controller {
 		auto limitdate = Clock.currTime() - (60 * 24).hours;
 		m_userdb.enumerateUsers(0, int.max, (ref usr) {
 			if (usr.id.bsonObjectIDValue.timeStamp > limitdate) return;
-			auto ac = m_articles.count(["posterEmail": Bson(usr.email), "active": Bson(true)]);
+			auto ac = m_articles.countDocuments(["posterEmail": Bson(usr.email), "active": Bson(true)]);
 			if (ac == 0) deleteUser(usr.id);
 		});
 	}
 
 	void getUserMessageCount(string email, out ulong active_count, out ulong inactive_count)
 	{
-		active_count = m_articles.count(["posterEmail": Bson(email), "active": Bson(true)]);
-		inactive_count = m_articles.count(["posterEmail": Bson(email), "active": Bson(false)]);
+		active_count = m_articles.countDocuments(["posterEmail": Bson(email), "active": Bson(true)]);
+		inactive_count = m_articles.countDocuments(["posterEmail": Bson(email), "active": Bson(false)]);
 	}
 
 	/***************************/
@@ -177,7 +178,7 @@ class Controller {
 		cat._id = BsonObjectID.generate();
 		cat.caption = caption;
 		cat.index = index;
-		m_groupCategories.insert(cat);
+		m_groupCategories.insertOne(cat);
 		return cat._id;
 	}
 
@@ -188,12 +189,12 @@ class Controller {
 		cat.caption = caption;
 		cat.index = index;
 		cat.groups = groups;
-		m_groupCategories.update(["_id": category], cat);
+		m_groupCategories.replaceOne(["_id": category], cat);
 	}
 
 	void deleteGroupCategory(BsonObjectID id)
 	{
-		m_groupCategories.remove(["_id": id]);
+		m_groupCategories.deleteOne(["_id": id]);
 	}
 
 	/***************************/
@@ -251,23 +252,23 @@ class Controller {
 
 	void addGroup(Group g)
 	{
-		m_groups.insert(g);
+		m_groups.insertOne(g);
 		createGroupIndexes(g.name);
 	}
 
 	void updateGroup(Group g)
 	{
-		m_groups.update(["_id": g._id], g);
+		m_groups.replaceOne(["_id": g._id], g);
 	}
 
 	void createGroupIndexes()(string grpname)
 	{
-		import std.typecons : tuple;
-
 		string egrp = escapeGroup(grpname);
 		string grpfield = "groups."~egrp;
-		m_articles.ensureIndex([tuple(grpfield~".articleNumber", 1)], IndexFlags.Sparse);
-		m_articles.ensureIndex([tuple(grpfield~".threadId", 1)], IndexFlags.Sparse);
+		IndexOptions opts;
+		opts.sparse = true;
+		m_articles.createIndex([grpfield~".articleNumber": 1], opts);
+		m_articles.createIndex([grpfield~".threadId": 1], opts);
 	}
 
 	/***************************/
@@ -276,7 +277,7 @@ class Controller {
 
 	long getThreadCount(BsonObjectID group)
 	{
-		return m_threads.count(["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])]);
+		return m_threads.countDocuments(["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])]);
 	}
 
 	Thread getThread(BsonObjectID id)
@@ -303,7 +304,11 @@ class Controller {
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
-		foreach( bthr; m_threads.find(["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])], null, QueryFlags.None, cast(int)skip).sort(["lastArticleId": Bson(-1)]) ){
+		FindOptions opts;
+		opts.skip = skip;
+		foreach (bthr; m_threads.find(["groupId": Bson(group), "firstArticleId": serializeToBson(["$ne": BsonObjectID()])], opts)
+			.sort(["lastArticleId": Bson(-1)]))
+		{
 			Thread thr;
 			deserializeBson(thr, bthr);
 			del(idx, thr);
@@ -314,14 +319,19 @@ class Controller {
 	long getThreadPostCount(BsonObjectID thread, string groupname = null)
 	{
 		if( !groupname ) groupname = getGroup(getThread(thread).groupId).name;
-		return m_articles.count(["groups."~escapeGroup(groupname)~".threadId" : Bson(thread), "active": Bson(true)]);
+		return m_articles.countDocuments(["groups."~escapeGroup(groupname)~".threadId" : Bson(thread), "active": Bson(true)]);
 	}
 
 	void enumerateThreadPosts(BsonObjectID thread, string groupname, size_t skip, size_t max_count, void delegate(size_t, Article) @safe del)
 	{
 		assert(skip <= int.max);
 		size_t idx = skip;
-		foreach (bart; m_articles.find(["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], null, QueryFlags.None, cast(int)skip, cast(int)max_count).sort(["_id": Bson(1)])) {
+		FindOptions opts;
+		opts.skip = skip;
+		opts.limit = max_count;
+		foreach (bart; m_articles.find(["groups."~escapeGroup(groupname)~".threadId": Bson(thread), "active": Bson(true)], opts)
+			.sort(["_id": Bson(1)]))
+		{
 			Article art;
 			deserializeBson(art, bart);
 			del(idx, art);
@@ -345,7 +355,7 @@ class Controller {
 		query["groups."~escapeGroup(group_name)~".articleNumber"] = serializeToBson(["$lt": article_number]);
 		query["active"] = Bson(true);
 
-		return m_articles.count(query);
+		return m_articles.countDocuments(query);
 	}
 
 	/***************************/
@@ -419,7 +429,7 @@ class Controller {
 		auto numquery = serializeToBson(["$gte": from, "$lte": to]);
 		size_t idx = 0;
 		foreach (ba; m_articles.find([numkey: numquery, "active": Bson(true)], ["message": 0]).sort([numkey: 1])) {
-			ba["message"] = Bson(BsonBinData(BsonBinData.Type.Generic, null));
+			ba["message"] = Bson(BsonBinData(BsonBinData.Type.generic, null));
 			if( ba["groups"][gpne]["articleNumber"].get!long > to )
 				break;
 			deserializeBson(art, ba);
@@ -446,7 +456,10 @@ class Controller {
 		auto numkey = "groups."~egrp~".articleNumber";
 		logDebug("%s %s", groupname, egrp);
 		size_t idx = 0;
-		foreach (ba; m_articles.find([numkey: ["$exists": true]], null, QueryFlags.None, first, count).sort([numkey: -1])) {
+		FindOptions opts;
+		opts.skip = first;
+		opts.limit = count;
+		foreach (ba; m_articles.find([numkey: ["$exists": true]], opts).sort([numkey: -1])) {
 			Article art;
 			deserializeBson(art, ba);
 			del(art);
@@ -456,7 +469,7 @@ class Controller {
 
 	ulong getAllArticlesCount(string groupname)
 	{
-		return m_articles.count(["groups."~escapeGroup(groupname)~".articleNumber": ["$exists": true]]);
+		return m_articles.countDocuments(["groups."~escapeGroup(groupname)~".articleNumber": ["$exists": true]]);
 	}
 
 	void enumerateActiveArticlesBackwards(string groupname, int first, int count, void delegate(ref Article art) @safe del)
@@ -465,7 +478,10 @@ class Controller {
 		auto numkey = "groups."~egrp~".articleNumber";
 		logDebug("%s %s", groupname, egrp);
 		size_t idx = 0;
-		foreach (ba; m_articles.find([numkey: Bson(["$exists": Bson(true)]), "active": Bson(true)], null, QueryFlags.None, first, count).sort([numkey: -1])) {
+		FindOptions opts;
+		opts.skip = first;
+		opts.limit = count;
+		foreach (ba; m_articles.find([numkey: Bson(["$exists": Bson(true)]), "active": Bson(true)], opts).sort([numkey: -1])) {
 			Article art;
 			deserializeBson(art, ba);
 			del(art);
@@ -475,7 +491,7 @@ class Controller {
 
 	ulong getActiveArticlesCount(string groupname)
 	{
-		return m_articles.count(["groups."~escapeGroup(groupname)~".articleNumber": Bson(["$exists": Bson(true)]), "active": Bson(true)]);
+		return m_articles.countDocuments(["groups."~escapeGroup(groupname)~".articleNumber": Bson(["$exists": Bson(true)]), "active": Bson(true)]);
 	}
 
 	void postArticle(ref Article art, User.ID user_id)
@@ -541,7 +557,7 @@ class Controller {
 		foreach( grp; newsgroups ){
 			auto bgpre = m_groups.findAndModify(["name": grp], ["$inc": ["articleNumberCounter": 1]], ["articleNumberCounter": 1]);
 			if( bgpre.isNull() ) continue; // ignore non-existant groups
-			m_groups.update(["name": grp], ["$inc": ["articleCount": 1]]);
+			m_groups.updateOne(["name": grp], ["$inc": ["articleCount": 1]]);
 			logDebug("GRP: %s", bgpre.toJson());
 
 			// try to find the thread of any reply-to message
@@ -560,20 +576,20 @@ class Controller {
 				thr.subject = subject;
 				thr.firstArticleId = art._id;
 				thr.lastArticleId = art._id;
-				m_threads.insert(thr);
+				m_threads.insertOne(thr);
 				threadid = thr._id;
 			} else {
-				m_threads.update(["_id": threadid], ["$set": ["lastArticleId": art._id]]);
+				m_threads.updateOne(["_id": threadid], ["$set": ["lastArticleId": art._id]]);
 			}
 
 			GroupRef grpref;
 			grpref.articleNumber = bgpre["articleNumberCounter"].get!long + 1;
 			grpref.threadId = threadid;
 			art.groups[escapeGroup(grp)] = grpref;
-			m_groups.update(["name": Bson(grp), "maxArticleNumber": serializeToBson(["$lt": grpref.articleNumber])], ["$set": ["maxArticleNumber": grpref.articleNumber]]);
+			m_groups.updateOne(["name": Bson(grp), "maxArticleNumber": serializeToBson(["$lt": grpref.articleNumber])], ["$set": ["maxArticleNumber": grpref.articleNumber]]);
 		}
 
-		m_articles.insert(art);
+		m_articles.insertOne(art);
 
 		markAsSpam(art._id, revoke);
 
@@ -613,7 +629,7 @@ class Controller {
 			string numfield = "groups."~gname~".articleNumber";
 			auto groupname = Bson(unescapeGroup(gname));
 			auto articlequery = Bson([numfield: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
-			m_groups.update(["name": groupname], ["$inc": ["articleCount": -1]]);
+			m_groups.updateOne(["name": groupname], ["$inc": ["articleCount": -1]]);
 			auto g = m_groups.findOne(["name": groupname]);
 			auto num = grp["articleNumber"];
 			if( g["minArticleNumber"] == num ){
@@ -622,7 +638,7 @@ class Controller {
 				long newnum;
 				if (minart.isNull()) newnum = long.max;
 				else newnum = minart["groups"][gname]["articleNumber"].get!long;
-				m_groups.update(["name": groupname, "minArticleNumber": num], ["$set": ["minArticleNumber": newnum]]);
+				m_groups.updateOne(["name": groupname, "minArticleNumber": num], ["$set": ["minArticleNumber": newnum]]);
 			}
 			if( g["maxArticleNumber"] == num ){
 				auto maxorder = serializeToBson([numfield: -1]);
@@ -630,17 +646,17 @@ class Controller {
 				long newnum;
 				if (!maxart.isNull()) newnum = maxart["groups"][gname]["articleNumber"].get!long;
 				else newnum = 0;
-				m_groups.update(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
+				m_groups.updateOne(["name": groupname, "maxArticleNumber": num], ["$set": ["maxArticleNumber": newnum]]);
 			}
 
 			// update the matching thread
 			auto threadid = grp["threadId"];
 			auto newfirstart = m_articles.findOne(serializeToBson(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(1)]]), ["_id": true]);
 			auto newfirstid = newfirstart.isNull() ? BsonObjectID() : newfirstart["_id"].get!BsonObjectID;
-			m_threads.update(["_id": threadid, "firstArticleId": oldart["_id"]], ["$set": ["firstArticleId": newfirstid]]);
+			m_threads.updateOne(["_id": threadid, "firstArticleId": oldart["_id"]], ["$set": ["firstArticleId": newfirstid]]);
 			auto newlastart = m_articles.findOne(serializeToBson(["query": ["groups."~gname~".threadId": threadid, "active": Bson(true)], "orderby": ["_id": Bson(-1)]]), ["_id": true]);
 			auto newlastid = newfirstart.isNull() ? BsonObjectID() : newlastart["_id"].get!BsonObjectID;
-			m_threads.update(["_id": threadid, "lastArticleId": oldart["_id"]], ["$set": ["lastArticleId": newlastid]]);
+			m_threads.updateOne(["_id": threadid, "lastArticleId": oldart["_id"]], ["$set": ["lastArticleId": newlastid]]);
 		}
 	}
 
@@ -655,20 +671,20 @@ class Controller {
 			auto threadid = gref["threadId"];
 			string numfield = "groups."~gname~".articleNumber";
 			auto groupname = Bson(unescapeGroup(gname));
-			m_groups.update(["name": groupname], ["$inc": ["articleCount": 1]]);
-			m_groups.update(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
-			m_groups.update(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
+			m_groups.updateOne(["name": groupname], ["$inc": ["articleCount": 1]]);
+			m_groups.updateOne(["name": groupname, "maxArticleNumber": Bson(["$lt": num])], ["$set": ["maxArticleNumber": num]]);
+			m_groups.updateOne(["name": groupname, "minArticleNumber": Bson(["$gt": num])], ["$set": ["minArticleNumber": num]]);
 
 			auto first_matches = serializeToBson([["firstArticleId": Bson(["$gt": oldart["_id"]])], ["firstArticleId": Bson(BsonObjectID())]]);
-			m_threads.update(["_id": threadid, "$or": first_matches], ["$set": ["firstArticleId": oldart["_id"]]]);
-			m_threads.update(["_id": threadid, "lastArticleId": Bson(["$lt": oldart["_id"]])], ["$set": ["lastArticleId": oldart["_id"]]]);
+			m_threads.updateOne(["_id": threadid, "$or": first_matches], ["$set": ["firstArticleId": oldart["_id"]]]);
+			m_threads.updateOne(["_id": threadid, "lastArticleId": Bson(["$lt": oldart["_id"]])], ["$set": ["lastArticleId": oldart["_id"]]]);
 		}
 	}
 
 	void deleteArticle(BsonObjectID artid)
 	{
 		deactivateArticle(artid);
-		m_articles.remove(["_id": artid]);
+		m_articles.deleteOne(["_id": artid]);
 	}
 
 	void reclassifySpam()
@@ -706,13 +722,13 @@ class Controller {
 			flt.classify(msg, is_spam, false);
 
 		art.setHeader("X-Spam-Status", is_spam ? "Yes" : "No");
-		m_articles.update(["_id": article], ["$set": ["headers": art.headers]]);
+		m_articles.updateOne(["_id": article], ["$set": ["headers": art.headers]]);
 	}
 
 	// deletes all inactive articles from the group
 	void purgeGroup(string name)
 	{
-		m_articles.remove(["active": Bson(false), "groups."~escapeGroup(name)~".articleNumber": Bson(["$exists": Bson(true)])]);
+		m_articles.deleteOne(["active": Bson(false), "groups."~escapeGroup(name)~".articleNumber": Bson(["$exists": Bson(true)])]);
 	}
 
 	bool isAuthorizedForReadingGroup(User.ID user, string groupname)
@@ -760,9 +776,9 @@ class Controller {
 			auto numbername = "groups."~grpname~".articleNumber";
 
 			auto artquery = serializeToBson([numbername: Bson(["$exists": Bson(true)]), "active": Bson(true)]);
-			auto artcnt = m_articles.count(artquery);
+			auto artcnt = m_articles.countDocuments(artquery);
 			logInfo("  article count: %s", artcnt);
-			m_groups.update(["_id": grp["_id"], "articleCount": grp["articleCount"]], ["$set": ["articleCount": artcnt]]);
+			m_groups.updateOne(["_id": grp["_id"], "articleCount": grp["articleCount"]], ["$set": ["articleCount": artcnt]]);
 
 			auto first_art = m_articles.findOne(Bson(["$query": artquery, "$orderby": serializeToBson([numbername: 1])]), ["groups": 1]);
 			auto last_art = m_articles.findOne(Bson(["$query": artquery, "$orderby": serializeToBson([numbername: -1])]), ["groups": 1]);
@@ -774,8 +790,8 @@ class Controller {
 			logInfo("  first article: %s", first_art_num);
 			logInfo("  last article: %s", last_art_num);
 
-			m_groups.update(["_id": grp["_id"], "minArticleNumber": grp["minArticleNumber"]], ["$set": ["minArticleNumber": first_art_num]]);
-			m_groups.update(["_id": grp["_id"], "maxArticleNumber": grp["maxArticleNumber"]], ["$set": ["maxArticleNumber": last_art_num]]);
+			m_groups.updateOne(["_id": grp["_id"], "minArticleNumber": grp["minArticleNumber"]], ["$set": ["minArticleNumber": first_art_num]]);
+			m_groups.updateOne(["_id": grp["_id"], "maxArticleNumber": grp["maxArticleNumber"]], ["$set": ["maxArticleNumber": last_art_num]]);
 		}
 
 		logInfo("Repair of group numbers finished.");
@@ -783,7 +799,7 @@ class Controller {
 
 	void repairThreads()
 	{
-		m_threads.remove(Bson.emptyObject);
+		m_threads.deleteMany(Bson.emptyObject);
 
 		foreach (ba; m_articles.find(["active": Bson(true)]).sort(["_id": Bson(1)])) () @safe {
 			Article a;
@@ -807,7 +823,7 @@ class Controller {
 				// try to find the thread of any reply-to message
 				if( !rart.isNull() ){
 					auto gref = rart["groups"][gname];
-					if( !gref.isNull() && m_threads.count(["_id": gref["threadId"]]) > 0 )
+					if( !gref.isNull() && m_threads.countDocuments(["_id": gref["threadId"]]) > 0 )
 						threadid = gref["threadId"].get!BsonObjectID;
 				}
 
@@ -819,14 +835,14 @@ class Controller {
 					thr.subject = subject;
 					thr.firstArticleId = a._id;
 					thr.lastArticleId = a._id;
-					m_threads.insert(thr);
+					m_threads.insertOne(thr);
 
 					threadid = thr._id;
 				} else {
-					m_threads.update(["_id": threadid], ["$set": ["lastArticleId": a._id]]);
+					m_threads.updateOne(["_id": threadid], ["$set": ["lastArticleId": a._id]]);
 				}
 
-				m_articles.update(["_id": a._id], ["$set": ["groups."~gname~".threadId": threadid]]);
+				m_articles.updateOne(["_id": a._id], ["$set": ["groups."~gname~".threadId": threadid]]);
 			}();
 		}();
 	}
