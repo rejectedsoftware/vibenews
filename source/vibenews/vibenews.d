@@ -9,7 +9,7 @@ module vibenews.vibenews;
 
 public import vibenews.controller : Article;
 public import vibe.data.json;
-public import vibe.mail.smtp : SMTPClientSettings;
+public import vibe.mail.smtp : SMTPClientSettings, SMTPAuthType, SMTPConnectionType;
 
 import antispam.antispam;
 
@@ -35,6 +35,7 @@ class VibeNewsSettings {
 	string[] webBindAddresses;
 	string[] adminBindAddresses;
 
+	string mailSender;
 	SMTPClientSettings mailSettings;
 
 	bool requireSSL = false;
@@ -51,9 +52,13 @@ class VibeNewsSettings {
 	this()
 	{
 		import vibe.http.server : HTTPServerSettings;
+		import vibe.stream.tls : TLSPeerValidationMode;
+
 		auto defaultBindAddresses = (new HTTPServerSettings).bindAddresses;
 		webBindAddresses = defaultBindAddresses;
 		adminBindAddresses = defaultBindAddresses;
+		mailSettings = new SMTPClientSettings;
+		mailSettings.tlsValidationMode = TLSPeerValidationMode.validCert;
 	}
 
 	void parseSettings(Json json)
@@ -92,6 +97,14 @@ class VibeNewsSettings {
 			foreach( address; *pa )
 				adminBindAddresses ~= address.get!string;
 		}
+		if (auto pm = "mailSender" in json) mailSender = pm.get!string;
+		if (auto pv = "mailServer" in json) mailSettings.host = pv.get!string;
+		if (auto pv = "mailPort" in json) mailSettings.port = pv.get!int.to!ushort;
+		if (auto pv = "mailUser" in json) mailSettings.username = pv.get!string;
+		if (auto pv = "mailPassword" in json) mailSettings.password = pv.get!string;
+		if (auto pv = "mailHostname" in json) mailSettings.localname = pv.get!string;
+		if (auto pv = "mailAuthType" in json) mailSettings.authType = pv.get!string.to!SMTPAuthType;
+		if (auto pv = "mailConnectionType" in json) mailSettings.connectionType = pv.get!string.to!SMTPConnectionType;
 	}
 }
 

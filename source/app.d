@@ -27,13 +27,14 @@ void main()
 	settings.spamFilters ~= new BlackListSpamFilter;
 	settings.spamFilters ~= new BayesSpamFilter;
 
-	if( existsFile("settings.json") ){
+	if (existsFile("settings.json")) {
 		auto data = stripUTF8Bom(cast(string)openFile("settings.json").readAll());
 		auto json = parseJson(data);
 		settings.parseSettings(json);
 	}
 
-	settings.mailSettings = new SMTPClientSettings;
+	if (!settings.mailSender.length)
+ 		settings.mailSender = "info@"~ settings.hostName;
 
 	auto ctrl = new Controller(settings);
 	s_server = new NewsInterface(ctrl);
