@@ -43,7 +43,7 @@ class Controller {
 		settings.databaseURL = "mongodb://127.0.0.1:27017/"~m_settings.databaseName;
 		settings.serviceName = m_settings.title;
 		settings.serviceUrl = URL("http://"~m_settings.hostName~"/");
-		settings.serviceEmail = "info@"~m_settings.hostName;
+		settings.serviceEmail = m_settings.mailSender;
 		settings.mailSettings = m_settings.mailSettings;
 		settings.requireAccountValidation = m_settings.requireAccountValidation;
 		m_userdb = createUserManController(settings);
